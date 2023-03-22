@@ -1,0 +1,42 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="alluja.knokknok.models.Friend.objects" />
+          <option value="alluja.knokknok.models.Group.objects" />
+          <option value="alluja.knokknok.models.Chat.objects" />
+          <option value="alluja.knokknok.models.ChatMessage.objects" />
+          <option value="alluja.knokknok.models.ChatMember.objects" />
+          <option value="alluja.knokknok.models.Event.objects" />
+          <option value="alluja.knokknok.models.EventLocation.objects" />
+          <option value="alluja.knokknok.models.InvitedFriend.objects" />
+          <option value="alluja.knokknok.models.ConnectedAccount.objects" />
+          <option value="alluja.knokknok.models.UserLocation.objects" />
+          <option value="alluja.knokknok.models.UserDevice.objects" />
+          <option value="alluja.knokknok.models.BlockedUser.objects" />
+          <option value="alluja.knokknok.models.Announcement.objects" />
+          <option value="alluja.knokknok.models.DeletedEvent.objects" />
+          <option value="bool.__await__" />
+          <option value="int.__await__" />
+          <option value="alluja.knokknok.models.Chat.set" />
+          <option value="alluja.knokknok.consumers.knokknok" />
+          <option value="alluja.knokknok.internal.notifications.knokknok" />
+          <option value="alluja.knokknok.models.EventShortLink.objects" />
+          <option value="alluja.knokknok.models.CrossBlockRule.objects" />
+          <option value="alluja.knokknok.models.LinkedAttendee.objects" />
+          <option value="alluja.knokknok.models.InvitedContact.objects" />
+          <option value="knokknok.models.ChatMember.objects" />
+          <option value="knokknok.models.LinkedAttendee.objects" />
+          <option value="knokknok.models.InvitedContact.objects" />
+          <option value="knokknok.models.Chat.objects" />
+          <option value="knokknok.models.EventShortLink.objects" />
+          <option value="knokknok.models.DeletedEvent.objects" />
+          <option value="knokknok.models.Friend.objects" />
+          <option value="knokknok.models.AttendingUser.objects" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
