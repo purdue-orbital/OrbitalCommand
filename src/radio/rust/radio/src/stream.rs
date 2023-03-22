@@ -27,13 +27,18 @@ pub struct RxStream {
 impl RxStream {
     pub fn rx(&mut self) -> Vec<Complex<f32>>
     {
-        let mut buff: &mut [Complex<f32>; 1024] = &mut [Complex::<f32>::new(0.0, 0.0); 1024];
+        let mut buff: &mut [Complex<f32>; 1024 as usize] = &mut [Complex::<f32>::new(0.0, 0.0); 1024 as usize];
 
         self.stream.read(&[buff], 100000).expect("Collect stream");
 
         self.buffer.extend(buff.iter().copied());
 
         self.buffer.clone()
+    }
+
+    pub fn clear_buffer(&mut self)
+    {
+        self.buffer = Vec::new();
     }
 }
 
@@ -91,7 +96,7 @@ impl Stream {
         // Set general stream data
         new_stream.radio.get_radio().set_bandwidth(new_stream.method, new_stream.channel.try_into().unwrap(), lpf_bandwidth).expect("Setting Bandwidth");
         new_stream.radio.get_radio().set_frequency(new_stream.method, new_stream.channel.try_into().unwrap(), center_frequency, args).expect("Setting Frequency");
-        new_stream.radio.get_radio().set_gain(new_stream.method, new_stream.channel.try_into().unwrap(), 70.0).expect("Setting Gain");
+        new_stream.radio.get_radio().set_gain(new_stream.method, new_stream.channel.try_into().unwrap(), 80.0).expect("Setting Gain");
         new_stream.radio.get_radio().set_sample_rate(new_stream.method, new_stream.channel.try_into().unwrap(), sample_rate).expect("Setting Sample Rate");
 
 
