@@ -1,5 +1,5 @@
-use std::any::type_name;
 use soapysdr::{Device, Error};
+use std::any::type_name;
 
 // Radio Values
 
@@ -8,10 +8,8 @@ pub struct Radio {
     device: Option<Device>,
 }
 
-impl Radio
-{
-    pub fn new() -> Result<Radio, Error>
-    {
+impl Radio {
+    pub fn new() -> Result<Radio, Error> {
         // Initialize values of a radio
         let mut new_radio = Radio { device: None };
 
@@ -20,10 +18,9 @@ impl Radio
         args.set("device", "lime");
 
         //soapysdr::Device::
-        for x in soapysdr::enumerate("device=lime").unwrap()
-        {
-            println!("{}",x);
-        }
+        // for x in soapysdr::enumerate("device=lime").unwrap() {
+        //     println!("{}", x);
+        // }
 
         // get list of radios
         let err = soapysdr::Device::new(args)?;
@@ -33,8 +30,7 @@ impl Radio
         Ok(new_radio)
     }
 
-    pub fn get_radio(&self) -> &Device
-    {
+    pub fn get_radio(&self) -> &Device {
         self.device.as_ref().expect("Get Radio Instance")
     }
 }

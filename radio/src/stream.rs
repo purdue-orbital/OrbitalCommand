@@ -1,18 +1,16 @@
 use std::collections::HashMap;
 
+use anyhow::Result;
 use num_complex::Complex;
 use soapysdr::{Args, Direction};
-use anyhow::Result;
 
 use crate::radio::Radio;
 
-pub struct Stream
-{
+pub struct Stream {
     // Stream Properties
     radio: Radio,
     method: Direction,
     channel: i8,
-
 }
 
 pub struct TxStream {
@@ -21,13 +19,13 @@ pub struct TxStream {
 
 pub struct RxStream {
     stream: soapysdr::RxStream<Complex<f32>>,
-    buffer: Vec<Complex<f32>>
+    buffer: Vec<Complex<f32>>,
 }
 
 impl RxStream {
-    pub fn rx(&mut self) -> Vec<Complex<f32>>
-    {
-        let mut buff: &mut [Complex<f32>; 1024 as usize] = &mut [Complex::<f32>::new(0.0, 0.0); 1024 as usize];
+    pub fn rx(&mut self) -> Vec<Complex<f32>> {
+        let mut buff: &mut [Complex<f32>; 1024 as usize] =
+            &mut [Complex::<f32>::new(0.0, 0.0); 1024 as usize];
 
         self.stream.read(&[buff], 100000).expect("Collect stream");
 
@@ -36,15 +34,13 @@ impl RxStream {
         self.buffer.clone()
     }
 
-    pub fn clear_buffer(&mut self)
-    {
+    pub fn clear_buffer(&mut self) {
         self.buffer = Vec::new();
     }
 }
 
 impl TxStream {
-    pub fn tx(&mut self, arr: Vec<Complex<f32>>) -> Result<()>
-    {
+    pub fn tx(&mut self, arr: Vec<Complex<f32>>) -> Result<()> {
         self.stream.write(&[arr.as_slice()], None, true, 10000)?;
 
         Ok(())
@@ -52,30 +48,52 @@ impl TxStream {
 }
 
 impl Stream {
-    pub fn new_tx(radio: Radio, channel: i8, center_frequency: f64, lpf_bandwidth: f64, sample_rate: f64) -> Result<TxStream> {
-        let stream = Self::new_stream(radio, Direction::Tx, channel, center_frequency, lpf_bandwidth, sample_rate)?;
+    pub fn new_tx(
+        radio: Radio,
+        channel: i8,
+        center_frequency: f64,
+        lpf_bandwidth: f64,
+        sample_rate: f64,
+    ) -> Result<TxStream> {
+        let stream = Self::new_stream(
+            radio,
+            Direction::Tx,
+            channel,
+            center_frequency,
+            lpf_bandwidth,
+            sample_rate,
+        )?;
 
         let mut tx = stream
             .radio
             .get_radio()
-            .tx_stream::<Complex<f32>>(
-                &[channel.try_into().unwrap()])?;
+            .tx_stream::<Complex<f32>>(&[channel.try_into().unwrap()])?;
 
         tx.activate(None)?;
 
-        Ok(TxStream {
-            stream: tx,
-        })
+        Ok(TxStream { stream: tx })
     }
 
-    pub fn new_rx(radio: Radio, channel: i8, center_frequency: f64, lpf_bandwidth: f64, sample_rate: f64) -> Result<RxStream> {
-        let stream = Self::new_stream(radio, Direction::Tx, channel, center_frequency, lpf_bandwidth, sample_rate)?;
+    pub fn new_rx(
+        radio: Radio,
+        channel: i8,
+        center_frequency: f64,
+        lpf_bandwidth: f64,
+        sample_rate: f64,
+    ) -> Result<RxStream> {
+        let stream = Self::new_stream(
+            radio,
+            Direction::Tx,
+            channel,
+            center_frequency,
+            lpf_bandwidth,
+            sample_rate,
+        )?;
 
         let mut rx = stream
             .radio
             .get_radio()
-            .rx_stream::<Complex<f32>>(
-                &[channel.try_into().unwrap()])?;
+            .rx_stream::<Complex<f32>>(&[channel.try_into().unwrap()])?;
 
         rx.activate(Some(1000))?;
 
@@ -85,20 +103,62 @@ impl Stream {
         })
     }
 
-    fn new_stream(radio: Radio, method: Direction, channel: i8, center_frequency: f64, lpf_bandwidth: f64, sample_rate: f64) -> Result<Stream>
-    {
+    fn new_stream(
+        radio: Radio,
+        method: Direction,
+        channel: i8,
+        center_frequency: f64,
+        lpf_bandwidth: f64,
+        sample_rate: f64,
+    ) -> Result<Stream> {
         // Make stream data
-        let mut new_stream = Stream { radio, method, channel };
+        let mut new_stream = Stream {
+            radio,
+            method,
+            channel,
+        };
 
         // Stream arguements
         let mut args = Args::new();
 
         // Set general stream data
-        new_stream.radio.get_radio().set_bandwidth(new_stream.method, new_stream.channel.try_into().unwrap(), lpf_bandwidth).expect("Setting Bandwidth");
-        new_stream.radio.get_radio().set_frequency(new_stream.method, new_stream.channel.try_into().unwrap(), center_frequency, args).expect("Setting Frequency");
-        new_stream.radio.get_radio().set_gain(new_stream.method, new_stream.channel.try_into().unwrap(), 80.0).expect("Setting Gain");
-        new_stream.radio.get_radio().set_sample_rate(new_stream.method, new_stream.channel.try_into().unwrap(), sample_rate).expect("Setting Sample Rate");
-
+        new_stream
+            .radio
+            .get_radio()
+            .set_bandwidth(
+                new_stream.method,
+                new_stream.channel.try_into().unwrap(),
+                lpf_bandwidth,
+            )
+            .expect("Setting Bandwidth");
+        new_stream
+            .radio
+            .get_radio()
+            .set_frequency(
+                new_stream.method,
+                new_stream.channel.try_into().unwrap(),
+                center_frequency,
+                args,
+            )
+            .expect("Setting Frequency");
+        new_stream
+            .radio
+            .get_radio()
+            .set_gain(
+                new_stream.method,
+                new_stream.channel.try_into().unwrap(),
+                80.0,
+            )
+            .expect("Setting Gain");
+        new_stream
+            .radio
+            .get_radio()
+            .set_sample_rate(
+                new_stream.method,
+                new_stream.channel.try_into().unwrap(),
+                sample_rate,
+            )
+            .expect("Setting Sample Rate");
 
         // Initialize stream for either TX or RX operations
         // if new_stream.method == Direction::Tx {
