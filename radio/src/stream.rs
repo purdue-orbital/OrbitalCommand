@@ -40,8 +40,8 @@ impl RxStream {
 }
 
 impl TxStream {
-    pub fn tx(&mut self, arr: Vec<Complex<f32>>) -> Result<()> {
-        self.stream.write(&[arr.as_slice()], None, true, 10000)?;
+    pub fn tx(&mut self, arr: &[Complex<f32>]) -> Result<()> {
+        self.stream.write(&[arr], None, true, 10000)?;
 
         Ok(())
     }
