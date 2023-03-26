@@ -1,9 +1,13 @@
-FROM rustlang/rust:nightly AS builder
+FROM rustlang/rust:nightly-alpine AS builder
 
 ARG TARGET_CRATE=ground
 
-RUN apt update
-RUN apt install -y libsoapysdr-dev libclang-dev clang
+RUN apk update
+RUN apk add soapy-sdr-dev --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+
+RUN apk add clang npm build-base
+
+ENV RUSTFLAGS=-Ctarget-feature=-crt-static
 
 WORKDIR /usr/src/orbital
 
@@ -23,6 +27,12 @@ RUN sed --in-place '/path = "\.\./d' Cargo.toml
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/src/orbital/target \
     cargo build --release
+
+# Client shit
+RUN mkdir client
+COPY $TARGET_CRATE/client/*.* ./client/
+WORKDIR ./client
+RUN if [[ -e "package.json" ]] ; then npm install ; fi
 
 # Copy and build internal libraries
 WORKDIR /usr/src/orbital
@@ -49,9 +59,21 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/src/orbital/target \
     cargo build --release && mv ../target/release/$TARGET_CRATE ../out/app
 
-FROM ubuntu AS runner
+WORKDIR client
+RUN if [[ -e "package.json" ]] ; then npm run build ; fi
+RUN if [[ -e "package.json" ]] ; then mkdir -p ../../out/dist ; fi
+RUN if [[ -e "package.json" ]] ; then mv dist/* ../../out/dist ; fi
+
+FROM alpine AS runner
+
+EXPOSE 80
 
 ARG APP=/usr/src
+
+RUN apk update
+RUN apk add soapy-sdr-dev --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+
+RUN apk add clang npm build-base
 
 COPY --from=builder /usr/src/orbital/out/ ${APP}/tmp
 

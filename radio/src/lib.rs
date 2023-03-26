@@ -1,3 +1,5 @@
+use crate::stream::{RxStream, TxStream};
+
 pub mod dsp;
 pub mod graphy;
 pub mod radio;
@@ -14,5 +16,33 @@ pub fn frequency_range(start_frequency: f64, stop_frequency: f64) -> FrequencyRa
     FrequencyRange {
         center_frequency: (start_frequency + stop_frequency) / 2.0,
         lpf_bandwidth: (stop_frequency - start_frequency),
+    }
+}
+
+pub struct RadioReader {
+    stream: RxStream
+}
+
+impl RadioReader {
+
+}
+
+pub struct RadioWriter {
+    stream: TxStream
+}
+
+impl RadioWriter {
+    fn new(stream: TxStream) -> Self {
+        Self {
+            stream
+        }
+    }
+
+    fn write(&mut self, mut data: Vec<u8>) -> anyhow::Result<()> {
+        assert!(data.len() <= 255);
+
+        data.insert(0, data.len() as u8);
+
+        todo!()
     }
 }
