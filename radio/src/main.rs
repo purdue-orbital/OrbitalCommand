@@ -5,8 +5,7 @@ use std::thread::sleep;
 use std::time::{Duration, SystemTime};
 use std::{io, thread};
 
-use plotters::prelude::*;
-use radio::frequency_range;
+use radio::{frequency_range, RadioReader};
 
 use radio::dsp::generate_wave;
 use radio::graphy;
@@ -38,98 +37,14 @@ fn main() {
     let mut arr = generate_wave(1000.0, sample_rate, 50);
 
     let hnd = thread::spawn(move || {
-        // while true {
-        //     while SystemTime::now()
-        //         .duration_since(SystemTime::UNIX_EPOCH)
-        //         .unwrap()
-        //         .as_millis()
-        //         % 1000
-        //         != 0
-        //     {}
-        // 
-        //     // Get last set of data
-        //     for _ in 0..100 {
-        //         s2.rx();
-        //     }
-        // 
-        //     let mut arr = s2.rx();
-        // 
-        //     s2.clear_buffer();
-        // 
-        //     thread::spawn(move || {
-        //         // prepare date
-        //         let mut avg_over_time = Vec::new();
-        //         let mut to_avg = Vec::new();
-        //         let avg_length = 1000;
-        //         let mut to_avg_num = 0.0;
-        // 
-        //         // Average the amplitudes
-        //         for x in 0..arr.len() - 1 {
-        //             to_avg.push(
-        //                 (arr.get(x as usize).unwrap().re.powf(2.0)
-        //                     + arr.get(x as usize).unwrap().im.powf(2.0))
-        //                 .sqrt(),
-        //             );
-        // 
-        //             if (x > avg_length) {
-        //                 let mut num = 0.0;
-        // 
-        //                 // add data to be averaged
-        //                 for y in to_avg.clone() {
-        //                     num += 300.0 * y;
-        //                 }
-        // 
-        //                 avg_over_time.push(num / avg_length as f32);
-        // 
-        //                 to_avg.remove(0 as usize);
-        //             }
-        //         }
-        // 
-        //         // calculate the average of the averages
-        //         for x in avg_over_time.clone() {
-        //             to_avg_num += x;
-        //         }
-        //         let total_avg = to_avg_num / avg_over_time.len() as f32;
-        // 
-        //         // drop averages down closer to zero and remove data that is below the average
-        //         for x in 0..avg_over_time.len() {
-        //             let mut i = (*avg_over_time.get(x).unwrap()) - total_avg;
-        // 
-        //             i *= (i > 0.0) as i32 as f32;
-        // 
-        //             avg_over_time[x] = i;
-        //         }
-        // 
-        //         let mut counter = 0;
-        //         let mut last_counter = 0;
-        //         let mut bin = "".to_owned();
-        // 
-        //         while counter < avg_over_time.len() {
-        //             if avg_over_time[counter] > 0.05 {
-        //                 if counter - last_counter > 10 {
-        //                     let mut hold = (counter - last_counter) as i32;
-        // 
-        //                     hold -= 3300;
-        // 
-        //                     while hold > 0 {
-        //                         bin.push('0');
-        //                         hold -= 3300;
-        //                     }
-        // 
-        //                     bin.push('1');
-        //                 }
-        //                 last_counter = counter;
-        //             }
-        // 
-        //             counter += 1;
-        //         }
-        // 
-        //         graphy::graphy::graph_vec("data.png", avg_over_time).unwrap();
-        //     });
-        // }
+        let mut rr = RadioReader::new(s2);
+
+        rr.read();
+
+        sleep(Duration::from_secs(30));
     });
 
-    let mut test = "111111";
+    let mut test = "1010101010011001010101010101010101010101001010101010";
 
     //loop
     {
@@ -139,10 +54,12 @@ fn main() {
             sleep(Duration::from_micros(900));
 
             if x == '1' {
-                s1.tx(arr.clone());
+                s1.tx(arr.clone().as_slice());
             }
         }
     }
+
+
 
     // graphy::graphy::graph("data.png", arr);
     hnd.join().unwrap();

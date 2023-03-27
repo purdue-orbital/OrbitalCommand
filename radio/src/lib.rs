@@ -1,18 +1,22 @@
+use std::hash::Hash;
 use std::sync::{Arc, mpsc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::TryRecvError;
-use std::thread;
+use std::{process, thread};
+use std::fmt::Debug;
 use std::thread::{JoinHandle, sleep};
 use std::time::Duration;
 use log::error;
 use threadpool::ThreadPool;
-use crate::dsp::generate_wave;
+use crate::dsp::{amplitude_array, generate_wave};
 use crate::stream::{RxStream, TxStream};
+use crate::tools::{average_array, sum};
 
 pub mod dsp;
 pub mod graphy;
 pub mod radio;
 pub mod stream;
+mod tools;
 
 #[derive(PartialEq)]
 pub struct FrequencyRange {
@@ -95,14 +99,15 @@ pub struct RadioReader {
 
 impl RadioReader {
     pub fn new(mut stream: RxStream) -> Self {
+
         let run = Arc::new(AtomicBool::new(true));
         let (tx, channel) = mpsc::channel::<Vec<u8>>();
 
         let run_thread = run.clone();
         let pool = ThreadPool::new(READER_WORKERS);
-        let handle = thread::spawn(move || while run_thread.load(Ordering::SeqCst) {
+        let handle = thread::spawn(move || for id in 0..READER_WORKERS { {
+
             // Get last set of data
-            // TODO: Check that this is actually needed?
             for _ in 0..100 {
                 stream.rx();
             }
@@ -113,51 +118,35 @@ impl RadioReader {
 
             let mut accum = ByteAccumulator::new(tx.clone());
             pool.execute(move || {
-                // prepare date
-                let mut avg_over_time = Vec::new();
-                let mut to_avg = Vec::new();
-                let avg_length = 1000;
-                let mut to_avg_num = 0.0;
 
-                // Average the amplitudes
-                for x in 0..arr.len() - 1 {
-                    to_avg.push(dsp::amplitude(*arr.get(x).unwrap()));
+                // Make radio wave into amplitude array
+                let mut amp_arr = amplitude_array(arr);
 
-                    if x > avg_length {
-                        let mut num = 0.0;
+                // Average the amplitude values
+                let mut amp_avg = average_array(amp_arr,1000,Some(300.0));
 
-                        // add data to be averaged
-                        for y in to_avg.clone() {
-                            num += 300.0 * y;
-                        }
+                // Find the Average of the Averages
+                let amp_avg_avg = sum(amp_avg.clone(),None) / amp_avg.len() as f32;
 
-                        avg_over_time.push(num / avg_length as f32);
+                // Reduce all values by the average.
+                for x in 0..amp_avg.len() {
 
-                        to_avg.remove(0);
-                    }
-                }
+                    // Reduce value by average
+                    let mut i = (*amp_avg.get(x).unwrap()) - amp_avg_avg;
 
-                // calculate the average of the averages
-                for x in avg_over_time.clone() {
-                    to_avg_num += x;
-                }
-                let total_avg = to_avg_num / avg_over_time.len() as f32;
-
-                // drop averages down closer to zero and remove data that is below the average
-                for x in 0..avg_over_time.len() {
-                    let mut i = (*avg_over_time.get(x).unwrap()) - total_avg;
-
+                    // If value is negative, make it zero
                     i *= (i > 0.0) as i32 as f32;
 
-                    avg_over_time[x] = i;
+                    amp_avg[x] = i;
                 }
 
                 let mut counter = 0;
                 let mut last_counter = 0;
                 let mut bin = "".to_owned();
 
-                while counter < avg_over_time.len() {
-                    if avg_over_time[counter] > 0.05 {
+                // Modulate Values
+                while counter < amp_avg.len() {
+                    if amp_avg[counter] > 0.01 {
                         if counter - last_counter > 10 {
                             let mut hold = (counter - last_counter) as i32;
 
@@ -177,8 +166,14 @@ impl RadioReader {
 
                     counter += 1;
                 }
+
+                if(bin.len() > 0)
+                {
+                    graphy::graph_vec(("data".to_owned()+id.to_string().as_str()+".png").as_str(),amp_avg);
+                }
+
             });
-        });
+        }});
 
         Self {
             run,

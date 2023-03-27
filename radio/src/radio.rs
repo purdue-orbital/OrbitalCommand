@@ -17,11 +17,6 @@ impl Radio {
         let mut args = soapysdr::Args::new();
         args.set("device", "lime");
 
-        //soapysdr::Device::
-        // for x in soapysdr::enumerate("device=lime").unwrap() {
-        //     println!("{}", x);
-        // }
-
         // get list of radios
         let err = soapysdr::Device::new(args)?;
 

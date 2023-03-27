@@ -12,6 +12,25 @@ pub fn amplitude(val : Complex<f32>) -> f32
 }
 
 
+/// Turns Complex Values From A Radio Wave Into A Array Of Amplitudes
+/// This will return a Vec<f32> where each value is the amplitude
+///
+/// # Arguments
+///
+/// * `arr` - Array of Complex Radio Samples
+pub fn amplitude_array(val : Vec<Complex<f32>>) -> Vec<f32>
+{
+    let mut out= Vec::new();
+
+    for x in val
+    {
+        out.push(amplitude(x));
+    }
+
+    out
+}
+
+
 /// Generate Complex Radio Wave
 ///
 /// # Arguments
