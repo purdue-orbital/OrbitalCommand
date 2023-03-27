@@ -1,26 +1,28 @@
 use core::time;
-use std::fmt::Error;
+use anyhow::Result;
 use std::thread;
 use std::thread::sleep;
 use num_complex::Complex;
+use threadpool::ThreadPool;
 use crate::stream::{RXStream, StreamSettings, TXStream};
 use crate::radio::Radio;
 
 
 pub struct Pipeline{
-    /// Tx Stream
-    pub Tx: TXStream,
-
+    /// tx Stream
+    pub tx: TXStream,
     /// Rx buffer array
-    pub Rx_Buffer: Vec<Complex<f32>>,
+    pub rx_buffer: Vec<Complex<f32>>,
 }
 
 impl Pipeline {
     /// Create a new radio workflow
-    pub fn new(frequency:f64, sample_rate:f64) -> Result<Pipeline, Error>
+    pub fn new(frequency:f64, sample_rate:f64) -> Result<Pipeline>
     {
         // Make a new radio instance
-        let mut radio = Radio::new().unwrap();
+        let mut radio = Radio::new()?;
+
+        let pool = ThreadPool::new(10);
 
         // Create Settings
         let mut settings = StreamSettings{
@@ -35,8 +37,8 @@ impl Pipeline {
 
         // Initialize pipeline
         let mut pipe = Pipeline{
-            Tx:TXStream::new(settings.clone())?,
-            Rx_Buffer:Vec::new()
+            tx:TXStream::new(settings.clone())?,
+            rx_buffer:Vec::new()
         };
 
         // Start a thread of rapid sampling
@@ -54,7 +56,7 @@ impl Pipeline {
                 let mut arr = rx.fetch();
 
                 // Spawn processing thread to process rx
-                thread::spawn(move || {
+                pool.execute(move || {
 
                     // TODO: This is where demodulation will happen
 

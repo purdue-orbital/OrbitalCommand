@@ -4,3 +4,4 @@ mod pipeline;
 mod stream;
 mod radio;
 mod dsp;
+mod tools;

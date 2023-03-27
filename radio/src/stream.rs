@@ -1,11 +1,11 @@
-use std::fmt::Error;
+use anyhow::Result;
 use std::ops::DerefMut;
 use std::sync::mpsc::channel;
 use num_complex::Complex;
 use soapysdr::{Args, Direction, RxStream, TxStream};
 use crate::radio::Radio;
 
-/// Settings for configuring a stream
+/// settings for configuring a stream
 #[derive(Clone)]
 pub struct StreamSettings{
     /// The rate the radio will take a sample in hz
@@ -81,20 +81,20 @@ pub struct StreamSettings{
 
 /// This is a stream for fetching radio transmissions and only fetching
 pub struct RXStream {
-    Settings: StreamSettings,
-    Stream: RxStream<Complex<f32>>,
-    Size: usize,
+    settings: StreamSettings,
+    stream: RxStream<Complex<f32>>,
+    size: usize,
 }
 
 /// This is a stream for sending radio transmissions and only sending
 pub struct TXStream {
-    Settings: StreamSettings,
-    Stream: TxStream<Complex<f32>>,
+    settings: StreamSettings,
+    stream: TxStream<Complex<f32>>,
 }
 
 /// This is a stream for fetching radio transmissions and only fetching
 impl RXStream {
-    pub fn new(settings:StreamSettings) -> Result<RXStream,Error>{
+    pub fn new(settings:StreamSettings) -> Result<RXStream> {
 
         // Set radio center frequency
         settings.radio.get_radio().set_frequency(
@@ -127,12 +127,12 @@ impl RXStream {
 
         // Initialize stream
         let mut stream = RXStream {
-            Settings: settings.clone(),
-            Stream: settings.radio.get_radio().rx_stream(&[settings.channel]).unwrap(),
-            Size: (settings.sample_rate * settings.listen_time) as usize,
+            settings: settings.clone(),
+            stream: settings.radio.get_radio().rx_stream(&[settings.channel]).unwrap(),
+            size: (settings.sample_rate * settings.listen_time) as usize,
         };
 
-        stream.Stream.activate(None).unwrap();
+        stream.stream.activate(None).unwrap();
 
         Ok(stream)
     }
@@ -142,10 +142,10 @@ impl RXStream {
 
         // Make array
         let mut arr = Vec::new();
-        arr.resize(self.Size,Complex::new(0.0,0.0));
+        arr.resize(self.size, Complex::new(0.0, 0.0));
 
         // Fill array
-        self.Stream.read(&[arr.as_mut_slice()],0).unwrap();
+        self.stream.read(&[arr.as_mut_slice()], 0).unwrap();
 
         // Return the now full array
         arr.to_vec()
@@ -155,7 +155,7 @@ impl RXStream {
 
 /// This is a stream for sending radio transmissions and only sending
 impl TXStream{
-    pub fn new(settings: StreamSettings) -> Result<TXStream,Error>{
+    pub fn new(settings: StreamSettings) -> Result<TXStream> {
 
         // Set radio center frequency
         settings.radio.get_radio().set_frequency(
@@ -180,11 +180,11 @@ impl TXStream{
         ).unwrap();
 
         let mut stream = TXStream {
-            Settings: settings.clone(),
-            Stream: settings.radio.get_radio().tx_stream(&[settings.channel]).unwrap(),
+            settings: settings.clone(),
+            stream: settings.radio.get_radio().tx_stream(&[settings.channel]).unwrap(),
         };
 
-        stream.Stream.activate(None).unwrap();
+        stream.stream.activate(None).unwrap();
 
         Ok(stream)
 
@@ -193,6 +193,6 @@ impl TXStream{
     /// Transmit modulated radio data.
     /// Passing Vec<Complex<f32>> will have it transmitted through the given stream settings
     pub fn transmit(&mut self, arr : Vec<Complex<f32>>){
-        self.Stream.write_all(&[arr.as_slice()], None, false, 0).unwrap();
+        self.stream.write_all(&[arr.as_slice()], None, false, 0).unwrap();
     }
 }

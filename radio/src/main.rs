@@ -9,7 +9,7 @@ mod radio;
 
 
 fn main() {
-    let mut pipe = Pipeline::new(915e6, 100e3);
+    let _ = Pipeline::new(915e6, 100e3);
 
     thread::sleep(Duration::from_secs(10));
 }
