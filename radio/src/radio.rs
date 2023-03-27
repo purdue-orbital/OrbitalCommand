@@ -2,13 +2,14 @@ use soapysdr::{Device, Error};
 use std::any::type_name;
 
 // Radio Values
-
 #[derive(Clone)]
 pub struct Radio {
-    device: Option<Device>,
+    device: Option<Device>, // Attached radio instance
 }
 
 impl Radio {
+    /// New Radio Instance
+    /// This will attempt to connect to a radio connected to the system
     pub fn new() -> Result<Radio, Error> {
         // Initialize values of a radio
         let mut new_radio = Radio { device: None };
@@ -25,6 +26,8 @@ impl Radio {
         Ok(new_radio)
     }
 
+    /// Get Radio
+    /// This will get an already established radio instance so you don't have to try to reconnect
     pub fn get_radio(&self) -> &Device {
         self.device.as_ref().expect("Get Radio Instance")
     }

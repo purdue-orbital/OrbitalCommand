@@ -58,3 +58,6 @@ pub fn generate_wave(frequency: f64, sample_rate: f64, num_samples: i32) -> Vec<
 
     arr
 }
+
+
+// TODO: This is where the mod/demod functions will go
