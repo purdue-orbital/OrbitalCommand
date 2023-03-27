@@ -121,11 +121,7 @@ impl RadioReader {
 
                 // Average the amplitudes
                 for x in 0..arr.len() - 1 {
-                    to_avg.push(
-                        (arr.get(x as usize).unwrap().re.powf(2.0)
-                            + arr.get(x as usize).unwrap().im.powf(2.0))
-                        .sqrt(),
-                    );
+                    to_avg.push(dsp::amplitude(*arr.get(x).unwrap()));
 
                     if x > avg_length {
                         let mut num = 0.0;
@@ -137,7 +133,7 @@ impl RadioReader {
 
                         avg_over_time.push(num / avg_length as f32);
 
-                        to_avg.remove(0 as usize);
+                        to_avg.remove(0);
                     }
                 }
 
