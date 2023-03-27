@@ -104,7 +104,7 @@ impl RadioReader {
             // Get last set of data
             // TODO: Check that this is actually needed?
             for _ in 0..100 {
-                s2.rx();
+                stream.rx();
             }
 
             let mut arr = stream.rx();
