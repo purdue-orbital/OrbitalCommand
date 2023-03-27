@@ -1,13 +1,13 @@
+use crate::radio::Radio;
 use anyhow::Result;
-use std::ops::DerefMut;
-use std::sync::mpsc::channel;
 use num_complex::Complex;
 use soapysdr::{Args, Direction, RxStream, TxStream};
-use crate::radio::Radio;
+use std::ops::DerefMut;
+use std::sync::mpsc::channel;
 
 /// settings for configuring a stream
 #[derive(Clone)]
-pub struct StreamSettings{
+pub struct StreamSettings {
     /// The rate the radio will take a sample in hz
     pub sample_rate: f64,
 
@@ -78,7 +78,6 @@ pub struct StreamSettings{
     pub listen_time: f64,
 }
 
-
 /// This is a stream for fetching radio transmissions and only fetching
 pub struct RXStream {
     settings: StreamSettings,
@@ -94,41 +93,48 @@ pub struct TXStream {
 
 /// This is a stream for fetching radio transmissions and only fetching
 impl RXStream {
-    pub fn new(settings:StreamSettings) -> Result<RXStream> {
-
+    pub fn new(settings: StreamSettings) -> Result<RXStream> {
         // Set radio center frequency
-        settings.radio.get_radio().set_frequency(
-            Direction::Rx,
-            settings.channel,
-            settings.lo_frequency,
-            Args::new()
-        ).unwrap();
+        settings
+            .radio
+            .get_radio()
+            .set_frequency(
+                Direction::Rx,
+                settings.channel,
+                settings.lo_frequency,
+                Args::new(),
+            )
+            .unwrap();
 
         // Set radio sample rate
-        settings.radio.get_radio().set_sample_rate(
-            Direction::Rx,
-            settings.channel,
-            settings.sample_rate
-        ).unwrap();
+        settings
+            .radio
+            .get_radio()
+            .set_sample_rate(Direction::Rx, settings.channel, settings.sample_rate)
+            .unwrap();
 
         // Set radio bandwidth
-        settings.radio.get_radio().set_bandwidth(
-            Direction::Rx,
-            settings.channel,
-            settings.lpf_filter
-        ).unwrap();
+        settings
+            .radio
+            .get_radio()
+            .set_bandwidth(Direction::Rx, settings.channel, settings.lpf_filter)
+            .unwrap();
 
         // Set gain for stream
-        settings.radio.get_radio().set_gain(
-            Direction::Rx,
-            settings.channel,
-            settings.gain
-        ).unwrap();
+        settings
+            .radio
+            .get_radio()
+            .set_gain(Direction::Rx, settings.channel, settings.gain)
+            .unwrap();
 
         // Initialize stream
         let mut stream = RXStream {
             settings: settings.clone(),
-            stream: settings.radio.get_radio().rx_stream(&[settings.channel]).unwrap(),
+            stream: settings
+                .radio
+                .get_radio()
+                .rx_stream(&[settings.channel])
+                .unwrap(),
             size: (settings.sample_rate * settings.listen_time) as usize,
         };
 
@@ -139,7 +145,6 @@ impl RXStream {
 
     /// Get RX data
     pub fn fetch(&mut self) -> Vec<Complex<f32>> {
-
         // Make array
         let mut arr = Vec::new();
         arr.resize(self.size, Complex::new(0.0, 0.0));
@@ -150,49 +155,56 @@ impl RXStream {
         // Return the now full array
         arr.to_vec()
     }
-
 }
 
 /// This is a stream for sending radio transmissions and only sending
-impl TXStream{
+impl TXStream {
     pub fn new(settings: StreamSettings) -> Result<TXStream> {
-
         // Set radio center frequency
-        settings.radio.get_radio().set_frequency(
-            Direction::Tx,
-            settings.channel,
-            settings.lo_frequency,
-            Args::new()
-        ).unwrap();
+        settings
+            .radio
+            .get_radio()
+            .set_frequency(
+                Direction::Tx,
+                settings.channel,
+                settings.lo_frequency,
+                Args::new(),
+            )
+            .unwrap();
 
         // Set radio sample rate
-        settings.radio.get_radio().set_sample_rate(
-            Direction::Tx,
-            settings.channel,
-            settings.sample_rate
-        ).unwrap();
+        settings
+            .radio
+            .get_radio()
+            .set_sample_rate(Direction::Tx, settings.channel, settings.sample_rate)
+            .unwrap();
 
         // Set gain for stream
-        settings.radio.get_radio().set_gain(
-            Direction::Tx,
-            settings.channel,
-            settings.gain
-        ).unwrap();
+        settings
+            .radio
+            .get_radio()
+            .set_gain(Direction::Tx, settings.channel, settings.gain)
+            .unwrap();
 
         let mut stream = TXStream {
             settings: settings.clone(),
-            stream: settings.radio.get_radio().tx_stream(&[settings.channel]).unwrap(),
+            stream: settings
+                .radio
+                .get_radio()
+                .tx_stream(&[settings.channel])
+                .unwrap(),
         };
 
         stream.stream.activate(None).unwrap();
 
         Ok(stream)
-
     }
 
     /// Transmit modulated radio data.
     /// Passing Vec<Complex<f32>> will have it transmitted through the given stream settings
-    pub fn transmit(&mut self, arr : Vec<Complex<f32>>){
-        self.stream.write_all(&[arr.as_slice()], None, false, 0).unwrap();
+    pub fn transmit(&mut self, arr: Vec<Complex<f32>>) {
+        self.stream
+            .write_all(&[arr.as_slice()], None, false, 0)
+            .unwrap();
     }
 }

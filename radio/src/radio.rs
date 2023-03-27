@@ -1,6 +1,6 @@
-use soapysdr::{Device};
-use std::any::type_name;
 use anyhow::Result;
+use soapysdr::Device;
+use std::any::type_name;
 
 // Radio Values
 #[derive(Clone)]

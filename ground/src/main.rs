@@ -1,4 +1,4 @@
-use actix_web::{App, HttpResponse, HttpServer, post};
+use actix_web::{post, App, HttpResponse, HttpServer};
 use mimalloc::MiMalloc;
 
 #[global_allocator]

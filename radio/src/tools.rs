@@ -6,18 +6,15 @@ use std::collections::VecDeque;
 /// * `arr` - Array Of Values To Calculate sum
 /// * `modifier` - A Number To Multiply Values By Before Being Averaged (Default: 1)
 ///
-pub fn sum(arr:Vec<f32>, modifier: Option<f32>) -> f32
-{
+pub fn sum(arr: Vec<f32>, modifier: Option<f32>) -> f32 {
     let mut total = 0.0;
 
-    for x in arr
-    {
+    for x in arr {
         total += x * modifier.unwrap_or(1.0);
     }
 
     total
 }
-
 
 /// Make an array of averages over time
 ///
@@ -26,18 +23,16 @@ pub fn sum(arr:Vec<f32>, modifier: Option<f32>) -> f32
 /// * `num` - Number Of Values Averaged Together
 /// * `modifier` - A Number To Multiply Values By Before Being Averaged (Default: 1)
 ///
-pub fn average_array(arr : Vec<f32>, num : usize, modifier: Option<f32>) -> Vec<f32>
-{
+pub fn average_array(arr: Vec<f32>, num: usize, modifier: Option<f32>) -> Vec<f32> {
     // Make a buffer to store values to average
-    let mut buffer = VecDeque::from( arr.split_at(num-1).0.to_vec());
+    let mut buffer = VecDeque::from(arr.split_at(num - 1).0.to_vec());
 
     // Store averaged values in this array
-    let mut out:Vec<f32> =  Vec::new();
+    let mut out: Vec<f32> = Vec::new();
     out.push(sum(Vec::from(buffer.clone()), modifier) / (num as f32));
 
     // Average and then append to the output array
-    for x in num..arr.len()
-    {
+    for x in num..arr.len() {
         // Remove first value in array
         buffer = buffer.clone();
         buffer.pop_front();

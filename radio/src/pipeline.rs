@@ -1,14 +1,13 @@
-use core::time;
+use crate::radio::Radio;
+use crate::stream::{RXStream, StreamSettings, TXStream};
 use anyhow::Result;
+use core::time;
+use num_complex::Complex;
 use std::thread;
 use std::thread::sleep;
-use num_complex::Complex;
 use threadpool::ThreadPool;
-use crate::stream::{RXStream, StreamSettings, TXStream};
-use crate::radio::Radio;
 
-
-pub struct Pipeline{
+pub struct Pipeline {
     /// tx Stream
     pub tx: TXStream,
     /// Rx buffer array
@@ -17,16 +16,15 @@ pub struct Pipeline{
 
 impl Pipeline {
     /// Create a new radio workflow
-    pub fn new(frequency:f64, sample_rate:f64) -> Result<Pipeline>
-    {
+    pub fn new(frequency: f64, sample_rate: f64) -> Result<Pipeline> {
         // Make a new radio instance
         let mut radio = Radio::new()?;
 
         let pool = ThreadPool::new(10);
 
         // Create Settings
-        let mut settings = StreamSettings{
-            lo_frequency:frequency,
+        let mut settings = StreamSettings {
+            lo_frequency: frequency,
             lpf_filter: 150e3,
             channel: 0,
             gain: 70.0,
@@ -36,19 +34,18 @@ impl Pipeline {
         };
 
         // Initialize pipeline
-        let mut pipe = Pipeline{
-            tx:TXStream::new(settings.clone())?,
-            rx_buffer:Vec::new()
+        let mut pipe = Pipeline {
+            tx: TXStream::new(settings.clone())?,
+            rx_buffer: Vec::new(),
         };
 
         // Start a thread of rapid sampling
-        thread::spawn( move ||{
-
+        thread::spawn(move || {
             // Start Rx Stream
             let mut rx = RXStream::new(settings.clone()).unwrap();
 
             // Keep looping
-            loop{
+            loop {
                 // Sleep briefly
                 sleep(time::Duration::from_secs_f32(0.002));
 
@@ -59,7 +56,6 @@ impl Pipeline {
                 pool.execute(move || {
 
                     // TODO: This is where demodulation will happen
-
                 });
             }
         });

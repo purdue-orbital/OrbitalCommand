@@ -1,12 +1,10 @@
+use crate::pipeline::Pipeline;
 use std::thread;
 use std::time::Duration;
-use crate::pipeline::Pipeline;
 
 mod pipeline;
-mod stream;
 mod radio;
-
-
+mod stream;
 
 fn main() {
     let _ = Pipeline::new(915e6, 100e3);
