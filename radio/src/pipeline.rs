@@ -1,17 +1,74 @@
 use crate::radio::Radio;
 use crate::stream::{RXStream, StreamSettings, TXStream};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use core::time;
+use std::sync::{Arc, mpsc, Mutex};
+use std::sync::mpsc::TryRecvError;
 use num_complex::Complex;
 use std::thread;
 use std::thread::sleep;
 use threadpool::ThreadPool;
+use crate::dsp;
 
 pub struct Pipeline {
     /// tx Stream
-    pub tx: TXStream,
+    tx: TXStream,
     /// Rx buffer array
-    pub rx_buffer: Vec<Complex<f32>>,
+    rx_buffer: Vec<Complex<f32>>,
+    rx_channel: mpsc::Receiver<Vec<u8>>,
+}
+
+/// Accumulates binary information and outputs it on a channel once it is complete
+struct ByteAccumulator {
+    data_len: usize,
+    accum: Vec<u8>,
+    channel: mpsc::Sender<Vec<u8>>,
+    current_byte: u8,
+    current_byte_idx: u8,
+}
+
+impl ByteAccumulator {
+    fn new(channel: mpsc::Sender<Vec<u8>>) -> Self {
+        Self {
+            data_len: 0,
+            accum: vec![],
+            channel,
+            current_byte: 0,
+            current_byte_idx: 0,
+        }
+    }
+
+    fn accumulate_bit(&mut self, bit: bool) -> Result<()> {
+        // Accumulate against the current bit
+        if self.current_byte_idx == 8 {
+            self.accumulate_byte(self.current_byte)?;
+            self.current_byte_idx = 0;
+            self.current_byte = 0;
+        }
+
+        self.current_byte |= (bit as u8) << self.current_byte_idx;
+        self.current_byte_idx += 1;
+
+        Ok(())
+    }
+
+    fn accumulate_byte(&mut self, byte: u8) -> Result<()> {
+        // If there's no data length configured, configure it now
+        if self.data_len == 0 {
+            self.data_len = (byte >> 1) as usize;
+            return Ok(());
+        }
+
+        self.accum.push(byte);
+
+        if self.accum.len() == self.data_len {
+            self.channel.send(self.accum.clone())?;
+            self.accum.clear();
+            self.data_len = 0;
+        }
+
+        Ok(())
+    }
 }
 
 impl Pipeline {
@@ -19,8 +76,9 @@ impl Pipeline {
     pub fn new(frequency: f64, sample_rate: f64) -> Result<Pipeline> {
         // Make a new radio instance
         let mut radio = Radio::new()?;
+        let (tx, rx) = mpsc::channel();
 
-        let pool = ThreadPool::new(10);
+        let pool = ThreadPool::new(100);
 
         // Create Settings
         let mut settings = StreamSettings {
@@ -30,13 +88,14 @@ impl Pipeline {
             gain: 70.0,
             sample_rate,
             radio,
-            listen_time: 0.02,
+            listen_time: 0.2,
         };
 
         // Initialize pipeline
         let mut pipe = Pipeline {
             tx: TXStream::new(settings.clone())?,
             rx_buffer: Vec::new(),
+            rx_channel: rx,
         };
 
         // Start a thread of rapid sampling
@@ -44,6 +103,7 @@ impl Pipeline {
             // Start Rx Stream
             let mut rx = RXStream::new(settings.clone()).unwrap();
 
+            let accumulator = Arc::new(Mutex::new(ByteAccumulator::new(tx)));
             // Keep looping
             loop {
                 // Sleep briefly
@@ -53,7 +113,16 @@ impl Pipeline {
                 let mut arr = rx.fetch();
 
                 // Spawn processing thread to process rx
+
+                let accumulator = accumulator.clone();
                 pool.execute(move || {
+                    let mut demoded = dsp::Demodulators::fsk(arr, sample_rate, 0.0001);
+                    {
+                        let mut locked = accumulator.lock().unwrap();
+                        for char in demoded.chars() {
+                            locked.accumulate_bit(char == '1').unwrap();
+                        }
+                    }
 
                     // TODO: This is where demodulation will happen
                 });
@@ -63,7 +132,24 @@ impl Pipeline {
         Ok(pipe)
     }
 
-    // TODO: Add a function to retrieve demodulated values
+    pub fn recv(&self) -> Result<Option<Vec<u8>>> {
+        match self.rx_channel.try_recv() {
+            Ok(vec) => Ok(Some(vec)),
+            Err(e) => match e {
+                TryRecvError::Empty => Ok(None),
+                TryRecvError::Disconnected => anyhow!("Channel disconnected!"),
+            }
+        }
+    }
 
     // TODO: Add a function to send binary values
+    pub fn send(&self, bytes: &[u8]) -> Result<()> {
+
+    }
+}
+
+impl Drop for Pipeline {
+    fn drop(&mut self) {
+        todo!()
+    }
 }

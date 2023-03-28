@@ -143,6 +143,10 @@ impl Demodulators {
     /// * `arr` - Array of radio samples to
     /// * `sample_rate` - The rate the __RADIO__ samples at in hz
     /// * `sample_time` - The amount of time, in seconds, a wave samples for per a symbol (IE: 0.02 Seconds sample_time for 6 symbols = 0.12 seconds total)
+    ///
+    /// # Return
+    /// This will return a two string concatenated First half it the received value, the second half are flipped bits
+    ///
     pub fn fsk(arr : Vec<Complex<f32>>, sample_rate: f64, sample_time : f64) -> String {
 
         // counter for loop later
@@ -154,10 +158,15 @@ impl Demodulators {
         // A hold value for demodding later
         let mut previous = 0.0;
 
+        // This value flips with the input values
         let mut one = false;
 
         // String to return once values are demodulated
         let mut out = String::new();
+
+        // This will flip all the bits in case values come in flipped
+        let mut flipped = String::new();
+
 
         // Get the phases in the array
         let mut phases = phase_array(arr);
@@ -175,8 +184,10 @@ impl Demodulators {
             }
             if one {
                 out.push('1');
+                flipped.push('0');
             }else{
                 out.push('0');
+                flipped.push('1');
             }
 
             // Save this value
