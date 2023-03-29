@@ -164,10 +164,6 @@ impl Demodulators {
         // String to return once values are demodulated
         let mut out = String::new();
 
-        // This will flip all the bits in case values come in flipped
-        let mut flipped = String::new();
-
-
         // Get the phases in the array
         let mut phases = phase_array(arr);
 
@@ -176,7 +172,6 @@ impl Demodulators {
 
         // Demod
         while (counter as usize) < modified.len(){
-            println!("{}",modified.clone().get(counter as usize).unwrap());
 
             // if the shift in frequency is large, mark as one, else zero
             if (modified.clone().get(counter as usize).unwrap() - previous).abs() > 0.05 {
@@ -184,10 +179,8 @@ impl Demodulators {
             }
             if one {
                 out.push('1');
-                flipped.push('0');
             }else{
                 out.push('0');
-                flipped.push('1');
             }
 
             // Save this value

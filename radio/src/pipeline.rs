@@ -25,6 +25,7 @@ struct ByteAccumulator {
     channel: mpsc::Sender<Vec<u8>>,
     current_byte: u8,
     current_byte_idx: u8,
+    current_parity_sum: u8,
 }
 
 impl ByteAccumulator {
@@ -35,10 +36,16 @@ impl ByteAccumulator {
             channel,
             current_byte: 0,
             current_byte_idx: 0,
+            current_parity_sum: 0,
         }
     }
 
     fn accumulate_bit(&mut self, bit: bool) -> Result<()> {
+        // Don't start accumulation until a 1
+        if self.data_len == 0 && self.current_byte == 0 && !bit {
+            return Ok(());
+        }
+
         // Accumulate against the current bit
         if self.current_byte_idx == 8 {
             self.accumulate_byte(self.current_byte)?;
@@ -59,9 +66,36 @@ impl ByteAccumulator {
             return Ok(());
         }
 
+        // If there have been 7 bytes pushed, this next byte MUST be a parity check byte
+        if (self.accum.len() + 1) % 8 == 0 {
+            if byte != 0b10101000 | self.current_parity_sum {
+                self.current_parity_sum = 0;
+
+                self.accum.clear();
+                self.data_len = 0;
+                return Ok(());
+            }
+            self.current_parity_sum = 0;
+        } else {
+            let mut ones = 0;
+            for i in 0..8 {
+                if byte >> i & 1 == 1 {
+                    ones += 1;
+                }
+            }
+
+            if ones % 2 == 1 {
+                self.current_parity_sum += 1;
+            }
+        }
+
         self.accum.push(byte);
 
         if self.accum.len() == self.data_len {
+            // Find all indices such that (idx + 1) % 8 == 0 and remove them last to first to clear parity data
+            for i in (7..self.accum.len()).step_by(8).rev() {
+                self.accum.remove(i);
+            }
             self.channel.send(self.accum.clone())?;
             self.accum.clear();
             self.data_len = 0;
@@ -137,14 +171,15 @@ impl Pipeline {
             Ok(vec) => Ok(Some(vec)),
             Err(e) => match e {
                 TryRecvError::Empty => Ok(None),
-                TryRecvError::Disconnected => anyhow!("Channel disconnected!"),
+                TryRecvError::Disconnected => Err(anyhow!("Channel disconnected!")),
             }
         }
     }
 
     // TODO: Add a function to send binary values
     pub fn send(&self, bytes: &[u8]) -> Result<()> {
-
+        // TODO: Inject parity data
+        Ok(())
     }
 }
 

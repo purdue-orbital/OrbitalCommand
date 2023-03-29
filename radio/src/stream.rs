@@ -146,8 +146,7 @@ impl RXStream {
     /// Get RX data
     pub fn fetch(&mut self) -> Vec<Complex<f32>> {
         // Make array
-        let mut arr = Vec::new();
-        arr.resize(self.size, Complex::new(0.0, 0.0));
+        let mut arr = Vec::with_capacity(self.size);
 
         // Fill array
         self.stream.read(&[arr.as_mut_slice()], 0).unwrap();
