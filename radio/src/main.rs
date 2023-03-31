@@ -1,5 +1,4 @@
 use std::thread;
-use std::thread::sleep;
 use std::time::Duration;
 use crate::pipeline::Pipeline;
 
@@ -12,10 +11,14 @@ mod tools;
 
 
 fn main() {
-    
-    let mut pipe = Pipeline::new(915e6, 100e3).unwrap();
+    let mut s = "111000111";
 
+    let mut modded = dsp::Modulators::fsk(s, 100e3, (50.0 / 100e3));
+    let mut demodded = dsp::Demodulators::fsk(modded.clone(), 100e3, (50.0 / 100e3));
 
-    sleep(Duration::from_secs_f32(15.0));
+    println!("{}", demodded);
+
+    dsp::Graph::time_graph("data.png", modded.clone()).unwrap();
+
 
 }
