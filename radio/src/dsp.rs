@@ -12,8 +12,6 @@ pub fn amplitude(val: Complex<f32>) -> f32
 {
     (val.re.powf(2.0) + val.im.powf(2.0)).sqrt()
 }
-
-
 /// Calculate Phase
 ///
 /// # Arguments
@@ -96,6 +94,15 @@ pub fn generate_wave(frequency: f64, sample_rate: f64, num_samples: i32, offset:
     arr
 }
 
+/// Radio filters for digital signal processing
+pub struct Filters{}
+
+impl Filters {
+
+}
+
+
+
 /// Radio modulators for digital signal processing
 pub struct Modulators {}
 
@@ -165,6 +172,10 @@ impl Demodulators {
         // String to return once values are demodulated
         let mut out = String::new();
 
+        // This will flip all the bits in case values come in flipped
+        let mut flipped = String::new();
+
+
         // Get the phases in the array
         let mut phases = phase_array(arr);
 
@@ -173,6 +184,7 @@ impl Demodulators {
 
         // Demod
         while (counter as usize) < modified.len(){
+            println!("{}",modified.clone().get(counter as usize).unwrap());
 
             // if the shift in frequency is large, mark as one, else zero
             if (modified.clone().get(counter as usize).unwrap() - previous).abs() > 0.05 {
@@ -180,8 +192,10 @@ impl Demodulators {
             }
             if one {
                 out.push('1');
+                flipped.push('0');
             }else{
                 out.push('0');
+                flipped.push('1');
             }
 
             // Save this value
