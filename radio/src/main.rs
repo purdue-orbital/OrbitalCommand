@@ -1,13 +1,8 @@
 use std::thread;
 use std::thread::sleep;
 use std::time::Duration;
+use radio::pipeline::Pipeline;
 use crate::pipeline::Pipeline;
-
-mod pipeline;
-mod stream;
-mod radio;
-mod dsp;
-mod tools;
 
 
 

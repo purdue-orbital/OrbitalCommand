@@ -1,4 +1,5 @@
 use num_complex::Complex;
+#[cfg(test)]
 use plotters::prelude::*;
 use crate::tools::subtract_left_adjacent;
 
@@ -198,8 +199,10 @@ impl Demodulators {
 
 
 /// This implementation will make graphs for visually analyzing radio waves
+#[cfg(test)]
 pub struct Graph {}
 
+#[cfg(test)]
 impl Graph {
     /// Graph a signal with respect of time
     pub fn time_graph(file_name: &str, arr: Vec<Complex<f32>>) -> Result<(), Box<dyn std::error::Error>> {

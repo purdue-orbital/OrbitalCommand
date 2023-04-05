@@ -1,11 +1,20 @@
-FROM rustlang/rust:nightly-alpine AS builder
+FROM rustlang/rust:nightly AS builder
 
 ARG TARGET_CRATE=ground
 
-RUN apk update
-RUN apk add soapy-sdr-dev --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+RUN apt-get update
+#RUN apk add soapy-sdr-dev --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+RUN apt-get install -y libsoapysdr-dev build-essential
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    npm
+RUN npm install npm@latest -g && \
+    npm install n -g && \
+    n latest
+RUN apt-get install -y clang
 
-RUN apk add clang npm build-base
+
+#RUN ldd /usr/lib/libSoapySDR.so && sleep 30
 
 ENV RUSTFLAGS=-Ctarget-feature=-crt-static
 
@@ -64,22 +73,25 @@ RUN if [[ -e "package.json" ]] ; then npm run build ; fi
 RUN if [[ -e "package.json" ]] ; then mkdir -p ../../out/dist ; fi
 RUN if [[ -e "package.json" ]] ; then mv dist/* ../../out/dist ; fi
 
-FROM alpine AS runner
-
-EXPOSE 80
-
-ARG APP=/usr/src
-
-RUN apk update
-RUN apk add soapy-sdr-dev --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
-
-RUN apk add clang npm build-base
-
-COPY --from=builder /usr/src/orbital/out/ ${APP}/tmp
-
-WORKDIR ${APP}
-RUN mv tmp/app .
-RUN if [[ -d "tmp/dist" ]] ; then cp -r ./tmp/dist ./dist ; fi
-RUN rm -r tmp
-
+WORKDIR /usr/src/orbital/out
 ENTRYPOINT ["./app"]
+
+#FROM alpine AS runner
+#
+#EXPOSE 80
+#
+#ARG APP=/usr/src
+#
+#RUN apk update
+#RUN apk add soapy-sdr-dev --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+#
+#RUN apk add clang npm build-base
+#
+#COPY --from=builder /usr/src/orbital/out/ ${APP}/tmp
+#
+#WORKDIR ${APP}
+#RUN mv tmp/app .
+#RUN if [[ -d "tmp/dist" ]] ; then cp -r ./tmp/dist ./dist ; fi
+#RUN rm -r tmp
+#
+#ENTRYPOINT ["./app"]
