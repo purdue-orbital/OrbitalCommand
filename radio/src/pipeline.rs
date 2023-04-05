@@ -137,14 +137,14 @@ impl Pipeline {
             Ok(vec) => Ok(Some(vec)),
             Err(e) => match e {
                 TryRecvError::Empty => Ok(None),
-                TryRecvError::Disconnected => anyhow!("Channel disconnected!"),
+                TryRecvError::Disconnected => Err(anyhow!("Channel disconnected!")),
             }
         }
     }
 
     // TODO: Add a function to send binary values
     pub fn send(&self, bytes: &[u8]) -> Result<()> {
-
+        Ok(())
     }
 }
 

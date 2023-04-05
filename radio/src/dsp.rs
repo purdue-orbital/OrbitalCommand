@@ -11,8 +11,6 @@ pub fn amplitude(val: Complex<f32>) -> f32
 {
     (val.re.powf(2.0) + val.im.powf(2.0)).sqrt()
 }
-
-
 /// Calculate Phase
 ///
 /// # Arguments
@@ -94,6 +92,15 @@ pub fn generate_wave(frequency: f64, sample_rate: f64, num_samples: i32, offset:
 
     arr
 }
+
+/// Radio filters for digital signal processing
+pub struct Filters{}
+
+impl Filters {
+
+}
+
+
 
 /// Radio modulators for digital signal processing
 pub struct Modulators {}
