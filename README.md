@@ -1,4 +1,4 @@
-## OrbitalCommand
+# OrbitalCommand
 Purdue Orbital's Avionics and Ground Control Library, now with 100% more Rust!
 
 ### Building
