@@ -1,7 +1,39 @@
+use std::f64::consts::PI;
+use num::pow::Pow;
+use num::traits::real::Real;
 use num_complex::Complex;
 #[cfg(test)]
 use plotters::prelude::*;
-use crate::tools::subtract_left_adjacent;
+use rand::Rng;
+use rand_distr::Normal;
+use crate::tools::{moving_average, normalize, subtract_left_adjacent};
+use rand_distr::Distribution;
+
+
+/// This will add noise to a radio signal for testing
+///
+/// # Arguments
+///
+/// * `signal` - Complex Radio Samples to add simulated noise to
+/// * `snr_db` - Signal to noise ratio. The lower the number, the more noise the signal is. (40 db is a good number to strive for)
+pub(crate) fn gaussian_noise_generator(signal: &[Complex<f32>], snr_db: f32) -> Vec<Complex<f32>> {
+    let snr = 10.0f32.powf(snr_db / 10.0); // calculate signal-to-noise ratio
+    let signal_power = signal.iter().map(|x| x.norm_sqr()).sum::<f32>() / signal.len() as f32;
+    let noise_power = signal_power / snr;
+    let standard_deviation = (noise_power / 2.0).sqrt();
+
+    let mut rng = rand::thread_rng();
+    let mut normal = Normal::new(0.0, standard_deviation).unwrap();
+
+    signal.iter()
+        .map(|&x| {
+            let real = normal.sample(&mut rng);
+            let imag = normal.sample(&mut rng);
+            x + Complex::new(real, imag)
+        })
+        .collect()
+}
+
 
 /// Calculate Amplitude
 ///
@@ -10,7 +42,7 @@ use crate::tools::subtract_left_adjacent;
 /// * `val` - Complex Radio Sample
 pub fn amplitude(val: Complex<f32>) -> f32
 {
-    (val.re.powf(2.0) + val.im.powf(2.0)).sqrt()
+    (val.re.pow(2) as f32 + val.im.pow(2) as f32).sqrt()
 }
 /// Calculate Phase
 ///
@@ -45,7 +77,7 @@ pub fn amplitude_array(val: Vec<Complex<f32>>) -> Vec<f32>
 
 
 /// Turns Complex Values From A Radio Wave Into An Array Of Phases
-/// This will return a Vec<f32> where each value is the amplitude
+/// This will return a Vec<f32> where each value is a phase
 ///
 /// # Arguments
 ///
@@ -102,6 +134,19 @@ impl Filters {
 }
 
 
+/// FSK Settings
+
+/// Wave frequency when binary is 0
+static FSK_FREQUENCY1: f64 = 1e3;
+
+/// Wave frequency when binary is 1
+static FSK_FREQUENCY2: f64 = 10e3;
+
+
+/// ASK Settings
+
+/// Frequency of ask for "1"s
+static ASK_FREQUENCY: f64 = 5e3;
 
 /// Radio modulators for digital signal processing
 pub struct Modulators {}
@@ -109,8 +154,52 @@ pub struct Modulators {}
 /// Radio demodulators for digital signal processing
 pub struct Demodulators {}
 
+
 /// Radio modulators for digital signal processing
 impl Modulators {
+    /// Modulate a radio signal using FSK
+    ///
+    /// # Arguments
+    /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
+    /// * `sample_rate` - The rate the __RADIO__ samples at in hz
+    /// * `baud_rate` - The number of symbols to send per a second (EX: baud_rate 100 = 100 bits a second)
+    pub fn ask(bin: &str, sample_rate: f64, baud_rate : f64) -> Vec<Complex<f32>>
+    {
+        // Calculate the number of samples per a symbol
+        let samples_per_symbol = sample_rate / baud_rate;
+
+        // calculate the total number of samples
+        let num_samples = bin.len() as f64 * samples_per_symbol;
+
+        // initialize vector
+        let mut toReturn = Vec::new();
+
+        // Values stores if the current set of samples will represent aa 1 or a 0
+        let mut bit = 1;
+
+        // Convert binary string to an array of ints
+        const RADIX: u32 = 10;
+        let mut binary = bin.chars().map(|c| c.to_digit(RADIX).unwrap());
+
+        // calculate first part of PHI for faster calculations
+        let phi = 2.0 * PI * ASK_FREQUENCY;
+
+        // Generate wave
+        for x in 0..num_samples as i32{
+
+            // switch the bits at the end of every set of symbols
+            if x % samples_per_symbol as i32 == 0 {
+                bit = binary.next().unwrap() as i32;
+            }
+
+            toReturn.push(Complex::new(bit as f32 * (phi * (x as f64 / sample_rate) as f64).cos() as f32, bit as f32 * (phi * (x as f64 / sample_rate) as f64).sin() as f32));
+
+        }
+
+        toReturn
+    }
+
+    /// # WIP
     /// Modulate a radio signal using FSK
     /// # Arguments
     /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
@@ -132,9 +221,9 @@ impl Modulators {
 
             // For each "1" bit, generate a wave with a higher frequency, else just use base frequency
             if chars.nth(0).unwrap() == '1' {
-                signal.append(&mut generate_wave(3e3, sample_rate, sample_size as i32, x as i32));
+                signal.append(&mut generate_wave(FSK_FREQUENCY2, sample_rate, sample_size as i32, x as i32));
             } else {
-                signal.append(&mut generate_wave(1e3, sample_rate, sample_size as i32,x as i32));
+                signal.append(&mut generate_wave(FSK_FREQUENCY2, sample_rate, sample_size as i32,x as i32));
             }
         }
 
@@ -146,6 +235,47 @@ impl Modulators {
 
 /// Radio demodulators for digital signal processing
 impl Demodulators {
+
+    /// Demodulate a radio signal using ASK
+    ///
+    /// # Arguments
+    /// * `arr` - Array of radio samples to
+    /// * `sample_rate` - The rate the __RADIO__ samples at in hz
+    /// * `baud_rate` - The number of symbols to send per a second (EX: baud_rate 100 = 100 bits a second)
+    pub fn ask(arr : Vec<Complex<f32>>, sample_rate: f64, baud_rate : f64) -> String
+    {
+        let mut out = String::from("");
+
+        // Calculate the number of samples per a symbol
+        let samples_per_symbol = sample_rate / baud_rate;
+
+        // convert the samples to an amplitude representation of the samples
+        let mut amplitudes = amplitude_array(arr.clone());
+
+        // preform moving average
+        let avg = moving_average(amplitudes.clone(), samples_per_symbol as usize);
+
+        // Normalize inputs
+        let normal = normalize(avg.clone());
+
+        // Turn inputs into binary array
+        let test:Vec<i8> = normal.iter().enumerate().filter(|&(i, _)| i as i32  % samples_per_symbol as i32 == 0).map(|(_,&v)| v.round() as i8).collect();
+
+        // Turn binary array into binary string
+        for x in test.clone(){
+            if x == 1{
+                out.push('1');
+            } else{
+                out.push('0');
+            }
+        }
+
+        out
+    }
+
+
+    ///# __WIP__
+    ///
     /// Demodulate a radio signal using FSK
     /// # Arguments
     /// * `arr` - Array of radio samples to
@@ -156,56 +286,35 @@ impl Demodulators {
     /// This will return a two string concatenated First half it the received value, the second half are flipped bits
     ///
     pub fn fsk(arr : Vec<Complex<f32>>, sample_rate: f64, sample_time : f64) -> String {
+        let mut toReturn = String::from("");
 
-        // counter for loop later
-        let mut counter = 0.0;
+        // Calculate the phase difference for FSK for "0"s
+        let phi1 = 2.0 * PI * FSK_FREQUENCY1 * (1.0 / sample_rate);
+        let difference1 = amplitude(Complex::new(0 as f32,0 as f32)) - amplitude(Complex::new(phi1.cos() as f32,phi1.sin() as f32));
 
-        // The number of values to skip by
-        let mut skip = sample_rate * sample_time;
+        // Calculate the phase difference for FSK for "1"s
+        let phi2 = 2.0 * PI * FSK_FREQUENCY2 * (1.0 / sample_rate);
+        let difference2 = amplitude(Complex::new(0 as f32,0 as f32)) - amplitude(Complex::new(phi2.cos() as f32,phi2.sin() as f32));
 
-        // A hold value for demodding later
-        let mut previous = 0.0;
+        let num_skip = sample_rate * sample_time;
 
-        // This value flips with the input values
-        let mut one = false;
+        // Subtract the difference in phase changes
+        let mut phases = subtract_left_adjacent(amplitude_array(arr));
+        let mut it = phases.iter();
 
-        // String to return once values are demodulated
-        let mut out = String::new();
-
-        // This will flip all the bits in case values come in flipped
-        let mut flipped = String::new();
-
-
-        // Get the phases in the array
-        let mut phases = phase_array(arr);
-
-        // Subtract adjacent values
-        let mut modified = subtract_left_adjacent(phases);
-
-        // Demod
-        while (counter as usize) < modified.len(){
-            println!("{}",modified.clone().get(counter as usize).unwrap());
-
-            // if the shift in frequency is large, mark as one, else zero
-            if (modified.clone().get(counter as usize).unwrap() - previous).abs() > 0.05 {
-                one = !one;
-            }
-            if one {
-                out.push('1');
-                flipped.push('0');
-            }else{
-                out.push('0');
-                flipped.push('1');
+        while let Some(x) = it.next()
+        {
+            // If value is closer to being 0 than 1, set 0
+            if (x - difference2).abs() > (x - difference1).abs(){
+                toReturn.push('0');
+            }else {
+                toReturn.push('1');
             }
 
-            // Save this value
-            previous = *modified.clone().get(counter as usize).unwrap();
-
-            // increase counter
-            counter += skip;
+            it.nth((num_skip-1.0) as usize);
         }
 
-        out
+        toReturn
     }
 
     // TODO: BPSK / QPSK Demodulator
