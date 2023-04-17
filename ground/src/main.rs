@@ -1,13 +1,13 @@
 use actix_web::{post, App, HttpResponse, HttpServer};
 use actix_web::web::Data;
 use mimalloc::MiMalloc;
-use radio::pipeline::Pipeline;
+use radio::radio::Radio;
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
 
 struct State {
-    radio: Pipeline
+    radio: Radio
 }
 
 #[post("/launch")]
@@ -27,12 +27,11 @@ async fn cut() -> actix_web::Result<HttpResponse> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let state = Data::new(State {
-        radio: Pipeline::new(915e6, 100e3).unwrap(),
-    });
-
     HttpServer::new(|| {
         App::new()
+            .app_data(Data::new(State {
+                radio: Radio::new().unwrap(),
+            }))
             .service(launch)
             .service(abort)
             .service(cut)
