@@ -74,6 +74,7 @@ RUN if [ -e "package.json" ] ; then mv dist/* ../../out/dist ; fi
 
 WORKDIR /usr/src/orbital/out
 ENTRYPOINT ["./app"]
+#ENTRYPOINT ["sleep", "infinity"]
 
 #FROM alpine AS runner
 #

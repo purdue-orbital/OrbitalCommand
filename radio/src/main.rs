@@ -3,13 +3,17 @@ This code is not intended to be compiled for production use
 
 This code will test all radio components of the radio system to ensure the radio can work
  */
+use std::thread;
+use std::time::Duration;
 use colored::Colorize;
-use crate::radio::Radio; // I like my colors okay
+use crate::radio::Radio;
+use crate::streams::{RadioSettings, Rx, Tx}; // I like my colors okay
 
 
 mod dsp;
 mod tools;
 mod radio;
+mod streams;
 
 /// This function will test if fsk works properly
 ///
@@ -65,13 +69,18 @@ fn test_ask() -> bool{
     let demod_two = dsp::Demodulators::ask(mod_two, sample_rate, baud_rate);
     let demod_three = dsp::Demodulators::ask(noisy, sample_rate, baud_rate);
 
+    println!("{demod_one}");
+    println!("{demod_two}");
+    println!("{demod_three}");
+
     // return if demodulated values match
     String::from(s1) == demod_one && String::from(s2) == demod_two && String::from(s2) == demod_three
 }
 
 /// This function will benchmark ask and print it's noise score (Higher score is better) (100 is the highest)
 ///
-/// For the more technically inclined, to get the SNR value, do 100 - score
+/// For the more technically inclined, to get the lowest SNR value benched and passed
+/// ., do 100 - score
 fn bench_ask(){
     // Modulation settings
     let sample_rate = 100e3;
@@ -137,10 +146,39 @@ fn main() {
 
     // If radio is connected, preform live tests
     if radio.is_connected(){
-        println!("[!] Radio is connected. Running live test... ")
+        println!("[!] Radio is connected. Running live test... ");
+
+        // Radio settings
+        let mut settings = RadioSettings{
+            sample_rate: 100e3,
+            lo_frequency: 915e6,
+            lpf_filter: 0.0,
+            channels_in_use: 0,
+            gain: 50.0,
+            radio,
+            baud_rate: 10000.0,
+            size: 0,
+        };
+
+        let mut rx_stream = Rx::new(settings.clone()).unwrap();
+        let mut tx_stream = Tx::new(settings.clone()).unwrap();
+                                                                //111111111111
+        let mut modded = dsp::Modulators::ask("10101011",settings.sample_rate, settings.baud_rate);
+
+        thread::spawn(move || {
+            let out = rx_stream.fetch(settings.sample_rate as usize * 5 as usize).unwrap();
+
+            let s = dsp::Demodulators::ask(out,settings.sample_rate, settings.baud_rate);
+
+            println!("{s}");
+        });
+
+        tx_stream.send(modded.as_slice()).unwrap();
+
+        thread::sleep(Duration::from_secs(10));
 
     }else {
-        println!("[!] Radio is not connected. Skipping live test... ")
+        println!("[!] Radio is not connected. Skipping live test... ");
     }
 
     println!("[!] Done!")

@@ -18,11 +18,14 @@ impl Radio {
 
         // Set that we are looking for lime devices
         let mut args = soapysdr::Args::new();
+
+        // For some reason this is platform dependent
         args.set("driver", "lime");
 
         // get list of radios
         let err = Device::new(args);
 
+        // if we get the radio properly, set the radio data
         if !err.is_err(){
             // if we find a radio and connect to it
             new_radio.device = Some(err.unwrap());

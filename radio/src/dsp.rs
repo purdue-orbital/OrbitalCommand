@@ -2,12 +2,13 @@ use std::f64::consts::PI;
 use num::pow::Pow;
 use num::traits::real::Real;
 use num_complex::Complex;
-#[cfg(test)]
+//#[cfg(test)]
 use plotters::prelude::*;
 use rand::Rng;
 use rand_distr::Normal;
 use crate::tools::{moving_average, normalize, subtract_left_adjacent};
 use rand_distr::Distribution;
+use crate::dsp;
 
 
 /// This will add noise to a radio signal for testing
@@ -16,7 +17,7 @@ use rand_distr::Distribution;
 ///
 /// * `signal` - Complex Radio Samples to add simulated noise to
 /// * `snr_db` - Signal to noise ratio. The lower the number, the more noise the signal is. (40 db is a good number to strive for)
-pub(crate) fn gaussian_noise_generator(signal: &[Complex<f32>], snr_db: f32) -> Vec<Complex<f32>> {
+pub fn gaussian_noise_generator(signal: &[Complex<f32>], snr_db: f32) -> Vec<Complex<f32>> {
     let snr = 10.0f32.powf(snr_db / 10.0); // calculate signal-to-noise ratio
     let signal_power = signal.iter().map(|x| x.norm_sqr()).sum::<f32>() / signal.len() as f32;
     let noise_power = signal_power / snr;
@@ -146,7 +147,7 @@ static FSK_FREQUENCY2: f64 = 10e3;
 /// ASK Settings
 
 /// Frequency of ask for "1"s
-static ASK_FREQUENCY: f64 = 5e3;
+static ASK_FREQUENCY: f64 = 100.0;
 
 /// Radio modulators for digital signal processing
 pub struct Modulators {}
@@ -172,7 +173,7 @@ impl Modulators {
         let num_samples = bin.len() as f64 * samples_per_symbol;
 
         // initialize vector
-        let mut toReturn = Vec::new();
+        let mut to_return = Vec::new();
 
         // Values stores if the current set of samples will represent aa 1 or a 0
         let mut bit = 1;
@@ -192,11 +193,11 @@ impl Modulators {
                 bit = binary.next().unwrap() as i32;
             }
 
-            toReturn.push(Complex::new(bit as f32 * (phi * (x as f64 / sample_rate) as f64).cos() as f32, bit as f32 * (phi * (x as f64 / sample_rate) as f64).sin() as f32));
+            to_return.push(Complex::new(bit as f32 * (phi * (x as f64 / sample_rate) as f64).cos() as f32, bit as f32 * (phi * (x as f64 / sample_rate) as f64).sin() as f32));
 
         }
 
-        toReturn
+        to_return
     }
 
     /// # WIP
@@ -242,7 +243,7 @@ impl Demodulators {
     /// * `arr` - Array of radio samples to
     /// * `sample_rate` - The rate the __RADIO__ samples at in hz
     /// * `baud_rate` - The number of symbols to send per a second (EX: baud_rate 100 = 100 bits a second)
-    pub fn ask(arr : Vec<Complex<f32>>, sample_rate: f64, baud_rate : f64) -> String
+    pub fn ask(mut arr: Vec<Complex<f32>>, sample_rate: f64, baud_rate : f64) -> String
     {
         let mut out = String::from("");
 
@@ -258,19 +259,35 @@ impl Demodulators {
         // Normalize inputs
         let normal = normalize(avg.clone());
 
-        // Turn inputs into binary array
-        let test:Vec<i8> = normal.iter().enumerate().filter(|&(i, _)| i as i32  % samples_per_symbol as i32 == 0).map(|(_,&v)| v.round() as i8).collect();
+        // this is scratch space for FFTs
+        let mut scratch = Vec::new();
+        scratch.resize(arr.len(), Complex::new(0.0, 0.0));
 
-        // Turn binary array into binary string
-        for x in test.clone(){
-            if x == 1{
-                out.push('1');
-            } else{
-                out.push('0');
+        let mut planner = rustfft::FftPlanner::new();
+
+        let fft = planner.plan_fft_forward(samples_per_symbol as usize);
+        fft.process_with_scratch(arr.as_mut_slice(), scratch.as_mut_slice());
+
+        let mut bit = '0';
+
+        for x in 0..arr.len() {
+            if x as f64 % samples_per_symbol == 0.0{
+                out.push(bit);
+                bit = '0';
+            }
+
+            if arr[x].re >= 5.0 || arr[x].im >= 5.0
+            {
+                bit = '1';
             }
         }
 
-        out
+        out.push(bit);
+
+        let mut chars = out.chars();
+        chars.next();
+
+        String::from(chars.as_str())
     }
 
 
@@ -322,10 +339,10 @@ impl Demodulators {
 
 
 /// This implementation will make graphs for visually analyzing radio waves
-#[cfg(test)]
+//#[cfg(test)]
 pub struct Graph {}
 
-#[cfg(test)]
+//#[cfg(test)]
 impl Graph {
     /// Graph a signal with respect of time
     pub fn time_graph(file_name: &str, arr: Vec<Complex<f32>>) -> Result<(), Box<dyn std::error::Error>> {
@@ -336,13 +353,33 @@ impl Graph {
         // Set Background to White
         root.fill(&WHITE)?;
 
+        let mut complex_min = 0.0;
+        let mut complex_max = 0.0;
+
+        for x in arr.clone(){
+            if x.re > complex_max{
+                complex_max = x.re;
+            }
+            if x.im > complex_max{
+                complex_max = x.im;
+            }
+
+
+            if x.re < complex_min{
+                complex_min = x.re;
+            }
+            if x.im < complex_min{
+                complex_min = x.im;
+            }
+        }
+
         // Set chart values
         let mut chart = ChartBuilder::on(&root)
             .caption("Time Graph", ("sans-serif", 50).into_font())
             .margin(5)
             .x_label_area_size(30)
             .y_label_area_size(30)
-            .build_cartesian_2d(0f32..arr.len() as f32, -1f32..1f32)?;
+            .build_cartesian_2d(0f32..arr.len() as f32, complex_min..complex_max)?;
 
         // Draw graph values
         chart.configure_mesh().draw()?;
