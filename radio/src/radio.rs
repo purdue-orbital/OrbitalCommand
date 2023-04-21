@@ -1,11 +1,13 @@
+use std::any::type_name;
+
 use anyhow::Result;
 use soapysdr::{Args, Device, Error};
-use std::any::type_name;
 
 // Radio Values
 #[derive(Clone)]
 pub struct Radio {
-    device: Option<Device>, // Attached radio instance
+    device: Option<Device>,
+    // Attached radio instance
     is_connected: bool,
 }
 
@@ -26,7 +28,7 @@ impl Radio {
         let err = Device::new(args);
 
         // if we get the radio properly, set the radio data
-        if !err.is_err(){
+        if !err.is_err() {
             // if we find a radio and connect to it
             new_radio.device = Some(err.unwrap());
             new_radio.is_connected = true;
@@ -37,7 +39,7 @@ impl Radio {
 
     /// Return bool value of if the radio is connected to the system
     pub fn is_connected(&self) -> bool {
-        return self.is_connected
+        return self.is_connected;
     }
 
     /// Get Radio

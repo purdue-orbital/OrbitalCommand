@@ -1,7 +1,8 @@
+use anyhow::Result;
 use num_complex::Complex;
 use soapysdr::{Args, Direction, RxStream, TxStream};
+
 use crate::radio::Radio;
-use anyhow::Result;
 
 /// settings for configuring a stream
 #[derive(Clone)]
@@ -81,44 +82,44 @@ pub struct RadioSettings {
 
 
 /// Rx Stream For Radio
-pub struct Rx{
+pub struct Rx {
     Stream: RxStream<Complex<f32>>,
 }
 
 impl Rx {
-   pub fn new(mut settings: RadioSettings) -> Result<Rx, soapysdr::Error>{
-       // Get radio
-       let device = settings.radio.get_radio();
+    pub fn new(mut settings: RadioSettings) -> Result<Rx, soapysdr::Error> {
+        // Get radio
+        let device = settings.radio.get_radio();
 
-       // Set radio sample rate
-       device.set_sample_rate(Direction::Rx, settings.channels_in_use, settings.sample_rate)?;
+        // Set radio sample rate
+        device.set_sample_rate(Direction::Rx, settings.channels_in_use, settings.sample_rate)?;
 
-       // Set gain
-       device.set_gain(Direction::Rx,settings.channels_in_use, settings.gain)?;
+        // Set gain
+        device.set_gain(Direction::Rx, settings.channels_in_use, settings.gain)?;
 
-       // Set carrier frequency
-       device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
+        // Set carrier frequency
+        device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
 
-       // Set hardware low pass filter
-       //device.set_bandwidth(Direction::Rx, settings.channels_in_use,settings.lpf_filter)?;
+        // Set hardware low pass filter
+        //device.set_bandwidth(Direction::Rx, settings.channels_in_use,settings.lpf_filter)?;
 
-       // Get rx stream
-       let mut rx = Rx{
-           Stream: device.rx_stream(&[settings.channels_in_use])?
-       };
+        // Get rx stream
+        let mut rx = Rx {
+            Stream: device.rx_stream(&[settings.channels_in_use])?
+        };
 
-       // Activate RX stream
-       rx.Stream.activate(Default::default())?;
+        // Activate RX stream
+        rx.Stream.activate(Default::default())?;
 
-       settings.size = rx.Stream.mtu()?;
+        settings.size = rx.Stream.mtu()?;
 
-       // Increase counter
-       settings.channels_in_use += 1;
+        // Increase counter
+        settings.channels_in_use += 1;
 
-       Ok(rx)
-   }
+        Ok(rx)
+    }
 
-    pub fn fetch(&mut self, len:usize) -> Result<Vec<Complex<f32>>>{
+    pub fn fetch(&mut self, len: usize) -> Result<Vec<Complex<f32>>> {
         let mut to_return = vec![Complex::new(0.0, 0.0); len];
         // to_return.resize(len,Complex::new(0.0,0.0));
 
@@ -129,12 +130,12 @@ impl Rx {
 }
 
 /// Tx Stream For Radio
-pub struct Tx{
+pub struct Tx {
     Stream: TxStream<Complex<f32>>,
 }
 
 impl Tx {
-    pub fn new(mut settings: RadioSettings) -> Result<Tx, soapysdr::Error>{
+    pub fn new(mut settings: RadioSettings) -> Result<Tx, soapysdr::Error> {
         // Get radio
         let device = settings.radio.get_radio();
 
@@ -142,7 +143,7 @@ impl Tx {
         device.set_sample_rate(Direction::Tx, settings.channels_in_use, settings.sample_rate)?;
 
         // Set gain
-        device.set_gain(Direction::Tx,settings.channels_in_use, settings.gain)?;
+        device.set_gain(Direction::Tx, settings.channels_in_use, settings.gain)?;
 
         // Set carrier frequency
         device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
@@ -151,7 +152,7 @@ impl Tx {
         //device.set_bandwidth(Direction::Tx, settings.channels_in_use,settings.lpf_filter)?;
 
         // Get rx stream
-        let mut tx = Tx{
+        let mut tx = Tx {
             Stream: device.tx_stream(&[settings.channels_in_use])?
         };
 
@@ -166,9 +167,8 @@ impl Tx {
         Ok(tx)
     }
 
-    pub fn send(&mut self, arr: &[Complex<f32>]) -> Result<()>{
-
-        self.Stream.write_all(&[arr],Default::default(), true, 100000000_i64)?;
+    pub fn send(&mut self, arr: &[Complex<f32>]) -> Result<()> {
+        self.Stream.write_all(&[arr], Default::default(), true, 100000000_i64)?;
 
         Ok(())
     }

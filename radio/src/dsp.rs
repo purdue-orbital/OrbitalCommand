@@ -1,15 +1,16 @@
 use std::f64::consts::PI;
+
 use num::pow::Pow;
 use num::traits::real::Real;
 use num_complex::Complex;
 //#[cfg(test)]
 use plotters::prelude::*;
 use rand::Rng;
-use rand_distr::Normal;
-use crate::tools::{moving_average, normalize, subtract_left_adjacent};
 use rand_distr::Distribution;
-use crate::dsp;
+use rand_distr::Normal;
 
+use crate::dsp;
+use crate::tools::{moving_average, normalize, subtract_left_adjacent};
 
 /// This will add noise to a radio signal for testing
 ///
@@ -45,6 +46,7 @@ pub fn amplitude(val: Complex<f32>) -> f32
 {
     (val.re.pow(2) as f32 + val.im.pow(2) as f32).sqrt()
 }
+
 /// Calculate Phase
 ///
 /// # Arguments
@@ -96,7 +98,6 @@ pub fn phase_array(val: Vec<Complex<f32>>) -> Vec<f32>
 }
 
 
-
 /// Generate Complex Radio Wave
 ///
 /// # Arguments
@@ -128,11 +129,9 @@ pub fn generate_wave(frequency: f64, sample_rate: f64, num_samples: i32, offset:
 }
 
 /// Radio filters for digital signal processing
-pub struct Filters{}
+pub struct Filters {}
 
-impl Filters {
-
-}
+impl Filters {}
 
 
 /// FSK Settings
@@ -164,7 +163,7 @@ impl Modulators {
     /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
     /// * `sample_rate` - The rate the __RADIO__ samples at in hz
     /// * `baud_rate` - The number of symbols to send per a second (EX: baud_rate 100 = 100 bits a second)
-    pub fn ask(bin: &str, sample_rate: f64, baud_rate : f64) -> Vec<Complex<f32>>
+    pub fn ask(bin: &str, sample_rate: f64, baud_rate: f64) -> Vec<Complex<f32>>
     {
         // Calculate the number of samples per a symbol
         let samples_per_symbol = sample_rate / baud_rate;
@@ -186,7 +185,7 @@ impl Modulators {
         let phi = 2.0 * PI * ASK_FREQUENCY;
 
         // Generate wave
-        for x in 0..num_samples as i32{
+        for x in 0..num_samples as i32 {
 
             // switch the bits at the end of every set of symbols
             if x % samples_per_symbol as i32 == 0 {
@@ -194,7 +193,6 @@ impl Modulators {
             }
 
             to_return.push(Complex::new(bit as f32 * (phi * (x as f64 / sample_rate) as f64).cos() as f32, bit as f32 * (phi * (x as f64 / sample_rate) as f64).sin() as f32));
-
         }
 
         to_return
@@ -206,7 +204,7 @@ impl Modulators {
     /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
     /// * `sample_rate` - The rate the __RADIO__ samples at in hz
     /// * `sample_time` - The amount of time, in seconds, a wave samples for per a symbol (IE: 0.02 Seconds sample_time for 6 symbols = 0.12 seconds total)
-    pub fn fsk(bin: &str, sample_rate: f64, sample_time : f64) -> Vec<Complex<f32>> {
+    pub fn fsk(bin: &str, sample_rate: f64, sample_time: f64) -> Vec<Complex<f32>> {
 
         // Make the array that will get returned with the modulated signal
         let mut signal = Vec::new();
@@ -221,10 +219,10 @@ impl Modulators {
         for x in 0..bin.len() {
 
             // For each "1" bit, generate a wave with a higher frequency, else just use base frequency
-            if chars.nth(0).unwrap() == '1' {
+            if chars.next().unwrap() == '1' {
                 signal.append(&mut generate_wave(FSK_FREQUENCY2, sample_rate, sample_size as i32, x as i32));
             } else {
-                signal.append(&mut generate_wave(FSK_FREQUENCY2, sample_rate, sample_size as i32,x as i32));
+                signal.append(&mut generate_wave(FSK_FREQUENCY1, sample_rate, sample_size as i32, x as i32));
             }
         }
 
@@ -236,14 +234,13 @@ impl Modulators {
 
 /// Radio demodulators for digital signal processing
 impl Demodulators {
-
     /// Demodulate a radio signal using ASK
     ///
     /// # Arguments
     /// * `arr` - Array of radio samples to
     /// * `sample_rate` - The rate the __RADIO__ samples at in hz
     /// * `baud_rate` - The number of symbols to send per a second (EX: baud_rate 100 = 100 bits a second)
-    pub fn ask(mut arr: Vec<Complex<f32>>, sample_rate: f64, baud_rate : f64) -> String
+    pub fn ask(mut arr: Vec<Complex<f32>>, sample_rate: f64, baud_rate: f64) -> String
     {
         let mut out = String::from("");
 
@@ -271,12 +268,12 @@ impl Demodulators {
         let mut bit = '0';
 
         for x in 0..arr.len() {
-            if x as f64 % samples_per_symbol == 0.0{
+            if x as f64 % samples_per_symbol == 0.0 {
                 out.push(bit);
                 bit = '0';
             }
 
-            if arr[x].re >= 5.0 || arr[x].im >= 5.0
+            if arr[x].re >= (samples_per_symbol / 2.0) as f32 || arr[x].im >= (samples_per_symbol / 2.0) as f32
             {
                 bit = '1';
             }
@@ -302,16 +299,16 @@ impl Demodulators {
     /// # Return
     /// This will return a two string concatenated First half it the received value, the second half are flipped bits
     ///
-    pub fn fsk(arr : Vec<Complex<f32>>, sample_rate: f64, sample_time : f64) -> String {
+    pub fn fsk(arr: Vec<Complex<f32>>, sample_rate: f64, sample_time: f64) -> String {
         let mut toReturn = String::from("");
 
         // Calculate the phase difference for FSK for "0"s
         let phi1 = 2.0 * PI * FSK_FREQUENCY1 * (1.0 / sample_rate);
-        let difference1 = amplitude(Complex::new(0 as f32,0 as f32)) - amplitude(Complex::new(phi1.cos() as f32,phi1.sin() as f32));
+        let difference1 = amplitude(Complex::new(0 as f32, 0 as f32)) - amplitude(Complex::new(phi1.cos() as f32, phi1.sin() as f32));
 
         // Calculate the phase difference for FSK for "1"s
         let phi2 = 2.0 * PI * FSK_FREQUENCY2 * (1.0 / sample_rate);
-        let difference2 = amplitude(Complex::new(0 as f32,0 as f32)) - amplitude(Complex::new(phi2.cos() as f32,phi2.sin() as f32));
+        let difference2 = amplitude(Complex::new(0 as f32, 0 as f32)) - amplitude(Complex::new(phi2.cos() as f32, phi2.sin() as f32));
 
         let num_skip = sample_rate * sample_time;
 
@@ -322,13 +319,13 @@ impl Demodulators {
         while let Some(x) = it.next()
         {
             // If value is closer to being 0 than 1, set 0
-            if (x - difference2).abs() > (x - difference1).abs(){
+            if (x - difference2).abs() > (x - difference1).abs() {
                 toReturn.push('0');
-            }else {
+            } else {
                 toReturn.push('1');
             }
 
-            it.nth((num_skip-1.0) as usize);
+            it.nth((num_skip - 1.0) as usize);
         }
 
         toReturn
@@ -356,19 +353,19 @@ impl Graph {
         let mut complex_min = 0.0;
         let mut complex_max = 0.0;
 
-        for x in arr.clone(){
-            if x.re > complex_max{
+        for x in arr.clone() {
+            if x.re > complex_max {
                 complex_max = x.re;
             }
-            if x.im > complex_max{
+            if x.im > complex_max {
                 complex_max = x.im;
             }
 
 
-            if x.re < complex_min{
+            if x.re < complex_min {
                 complex_min = x.re;
             }
-            if x.im < complex_min{
+            if x.im < complex_min {
                 complex_min = x.im;
             }
         }

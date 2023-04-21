@@ -24,3 +24,15 @@ docker run --privileged launch:latest
 ```shell
 docker run --privileged radio:latest
 ```
+
+## Benchmarks
+
+All benchmarks are run on a raspberry pi 4B
+
+### Radio
+
+#### ASK
+```
+Mod 2048 Bytes:  [8.6000 ms, 8.6052 ms, 8.6120 ms]
+Demod 2048 Bytes:  [8.6120 ms, 8.6270 ms, 8.6432 ms]
+```
