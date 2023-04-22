@@ -27,12 +27,12 @@ docker run --privileged radio:latest
 
 ## Benchmarks
 
-All benchmarks are run on a raspberry pi 4B
+All benchmarks are run on a raspberry pi 4B running raspbian.
 
 ### Radio
 
 #### ASK
 ```
-Mod 2048 Bytes:  [8.6000 ms, 8.6052 ms, 8.6120 ms]
-Demod 2048 Bytes:  [8.6120 ms, 8.6270 ms, 8.6432 ms]
+Mod 2048 Bytes:  [18.673 ms, 18.696 ms, 18.728 ms]
+Demod 2048 Bytes:  [18.651 ms, 18.673 ms, 18.701 ms]
 ```

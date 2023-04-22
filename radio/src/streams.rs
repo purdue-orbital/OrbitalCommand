@@ -74,7 +74,7 @@ pub struct RadioSettings {
     pub radio: Radio,
 
     /// Amount of bits per a second the radio will read
-    pub baud_rate: f64,
+    pub baud_rate: f32,
 
     /// Optimized and preferred sample size
     pub size: usize,

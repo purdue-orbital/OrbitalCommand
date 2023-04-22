@@ -1,3 +1,4 @@
+use std::thread::spawn;
 use anyhow::{Error, Result};
 use num_complex::Complex;
 
@@ -40,6 +41,7 @@ pub struct RadioStream {
     rx_stream: Rx,
     settings: RadioSettings,
 }
+
 
 impl RadioStream {
     /// This will create text into frame for transmission
@@ -90,43 +92,60 @@ impl RadioStream {
     pub fn transmit(&mut self, bin: &str) -> Result<()> {
 
         // Modulate
-        let signal = Modulators::ask(bin, self.settings.sample_rate, self.settings.baud_rate);
+        let signal = Modulators::ask(bin, self.settings.sample_rate as f32, self.settings.baud_rate);
 
         // Send
-        self.tx_stream.send(signal.as_slice())?;
+        self.tx_stream.send(signal.as_slice()).unwrap();
+
 
         Ok(())
     }
 
     /// This process samples read and return any data received
-    pub fn read(&mut self, bin: &str) -> Result<()> {
+    pub fn read(&mut self) -> Result<String> {
 
-        // Modulate
-        let signal = Modulators::ask(bin, self.settings.sample_rate, self.settings.baud_rate);
+        // Read
+        let signal = self.rx_stream.fetch((self.settings.sample_rate * 5.0) as usize)?;
 
-        // Send
-        self.tx_stream.send(signal.as_slice())?;
+        // Demodulate signal
+        let s = dsp::Demodulators::ask(signal, self.settings.sample_rate as f32, self.settings.baud_rate);
 
-        Ok(())
+        Ok(s)
     }
 }
 
 //--------------------------------------------------------------------------------------------------
 
 
-/// This exposes functions for benchmarking and testing
+/// This exposes functions for benchmarking
 #[cfg(feature = "bench")]
 pub struct Benchy {}
 
 
 #[cfg(feature = "bench")]
 impl Benchy {
-    pub fn mod_ask<'a>(bin: &str, sample_rate: f64, baud_rate: f64) -> Vec<Complex<f32>>
+    pub fn mod_ask(bin: &str, sample_rate: f32, baud_rate: f32) -> Vec<Complex<f32>>
     {
         Modulators::ask(bin, sample_rate, baud_rate)
     }
 
-    pub fn demod_ask(arr: Vec<Complex<f32>>, sample_rate: f64, baud_rate: f64) -> String
+    pub fn demod_ask(arr: Vec<Complex<f32>>, sample_rate: f32, baud_rate: f32) -> String
+    {
+        Demodulators::ask(arr, sample_rate, baud_rate)
+    }
+}
+
+
+/// This exposes functions for testing
+pub struct Testy {}
+
+impl Testy {
+    pub fn mod_ask(bin: &str, sample_rate: f32, baud_rate: f32) -> Vec<Complex<f32>>
+    {
+        Modulators::ask(bin, sample_rate, baud_rate)
+    }
+
+    pub fn demod_ask(arr: Vec<Complex<f32>>, sample_rate: f32, baud_rate: f32) -> String
     {
         Demodulators::ask(arr, sample_rate, baud_rate)
     }
