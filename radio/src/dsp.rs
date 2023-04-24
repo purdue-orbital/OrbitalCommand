@@ -1,4 +1,5 @@
 use std::f32::consts::PI;
+use std::thread::spawn;
 
 use num::pow::Pow;
 use num_complex::Complex;
@@ -157,9 +158,9 @@ impl Modulators {
         // Generate wave
         for x in bin.chars() {
             if x == '1' {
-                to_return.append(&mut one_signal.clone());
+                    to_return.append(one_signal.clone().as_mut())
             } else {
-                to_return.append(&mut zero_signal.clone());
+                    to_return.append(zero_signal.clone().as_mut())
             }
         }
 
@@ -196,7 +197,7 @@ impl Demodulators {
         let mut bit = '0';
 
         // Make Thread pool
-        //let pool: Vec<Thread> = Vec::new();
+        //let pool = Vec::new();
 
         for x in 0..arr.len() {
             if x as f32 % samples_per_symbol == 0.0 {
