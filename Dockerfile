@@ -45,7 +45,8 @@ RUN if [ -e "package.json" ] ; then npm install ; fi
 # Copy and build internal libraries
 WORKDIR /usr/src/orbital
 COPY radio ./radio
-RUN printf "[workspace]\nmembers=[\"radio\",\"$TARGET_CRATE\"]" > ./Cargo.toml
+COPY common ./common
+RUN printf "[workspace]\nmembers=[\"radio\",\"common\",\"$TARGET_CRATE\"]" > ./Cargo.toml
 
 WORKDIR ./$TARGET_CRATE
 COPY $TARGET_CRATE/Cargo.toml ./Cargo.toml

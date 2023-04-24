@@ -62,7 +62,14 @@
         stateUnsub();
         telemetryUnsub();
     });
+
+    const beforeUnloadListener = (event) => {
+	  event.preventDefault();
+	  return (event.returnValue = "");
+	};
 </script>
+
+<svelte:window on:beforeunload={beforeUnloadListener}/>
 
 <main>
     <div class="header">

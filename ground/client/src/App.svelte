@@ -1,7 +1,7 @@
 <script>
     import Content from './Content.svelte';
     import Modal from 'svelte-simple-modal';
-    import {modal} from './stores/ModalStore'
+    import {modal} from './stores/ModalStore';
 </script>
 
 <svelte:head>

@@ -2,5 +2,6 @@
 members = [
     "radio",
     "ground",
-    "launch"
+    "launch",
+    "common",
 ]
