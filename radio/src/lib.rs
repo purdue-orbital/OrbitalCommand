@@ -63,7 +63,7 @@ impl Frame {
     pub fn new(bytes: &[u8]) -> Frame {
 
         // Ensure transmission size
-        assert!(bytes.len() <= TRANSMISSION_SIZE);
+        //assert!(bytes.len() <= TRANSMISSION_SIZE);
 
         Frame { data: Vec::from(bytes) }
     }
