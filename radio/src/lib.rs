@@ -169,14 +169,21 @@ impl RadioStream {
     /// This will transmit binary data to the radio
     pub fn transmit(&mut self, data: &[u8]) -> Result<()> {
 
-        // Turn data into a frame
-        let frame = Frame::new(data);
+        // Break bytes into multiple frames if needed
+        let arr = data.chunks(TRANSMISSION_SIZE - 1);
 
-        // Modulate
-        let signal = Modulators::ask(frame.assemble().as_str(), self.settings.sample_rate as f32, self.settings.baud_rate);
+        // Go through each chunk and transmit
+        for x in arr{
 
-        // Send
-        self.tx_stream.send(signal.as_slice()).unwrap();
+            // bytes into frames
+            let frame = Frame::new(x);
+
+            // Modulate
+            let signal = Modulators::ask(frame.assemble().as_str(), self.settings.sample_rate as f32, self.settings.baud_rate);
+
+            // Send
+            self.tx_stream.send(signal.as_slice()).unwrap();
+        }
 
         Ok(())
     }

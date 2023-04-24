@@ -53,11 +53,12 @@ fn main() {
 
     });
 
-    // allocate space for reading user input
-    let mut line = String::new();
 
     // Start chat app
     loop {
+        // allocate space for reading user input
+        let mut line = String::new();
+
         // Take in user input
         std::io::stdin().read_line(&mut line).unwrap();
 
