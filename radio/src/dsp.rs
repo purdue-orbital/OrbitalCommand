@@ -1,5 +1,4 @@
 use std::f32::consts::PI;
-use std::thread::spawn;
 
 use num::pow::Pow;
 use num_complex::Complex;
@@ -104,7 +103,7 @@ pub fn phase_array(val: Vec<Complex<f32>>) -> Vec<f32>
 ///
 /// * `offset` - The Number Of Samples To Skip (IE: You already made 600 samples and want the next 100)
 pub fn generate_wave(frequency: f32, sample_rate: f32, num_samples: i32, offset: i32, amplitude: f32) -> Vec<Complex<f32>> {
-    let mut arr: Vec<Complex<f32>> = Vec::new();
+    let mut arr: Vec<Complex<f32>> = Vec::with_capacity(num_samples as usize);
 
     // base
     let phi = 2.0 * PI * frequency * (1.0 / sample_rate);
@@ -150,18 +149,16 @@ impl Modulators {
         let samples_per_symbol = (sample_rate / baud_rate) as usize;
 
         // initialize vector
-        let mut to_return = Vec::new();
+        let mut to_return = Vec::with_capacity(bin.len() * samples_per_symbol);
 
         let one_signal = generate_wave(ASK_FREQUENCY, sample_rate, samples_per_symbol as i32, 0, 1.0);
         let zero_signal = generate_wave(0.0, sample_rate, samples_per_symbol as i32, 0, 0.0);
 
         // Generate wave
         for x in bin.chars() {
-            if x == '1' {
-                    to_return.append(one_signal.clone().as_mut())
-            } else {
-                    to_return.append(zero_signal.clone().as_mut())
-            }
+
+            to_return.append((if x == '1' {one_signal.clone()} else {zero_signal.clone()}).as_mut());
+
         }
 
         to_return
@@ -180,43 +177,30 @@ impl Demodulators {
     /// * `baud_rate` - The number of symbols to send per a second (EX: baud_rate 100 = 100 bits a second)
     pub fn ask(mut arr: Vec<Complex<f32>>, sample_rate: f32, baud_rate: f32) -> String
     {
-        let mut out = String::from("");
-
         // Calculate the number of samples per a symbol
         let samples_per_symbol = sample_rate / baud_rate;
 
-        // this is scratch space for FFTs
-        let mut scratch = Vec::new();
-        scratch.resize(arr.len(), Complex::new(0.0, 0.0));
+        let symbol_threshold = samples_per_symbol / 2.0;
 
+        // calculate the index to look at
+        let fft_index = (ASK_FREQUENCY / (sample_rate / samples_per_symbol)).round() as usize;
+
+        // this is scratch space for FFTs
+        let mut scratch = vec![Complex::new(0.0, 0.0); arr.len()];
         let mut planner = rustfft::FftPlanner::new();
 
         let fft = planner.plan_fft_forward(samples_per_symbol as usize);
         fft.process_with_scratch(arr.as_mut_slice(), scratch.as_mut_slice());
 
-        let mut bit = '0';
+        let mut out = String::with_capacity(arr.len() / samples_per_symbol as usize);
 
-        // Make Thread pool
-        //let pool = Vec::new();
+        for x in (fft_index..arr.len()).step_by(samples_per_symbol as usize) {
 
-        for x in 0..arr.len() {
-            if x as f32 % samples_per_symbol == 0.0 {
-                out.push(bit);
-                bit = '0';
-            }
+            out.push(if arr[x].re.abs() >= symbol_threshold {'1'} else {'0'});
 
-            if arr[x].re >= (samples_per_symbol / 2.0) || arr[x].im >= (samples_per_symbol / 2.0)
-            {
-                bit = '1';
-            }
         }
 
-        out.push(bit);
-
-        let mut chars = out.chars();
-        chars.next();
-
-        String::from(chars.as_str())
+        out
     }
 
     // TODO: BPSK / QPSK Demodulator
