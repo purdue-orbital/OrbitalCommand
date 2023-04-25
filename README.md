@@ -34,8 +34,8 @@ cargo bench --features bench --manifest-path=radio/Cargo.toml
 
 #### ASK
 ```
-Mod 2048 Bytes:  [3.8963 ms, 3.9077 ms, 3.9232 ms]
-Demod 2048 Bytes:  [3.9079 ms, 3.9167 ms, 3.9305 ms]
+Mod 2048 Bytes:  [3.7731 ms, 3.7809 ms, 3.7924 ms]
+Demod 2048 Bytes:  [3.6864 ms, 3.6943 ms, 3.7079 ms]
 ```
 
 ## Testing
