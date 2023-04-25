@@ -4,7 +4,7 @@ Purdue Orbital's Avionics and Ground Control Library, now with 100% more Rust!
 ### Building
 Build the code:
 ```shell
-./build.sh <ground|launch|radio> [load]
+./build.sh <ground|launch> [load]
 ```
 
 First argument determines which station to build, second optional argument determines whether to load into Docker. 
@@ -26,8 +26,28 @@ All benchmarks are run on a Raspberry PI 4B running Raspbian.
 
 ### Radio
 
+To preform benchmarks for the radio, run this command
+
+```shell
+cargo bench --features bench --manifest-path=radio/Cargo.toml
+```
+
 #### ASK
 ```
-Mod 2048 Bytes:  [3.9191 ms, 3.9346 ms, 3.9571 ms]
-Demod 2048 Bytes:  [3.9783 ms, 3.9877 ms, 4.0022 ms]
+Mod 2048 Bytes:  [3.8963 ms, 3.9077 ms, 3.9232 ms]
+Demod 2048 Bytes:  [3.9079 ms, 3.9167 ms, 3.9305 ms]
 ```
+
+## Testing
+
+This section is for developers who wish to help contribute to this code! 
+___ALL___ code needs to be tested before being committed.
+
+### Radio
+
+To test all radio components work properly, run the code seen below.
+
+```shell
+cargo test --manifest-path=radio/Cargo.toml
+```
+
