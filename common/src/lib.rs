@@ -12,6 +12,7 @@ pub enum Message {
     Abort,
     Launch,
     Cut,
+    Update,
     Telemetry {
         temperature: f64,
         gps: Vec3,

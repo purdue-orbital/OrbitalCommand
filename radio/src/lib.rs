@@ -127,10 +127,10 @@ impl RadioStream {
         // Radio settings
         let set = RadioSettings {
             sample_rate: 100e3,
-            lo_frequency: 915e6,
+            lo_frequency: 430e6,
             lpf_filter: 0.0,
             channels_in_use: 0,
-            gain: 50.0,
+            gain: 1000.0,
             radio,
             baud_rate: 1e4,
             size: 0,
