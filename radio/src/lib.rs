@@ -130,7 +130,7 @@ impl RadioStream {
             lo_frequency: 430e6,
             lpf_filter: 0.0,
             channels_in_use: 0,
-            gain: 1000.0,
+            gain: 1e3,
             radio,
             baud_rate: 1e4,
             size: 0,
@@ -157,7 +157,7 @@ impl RadioStream {
                 let demod = Demodulators::ask(signal, set.clone().sample_rate as f32, set.clone().baud_rate);
 
                 let mut data = buffer.lock().unwrap();
-                *data = format!("{}{demod}", *data);
+                *data = format!("{}{}", *data, demod);
             }
 
         });
