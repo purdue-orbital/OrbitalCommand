@@ -9,6 +9,67 @@ use rustfft::{Fft, FftPlanner};
 use rustfft::num_traits::Pow;
 use crate::tools::i32_to_bin;
 
+
+/// Radio filters for digital signal processing
+pub struct Filters {}
+
+impl Filters {}
+
+///-------------------------------------------------------------------------------------------------
+/// Mod Settings
+///-------------------------------------------------------------------------------------------------
+
+static BUFFER_SIZE:f32 = 2048e4; // Pre allocated buffer size of values to return (For performance)
+
+///-------------------------------------------------------------------------------------------------
+/// Demod Settings
+///-------------------------------------------------------------------------------------------------
+
+static MAX_SYMBOLS:f32 = 2048e4; // Maximum numbers of samples that could be demodulated at once (For performance)
+
+///-------------------------------------------------------------------------------------------------
+/// FSK Settings
+///-------------------------------------------------------------------------------------------------
+
+static FSK_FREQUENCY1: f32 = 1e3;
+
+static FSK_FREQUENCY2: f32 = 1e6;
+
+///-------------------------------------------------------------------------------------------------
+/// MFSK Settings
+///-------------------------------------------------------------------------------------------------
+
+///
+/// You need to ensure that:
+/// MFSK_BANDWIDTH == BAUD_RATE * (2^MFSK_BITS_ENCODED)
+///
+/// and
+///
+/// MFSK_BANDWIDTH <= SAMPLE_RATE
+///
+/// This has to do with a limitation with rustfft and most likely the FFT algorithm as a whole
+///
+
+// the bandwidth in hz of MFSK
+static MFSK_BANDWIDTH: f32 = 2.56e6;
+
+// the number of bits represented by a symbol
+static MFSK_BITS_ENCODED: i32 = 8;
+
+// the number of samples that FFT will return per an evaluation (Higher this value is, more computation time but higher accuracy)
+static MFSK_FFT_SIZE: usize = 1024;
+
+///-------------------------------------------------------------------------------------------------
+/// ASK Settings
+///-------------------------------------------------------------------------------------------------
+
+/// Frequency of ask for "1"s
+static ASK_FREQUENCY: f32 = 100.0;
+
+
+
+
+
 /// This will add noise to a radio signal for testing
 ///
 /// # Arguments
@@ -122,50 +183,6 @@ pub fn generate_wave(frequency: f32, sample_rate: f32, num_samples: i32, offset:
     arr
 }
 
-/// Radio filters for digital signal processing
-pub struct Filters {}
-
-impl Filters {}
-
-///-------------------------------------------------------------------------------------------------
-/// FSK Settings
-///-------------------------------------------------------------------------------------------------
-
-static FSK_FREQUENCY1: f32 = 1e3;
-
-static FSK_FREQUENCY2: f32 = 1e6;
-
-///-------------------------------------------------------------------------------------------------
-/// MFSK Settings
-///-------------------------------------------------------------------------------------------------
-
-///
-/// You need to ensure that:
-/// (MFSK_BANDWIDTH / (BAUD_RATE * (2^MFSK_BITS_ENCODED))) == 1
-///
-/// and
-///
-/// MFSK_BANDWIDTH <= SAMPLE_RATE
-///
-/// This has to do with a limitation with rustfft and most likely the FFT algorithm as a whole
-///
-
-// the bandwidth in hz of MFSK
-static MFSK_BANDWIDTH: f32 = 256e4;
-
-// the number of bits represented by a symbol
-static MFSK_BITS_ENCODED: i32 = 8;
-
-// the number of samples that FFT will return per an evaluation (Higher this value is, more computation time but higher accuracy)
-static MFSK_FFT_SIZE: usize = 1024;
-
-///-------------------------------------------------------------------------------------------------
-/// ASK Settings
-///-------------------------------------------------------------------------------------------------
-
-/// Frequency of ask for "1"s
-static ASK_FREQUENCY: f32 = 100.0;
-
 /// Radio modulators for digital signal processing
 #[derive(Clone)]
 pub struct Modulators {
@@ -206,6 +223,9 @@ pub struct Demodulators {
 
     // pre-planned fft operation
     fft: Arc<dyn Fft<f32>>,
+
+    // Pre allocated space for FFTs
+    scratch: Vec<Complex<f32>>,
 }
 
 
@@ -377,7 +397,7 @@ impl Demodulators {
         }
 
 
-        Demodulators{ samples_per_symbol, sample_rate, symbol_threshold, fsk_fft_index, ask_fft_index, mfsk_fft_index_map, fft}
+        Demodulators{ samples_per_symbol, sample_rate, symbol_threshold, fsk_fft_index, ask_fft_index, mfsk_fft_index_map, fft, scratch: vec![Complex::new(0.0, 0.0); MAX_SYMBOLS as usize]}
     }
 
     /// Update sample rate and baud rate
@@ -418,8 +438,7 @@ impl Demodulators {
     pub fn ask(&mut self, mut arr: Vec<Complex<f32>>) -> String
     {
         // run fft
-        let mut scratch = vec![Complex::new(0.0, 0.0); arr.len()];
-        self.fft.process_with_scratch(arr.as_mut_slice(), scratch.as_mut_slice());
+        self.fft.process_with_scratch(arr.as_mut_slice(), self.scratch.as_mut_slice());
 
         let mut out = String::with_capacity(arr.len() / self.samples_per_symbol);
 
@@ -439,8 +458,7 @@ impl Demodulators {
     pub fn fsk(&mut self,mut arr: Vec<Complex<f32>>) -> String
     {
         // run fft
-        let mut scratch = vec![Complex::new(0.0, 0.0); arr.len()];
-        self.fft.process_with_scratch(arr.as_mut_slice(), scratch.as_mut_slice());
+        self.fft.process_with_scratch(arr.as_mut_slice(), self.scratch.as_mut_slice());
 
         let mut out = String::with_capacity(arr.len() / self.samples_per_symbol);
 
@@ -460,8 +478,7 @@ impl Demodulators {
     pub fn mfsk(&mut self, mut arr: Vec<Complex<f32>>) -> String
     {
         // run fft
-        let mut scratch = vec![Complex::new(0.0, 0.0); arr.len()];
-        self.fft.process_with_scratch(arr.as_mut_slice(), scratch.as_mut_slice());
+        self.fft.process_with_scratch(arr.as_mut_slice(), self.scratch.as_mut_slice());
 
         // Pre allocate space
         let mut out = String::with_capacity(arr.len() / self.samples_per_symbol);

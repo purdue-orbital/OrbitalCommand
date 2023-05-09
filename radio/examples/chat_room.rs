@@ -33,6 +33,7 @@ fn main() {
 
                 if check.is_ok(){
                     let out = check.unwrap().to_string();
+
                     // check to see if string is in hold
                     if !hold.contains(&out){
 

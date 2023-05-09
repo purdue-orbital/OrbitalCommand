@@ -118,6 +118,21 @@ fn mfsk_demod_2048bytes() { DATA.instance.clone().demod_mfsk(DATA.signal_2048byt
 
 
 pub fn mfsk_benchmark(c: &mut Criterion) {
+
+    // Demodulators benchmarks
+    c.bench_function("mfsk demod 1 byte", |b| b.iter(mfsk_demod_1byte));
+    c.bench_function("mfsk demod 2 bytes", |b| b.iter(mfsk_demod_2bytes));
+    c.bench_function("mfsk demod 4 bytes", |b| b.iter(mfsk_demod_4bytes));
+    c.bench_function("mfsk demod 8 bytes", |b| b.iter(mfsk_demod_8bytes));
+    c.bench_function("mfsk demod 16 bytes", |b| b.iter(mfsk_demod_16bytes));
+    c.bench_function("mfsk demod 32 bytes", |b| b.iter(mfsk_demod_32bytes));
+    c.bench_function("mfsk demod 64 bytes", |b| b.iter(mfsk_demod_64bytes));
+    c.bench_function("mfsk demod 128 bytes", |b| b.iter(mfsk_demod_128bytes));
+    c.bench_function("mfsk demod 256 bytes", |b| b.iter(mfsk_demod_256bytes));
+    c.bench_function("mfsk demod 512 bytes", |b| b.iter(mfsk_demod_512bytes));
+    c.bench_function("mfsk demod 1024 bytes", |b| b.iter(mfsk_demod_1024bytes));
+    c.bench_function("mfsk demod 2048 bytes", |b| b.iter(mfsk_demod_2048bytes));
+
     // Modulators benchmarks
     c.bench_function("mfsk mod 1 byte", |b| b.iter(mfsk_mod_1byte));
     c.bench_function("mfsk mod 2 bytes", |b| b.iter(mfsk_mod_2bytes));
@@ -133,19 +148,6 @@ pub fn mfsk_benchmark(c: &mut Criterion) {
     c.bench_function("mfsk mod 2048 bytes", |b| b.iter(mfsk_mod_2048bytes));
 
 
-    // Demodulators benchmarks
-    c.bench_function("mfsk demod 1 byte", |b| b.iter(mfsk_demod_1byte));
-    c.bench_function("mfsk demod 2 bytes", |b| b.iter(mfsk_demod_2bytes));
-    c.bench_function("mfsk demod 4 bytes", |b| b.iter(mfsk_demod_4bytes));
-    c.bench_function("mfsk demod 8 bytes", |b| b.iter(mfsk_demod_8bytes));
-    c.bench_function("mfsk demod 16 bytes", |b| b.iter(mfsk_demod_16bytes));
-    c.bench_function("mfsk demod 32 bytes", |b| b.iter(mfsk_demod_32bytes));
-    c.bench_function("mfsk demod 64 bytes", |b| b.iter(mfsk_demod_64bytes));
-    c.bench_function("mfsk demod 128 bytes", |b| b.iter(mfsk_demod_128bytes));
-    c.bench_function("mfsk demod 256 bytes", |b| b.iter(mfsk_demod_256bytes));
-    c.bench_function("mfsk demod 512 bytes", |b| b.iter(mfsk_demod_512bytes));
-    c.bench_function("mfsk demod 1024 bytes", |b| b.iter(mfsk_demod_1024bytes));
-    c.bench_function("mfsk demod 2048 bytes", |b| b.iter(mfsk_demod_2048bytes));
 }
 
 

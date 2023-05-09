@@ -122,11 +122,11 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-            sample_rate: 100e3,
-            lo_frequency: 430e6,
+            sample_rate: 1e5,
+            lo_frequency: 916e6,
             lpf_filter: 0.0,
             channels_in_use: 0,
-            gain: 1e3,
+            gain: 50.0,
             radio,
             baud_rate: 1e4,
             size: 0,
@@ -154,6 +154,8 @@ impl RadioStream {
                 let signal = rx_stream.fetch((set.clone().sample_rate * 0.5) as usize).expect("Reading stream");
 
                 let demod = instance.ask(signal);
+
+                //println!("{demod}");
 
                 let mut data = buffer.lock().unwrap();
                 *data = format!("{}{}", *data, demod);
@@ -192,9 +194,6 @@ impl RadioStream {
         // Read
         let s = self.rx_buffer.clone();
 
-        // Clear buffer
-        self.rx_buffer.lock().unwrap().clear();
-
         // Turn Signal into frames
         let arr = Frame::from(s.lock().unwrap().as_str());
 
@@ -204,6 +203,9 @@ impl RadioStream {
         for x in arr {
             to_return.push(x.data);
         }
+
+        // Clear buffer
+        self.rx_buffer.lock().unwrap().clear();
 
         Ok(to_return)
     }
