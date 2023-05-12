@@ -1,14 +1,17 @@
-
+use std::{vec};
 use std::f32::consts::PI;
+
 use std::sync::Arc;
 
 use num_complex::Complex;
+use rand::distributions::uniform::SampleBorrow;
 use rand_distr::Distribution;
 use rand_distr::Normal;
+use rayon::prelude::*;
 use rustfft::{Fft, FftPlanner};
 use rustfft::num_traits::Pow;
-use crate::tools::i32_to_bin;
 
+use crate::tools::{bin_char_arr_to_usize_unchecked, i32_to_char_bin};
 
 /// Radio filters for digital signal processing
 pub struct Filters {}
@@ -19,13 +22,13 @@ impl Filters {}
 /// Mod Settings
 ///-------------------------------------------------------------------------------------------------
 
-static BUFFER_SIZE:f32 = 2048e4; // Pre allocated buffer size of values to return (For performance)
+static BUFFER_SIZE: f32 = 2048e4; // Pre allocated buffer size of values to return (For performance)
 
 ///-------------------------------------------------------------------------------------------------
 /// Demod Settings
 ///-------------------------------------------------------------------------------------------------
 
-static MAX_SYMBOLS:f32 = 2048e4; // Maximum numbers of samples that could be demodulated at once (For performance)
+static MAX_SYMBOLS: f32 = 2048e4; // Maximum numbers of samples that could be demodulated at once (For performance)
 
 ///-------------------------------------------------------------------------------------------------
 /// FSK Settings
@@ -66,8 +69,52 @@ static MFSK_FFT_SIZE: usize = 1024;
 /// Frequency of ask for "1"s
 static ASK_FREQUENCY: f32 = 100.0;
 
+/// Modulate a signal when when two signals are present
+///
+/// # Arguments
+///
+/// * `bin` - Binary String
+/// * `zero_signal` - Pre generated signal on a '0' bit
+/// * `one_signal` - Pre generated signal on a '1' bit
+/// * `samples_per_symbol` - the number of samples per a symbol (in this case a number_of_symbols == bin.len()) (this can be calculated doing sample_rate / baud_rate)
+#[inline]
+pub fn bi_signal_modulation(bin: &str, zero_signal: &[Complex<f32>], one_signal: &[Complex<f32>], samples_per_symbol: usize) -> Vec<Complex<f32>> {
+
+    // initialize vector
+    let mut to_return = Vec::with_capacity(bin.len() * samples_per_symbol);
+
+    // Generate wave
+    for x in bin.chars() {
+        to_return.extend(if x == '1' { one_signal } else { zero_signal });
+    }
+
+    to_return
+}
+
+/// Demodulate a signal when when two signals are present
+///
+/// # Arguments
+///
+/// * `arr` - Array of complex values
+/// * `index` - Index in fft to find if '1' is present
+/// * `threshold` - The number of samples of a 1 signal to evaluate as '1' bit (defaults to zero if below this threshold)
+/// * `scratch` - Scratch space for fft calculation (for performance)
+/// * `samples_per_symbol` - the number of samples per a symbol (in this case a number_of_symbols == bin.len()) (this can be calculated doing sample_rate / baud_rate)
+#[inline]
+pub fn bi_signal_demodulation(arr: &mut [Complex<f32>], index: &usize, threshold: &f32, scratch: &mut [Complex<f32>], fft: &Arc<dyn Fft<f32>>, samples_per_symbol: &usize) -> String {
+
+    // run fft
+    fft.process_with_scratch(arr, scratch);
 
 
+    let mut out = String::with_capacity(arr.len() / samples_per_symbol);
+
+    for x in (*index..arr.len()).step_by(*samples_per_symbol) {
+        out.push(if arr[x].re.abs() >= *threshold { '1' } else { '0' });
+    }
+
+    out
+}
 
 
 /// This will add noise to a radio signal for testing
@@ -186,7 +233,6 @@ pub fn generate_wave(frequency: f32, sample_rate: f32, num_samples: i32, offset:
 /// Radio modulators for digital signal processing
 #[derive(Clone)]
 pub struct Modulators {
-
     // Calculate the number of samples per a symbol
     samples_per_symbol: usize,
 
@@ -207,14 +253,13 @@ pub struct Modulators {
 /// Radio demodulators for digital signal processing
 #[derive(Clone)]
 pub struct Demodulators {
-
     // Calculate the number of samples per a symbol
     samples_per_symbol: usize,
 
     // The rate the radio will sample at
     sample_rate: f32,
 
-    symbol_threshold:usize,
+    symbol_threshold: usize,
 
     fsk_fft_index: usize,
     ask_fft_index: usize,
@@ -231,52 +276,32 @@ pub struct Demodulators {
 
 /// Radio modulators for digital signal processing
 impl Modulators {
-
     /// Create a modulation instance
     ///
     /// * `sample_rate` - The rate the __RADIO__ samples at in hz
     /// * `baud_rate` - The number of symbols to send per a second (EX: baud_rate 100 = 100 symbols a second)
-    pub fn new(sample_rate: f32, baud_rate: f32) -> Modulators{
-        let samples_per_symbol = (sample_rate / baud_rate) as usize;
+    pub fn new(sample_rate: f32, baud_rate: f32) -> Modulators {
 
-        let transmission_window = MFSK_BANDWIDTH as i32 / 2.pow(MFSK_BITS_ENCODED as u32);
+        // Create empty struct
+        let mut out = Modulators { samples_per_symbol: 0, sample_rate: 0.0, ask_on_signal: vec![], ask_off_signal: vec![], fsk_one_signal: vec![], fsk_zero_signal: vec![], mfsk_freq_map: vec![] };
 
-        // Generate frequency map
-        let mut mfsk_freq_map = Vec::with_capacity(2.pow(MFSK_BITS_ENCODED as u32) as usize);
-        let mut counter = 0.0;
+        // Update struct
+        out.update(sample_rate, baud_rate);
 
-        // Create frequency map
-        for _ in 0..2.pow(MFSK_BITS_ENCODED as u32) as usize{
-            mfsk_freq_map.push(generate_wave(counter, sample_rate, samples_per_symbol as i32, 0 , 1.0));
-
-            counter += transmission_window as f32;
-        }
-
-        Modulators{
-            samples_per_symbol,
-            sample_rate,
-
-            ask_on_signal: generate_wave(ASK_FREQUENCY, sample_rate, samples_per_symbol as i32, 0, 1.0),
-            ask_off_signal: generate_wave(0.0, sample_rate, samples_per_symbol as i32, 0, 0.0),
-
-            fsk_one_signal: generate_wave(FSK_FREQUENCY1, sample_rate, samples_per_symbol as i32, 0, 1.0),
-            fsk_zero_signal: generate_wave(FSK_FREQUENCY2, sample_rate, samples_per_symbol as i32, 0, 1.0),
-
-            mfsk_freq_map,
-        }
+        // return
+        out
     }
 
     /// Update sample rate and baud rate
-    pub fn update(&mut self, sample_rate: f32, baud_rate: f32){
-
+    pub fn update(&mut self, sample_rate: f32, baud_rate: f32) {
         self.samples_per_symbol = (sample_rate / baud_rate) as usize;
         self.sample_rate = sample_rate;
 
         self.ask_on_signal = generate_wave(ASK_FREQUENCY, sample_rate, self.samples_per_symbol as i32, 0, 1.0);
         self.ask_off_signal = generate_wave(0.0, sample_rate, self.samples_per_symbol as i32, 0, 0.0);
 
-        self.fsk_one_signal = generate_wave(FSK_FREQUENCY1, sample_rate, self.samples_per_symbol as i32, 0, 1.0);
-        self.fsk_zero_signal = generate_wave(FSK_FREQUENCY2, sample_rate, self.samples_per_symbol as i32, 0, 1.0);
+        self.fsk_one_signal = generate_wave(FSK_FREQUENCY2, sample_rate, self.samples_per_symbol as i32, 0, 1.0);
+        self.fsk_zero_signal = generate_wave(FSK_FREQUENCY1, sample_rate, self.samples_per_symbol as i32, 0, 1.0);
 
         // Generate frequency map
         self.mfsk_freq_map = Vec::with_capacity(2.pow(MFSK_BITS_ENCODED as u32) as usize);
@@ -284,8 +309,8 @@ impl Modulators {
         let transmission_window = MFSK_BANDWIDTH as i32 / 2.pow(MFSK_BITS_ENCODED as u32);
 
         // Create frequency map
-        for _ in 0..2.pow(MFSK_BITS_ENCODED as u32) as usize{
-            self.mfsk_freq_map.push(generate_wave(counter, self.sample_rate, self.samples_per_symbol as i32, 0 , 1.0));
+        for _ in 0..2.pow(MFSK_BITS_ENCODED as u32) as usize {
+            self.mfsk_freq_map.push(generate_wave(counter, self.sample_rate, self.samples_per_symbol as i32, 0, 1.0));
 
             counter += transmission_window as f32;
         }
@@ -297,17 +322,7 @@ impl Modulators {
     /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
     pub fn ask(&mut self, bin: &str) -> Vec<Complex<f32>>
     {
-        // initialize vector
-        let mut to_return = Vec::with_capacity(bin.len() * self.samples_per_symbol);
-
-        // Generate wave
-        for x in bin.chars() {
-
-            to_return.append((if x == '1' {self.ask_on_signal.clone()} else {self.ask_off_signal.clone()}).as_mut());
-
-        }
-
-        to_return
+        bi_signal_modulation(bin, self.ask_off_signal.as_mut_slice(), self.ask_on_signal.as_mut_slice(), self.samples_per_symbol)
     }
 
     /// Modulate a radio signal using FSK
@@ -316,17 +331,7 @@ impl Modulators {
     /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
     pub fn fsk(&mut self, bin: &str) -> Vec<Complex<f32>>
     {
-        // initialize vector
-        let mut to_return = Vec::with_capacity(bin.len() * self.samples_per_symbol);
-
-        // Generate wave
-        for x in bin.chars() {
-
-            to_return.append((if x == '1' {self.fsk_one_signal.clone()} else {self.fsk_zero_signal.clone()}).as_mut());
-
-        }
-
-        to_return
+        bi_signal_modulation(bin, self.fsk_zero_signal.as_mut_slice(), self.fsk_one_signal.as_mut_slice(), self.samples_per_symbol)
     }
 
     /// Modulate a radio signal using MFSK
@@ -338,25 +343,14 @@ impl Modulators {
         // initialize vector
         let mut to_return = Vec::with_capacity(bin.len() * self.samples_per_symbol);
 
-        // Temporary var that will hold the bits to encode
-        let mut hold = String::with_capacity(MFSK_BITS_ENCODED as usize);
+        for x in (0..bin.len()).step_by(MFSK_BITS_ENCODED as usize) {
+            #[warn(clippy::needless_borrow)]  // This actually improves performance
+                let signal = self.mfsk_freq_map[bin_char_arr_to_usize_unchecked((&bin[x..(x as i32 + MFSK_BITS_ENCODED) as usize]).chars())].as_ref();
 
-        for x in bin.chars() {
-
-            hold.push(x);
-
-            if hold.len() == MFSK_BITS_ENCODED as usize{
-
-                to_return.append(self.mfsk_freq_map[usize::from_str_radix(&hold, 2).unwrap()].clone().as_mut());
-
-                hold.clear();
-            }
-
+            to_return.extend_from_slice(signal);
         }
 
-
         to_return
-
     }
 
     // TODO: Although FSK is a great modulator, BPSK and subsequent QPSK are much more efficient
@@ -364,45 +358,26 @@ impl Modulators {
 
 /// Radio demodulators for digital signal processing
 impl Demodulators {
-
     /// Create a demodulation instance
     ///
     /// * `sample_rate` - The rate the __RADIO__ samples at in hz
     /// * `baud_rate` - The number of symbols to send per a second (EX: baud_rate 100 = 100 symbols a second)
-    pub fn new(sample_rate: f32, baud_rate: f32) -> Demodulators{
-        let samples_per_symbol = (sample_rate / baud_rate) as usize;
-
+    pub fn new(sample_rate: f32, baud_rate: f32) -> Demodulators {
         let mut planner = FftPlanner::new();
-        let fft = planner.plan_fft_forward(samples_per_symbol);
+        let fft = planner.plan_fft_forward(0);
 
-        let symbol_threshold = samples_per_symbol / 2;
+        // Create empty struct
+        let mut out = Demodulators { samples_per_symbol: 0, sample_rate: 0.0, symbol_threshold: 0, fsk_fft_index: 0, ask_fft_index: 0, mfsk_fft_index_map: vec![0], fft, scratch: vec![] };
 
-        // calculate the index to look at
-        let fsk_fft_index = (FSK_FREQUENCY1 / (sample_rate / samples_per_symbol as f32)).round() as usize;
-        let ask_fft_index = (ASK_FREQUENCY / (sample_rate / samples_per_symbol as f32)).round() as usize;
+        // Update struct
+        out.update(sample_rate, baud_rate);
 
-
-        // create index map for mfsk
-        let mut mfsk_fft_index_map = vec![0; samples_per_symbol];
-        let transmission_window = MFSK_BANDWIDTH as i32 / 2.pow(MFSK_BITS_ENCODED as u32);
-        let fft_idk = sample_rate / samples_per_symbol as f32; // I don't know why we need to do this but this is how we can find what indexes go to what frequencies
-
-        // create map
-        if samples_per_symbol >= 2.pow(MFSK_BITS_ENCODED as u32) as usize {
-            for x in 0..2.pow(MFSK_BITS_ENCODED as u32) as i32 {
-                let index = ((x * transmission_window) as f32 / fft_idk).round() as usize;
-
-                mfsk_fft_index_map[index] = x;
-            }
-        }
-
-
-        Demodulators{ samples_per_symbol, sample_rate, symbol_threshold, fsk_fft_index, ask_fft_index, mfsk_fft_index_map, fft, scratch: vec![Complex::new(0.0, 0.0); MAX_SYMBOLS as usize]}
+        // return
+        out
     }
 
     /// Update sample rate and baud rate
-    pub fn update(&mut self, sample_rate: f32, baud_rate: f32){
-
+    pub fn update(&mut self, sample_rate: f32, baud_rate: f32) {
         self.samples_per_symbol = (sample_rate / baud_rate) as usize;
         self.sample_rate = sample_rate;
 
@@ -429,6 +404,8 @@ impl Demodulators {
 
         let mut planner = FftPlanner::new();
         self.fft = planner.plan_fft_forward(self.samples_per_symbol);
+
+        self.scratch = vec![Complex::new(0.0, 0.0); MAX_SYMBOLS as usize];
     }
 
     /// Demodulate a radio signal using ASK
@@ -437,38 +414,16 @@ impl Demodulators {
     /// * `arr` - Array of radio samples to
     pub fn ask(&mut self, mut arr: Vec<Complex<f32>>) -> String
     {
-        // run fft
-        self.fft.process_with_scratch(arr.as_mut_slice(), self.scratch.as_mut_slice());
-
-        let mut out = String::with_capacity(arr.len() / self.samples_per_symbol);
-
-        for x in (self.ask_fft_index..arr.len()).step_by(self.samples_per_symbol) {
-
-            out.push(if arr[x].re.abs() >= self.symbol_threshold as f32 {'1'} else {'0'});
-
-        }
-
-        out
+        bi_signal_demodulation(arr.as_mut_slice(), self.ask_fft_index.borrow(), (self.symbol_threshold as f32).borrow(), self.scratch.as_mut_slice(), &self.fft, self.samples_per_symbol.borrow())
     }
 
     /// Demodulate a radio signal using FSK
     ///
     /// # Arguments
     /// * `arr` - Array of radio samples to
-    pub fn fsk(&mut self,mut arr: Vec<Complex<f32>>) -> String
+    pub fn fsk(&mut self, mut arr: Vec<Complex<f32>>) -> String
     {
-        // run fft
-        self.fft.process_with_scratch(arr.as_mut_slice(), self.scratch.as_mut_slice());
-
-        let mut out = String::with_capacity(arr.len() / self.samples_per_symbol);
-
-        for x in (self.fsk_fft_index..arr.len()).step_by(self.samples_per_symbol) {
-
-            out.push(if arr[x].re.abs() >= self.symbol_threshold as f32 {'0'} else {'1'});
-
-        }
-
-        out
+        bi_signal_demodulation(arr.as_mut_slice(), self.fsk_fft_index.borrow(), (self.symbol_threshold as f32).borrow(), self.scratch.as_mut_slice(), &self.fft, self.samples_per_symbol.borrow())
     }
 
     /// Demodulate a radio signal using MFSK
@@ -477,23 +432,19 @@ impl Demodulators {
     /// * `arr` - Array of radio samples to
     pub fn mfsk(&mut self, mut arr: Vec<Complex<f32>>) -> String
     {
-        // run fft
+        // // run fft
         self.fft.process_with_scratch(arr.as_mut_slice(), self.scratch.as_mut_slice());
 
         // Pre allocate space
-        let mut out = String::with_capacity(arr.len() / self.samples_per_symbol);
+        let mut out: Vec<char> = Vec::with_capacity(arr.len() / self.samples_per_symbol);
 
-        for x in (0..arr.len()).step_by(self.samples_per_symbol)  {
-            for y in 0..self.samples_per_symbol {
-                if arr[x + y].re >= self.symbol_threshold as f32{
-                    out.push_str(i32_to_bin(self.mfsk_fft_index_map[y], MFSK_BITS_ENCODED as usize).as_str());
-
-                    break;
-                }
-            }
+        let chunks = arr.chunks_exact(self.samples_per_symbol);
+        for x in chunks {
+            let index = x.iter().position(|b| b.re >= self.symbol_threshold as f32).unwrap();
+            out.extend_from_slice(i32_to_char_bin(self.mfsk_fft_index_map[index], MFSK_BITS_ENCODED as usize).as_slice());
         }
 
-        out
+        out.iter().collect()
     }
 
     // TODO: BPSK / QPSK Demodulator

@@ -26,25 +26,34 @@ All benchmarks are run on a Raspberry PI 4B running Raspbian.
 
 ### Radio
 
-To preform benchmarks for the radio, run this command
-
-```shell
-cargo bench --features bench --manifest-path=radio/Cargo.toml
-```
-
 #### ASK
+To Run:
+```shell
+cargo bench --features ask --manifest-path=radio/Cargo.toml
+```
+Result:
 ```
 Mod 2048 Bytes:  [1.4402 ms, 1.5494 ms, 1.6884 ms]
 Demod 2048 Bytes:  [2.8386 ms, 2.8494 ms, 2.8656 ms]
 ```
 
 #### FSK
+To Run:
+```shell
+cargo bench --features fsk --manifest-path=radio/Cargo.toml
+```
+Result:
 ```
 Mod 2048 Bytes:  [3.4526 ms, 3.5275 ms, 3.26085 ms]
 Demod 2048 Bytes:  [31.533 ms, 31.629 ms, 33.682 ms]
 ```
 
 #### MFSK-8
+To Run:
+```shell
+cargo bench --features mfsk --manifest-path=radio/Cargo.toml
+```
+Result:
 ```
 Mod 2048 Bytes:  [8.0488 ms, 8.0799 ms, 8.1309 ms]
 Demod 2048 Bytes:  [10.279 ms, 10.313 ms, 10.369 ms]

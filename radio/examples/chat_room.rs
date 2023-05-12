@@ -1,6 +1,6 @@
-use std::thread::spawn;
 use std::{str, thread};
 use std::sync::{Arc, Mutex};
+use std::thread::spawn;
 use std::time::Duration;
 
 fn main() {
@@ -15,27 +15,27 @@ fn main() {
     let thread_clone = stream.clone();
 
     // This is the thread we read transmissions from asynchronously
-    spawn(move ||{
+    spawn(move || {
 
         // This will hold message history per a read and remove redundant transmissions
         let mut hold = Vec::new();
 
-        loop{
+        loop {
 
             // Read transmissions
             let arr = thread_clone.lock().unwrap().read().unwrap();
 
             // Loop through each transmission received
-            for x in arr{
+            for x in arr {
 
                 // Turn bytes into a string
                 let check = str::from_utf8(x.as_slice());
 
-                if check.is_ok(){
+                if check.is_ok() {
                     let out = check.unwrap().to_string();
 
                     // check to see if string is in hold
-                    if !hold.contains(&out){
+                    if !hold.contains(&out) {
 
                         // if not print and add to hold
                         println!("{}", out.as_str());
@@ -51,7 +51,6 @@ fn main() {
             // Wait for more transmissions
             thread::sleep(Duration::from_secs(1));
         }
-
     });
 
 
@@ -65,7 +64,7 @@ fn main() {
 
         // Radio doesn't yet have the ability to tell frames are incomplete so they just get dropped.
         // To compensate for now, we just spam transmissions and remove the redundant ones
-        for _ in 0..5{
+        for _ in 0..5 {
             // preform delay so we don't lose all the packets
             thread::sleep(Duration::from_millis(100));
 
@@ -73,6 +72,4 @@ fn main() {
             stream.lock().unwrap().transmit(line.as_bytes()).unwrap();
         }
     }
-
-
 }

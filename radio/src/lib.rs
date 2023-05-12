@@ -1,4 +1,3 @@
-
 use std::sync::{Arc, Mutex};
 use std::thread::spawn;
 
@@ -140,7 +139,7 @@ impl RadioStream {
             tx_stream: Tx::new(set.clone())?,
             rx_buffer: buffer.clone(),
             settings: set.clone(),
-            modulation: Modulators::new(set.sample_rate as f32,set.baud_rate),
+            modulation: Modulators::new(set.sample_rate as f32, set.baud_rate),
         };
 
         // Spawn rx thread
@@ -193,7 +192,6 @@ impl RadioStream {
 
         // Read
         let s = self.rx_buffer.clone();
-
         // Turn Signal into frames
         let arr = Frame::from(s.lock().unwrap().as_str());
 
@@ -215,17 +213,15 @@ impl RadioStream {
 
 
 /// This exposes functions for benchmarking
-#[cfg(feature = "bench")]
 #[derive(Clone)]
 pub struct Benchy {
-    modulation:  Arc<Mutex<Modulators>>,
+    modulation: Arc<Mutex<Modulators>>,
     demodulation: Arc<Mutex<Demodulators>>,
 }
 
 
-#[cfg(feature = "bench")]
 impl Benchy {
-    pub fn new() -> Benchy{
+    pub fn new() -> Benchy {
         Benchy { modulation: Arc::from(Mutex::from(Modulators::new(0.0, 0.0))), demodulation: Arc::from(Mutex::from(Demodulators::new(0.0, 0.0))) }
     }
 
@@ -269,7 +265,7 @@ impl Benchy {
 /// This exposes functions for testing
 #[derive(Clone)]
 pub struct Testy {
-    modulation:  Arc<Mutex<Modulators>>,
+    modulation: Arc<Mutex<Modulators>>,
     demodulation: Arc<Mutex<Demodulators>>,
 }
 

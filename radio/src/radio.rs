@@ -1,7 +1,5 @@
-
-
 use anyhow::Result;
-use soapysdr::{Device};
+use soapysdr::Device;
 
 // Radio Values
 #[derive(Clone)]

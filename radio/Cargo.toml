@@ -13,6 +13,8 @@ log = "0.4.17"
 rand = "0.8.4"
 rand_distr = "0.4.3"
 rustfft = "6.1.0"
+regex = "1.8.1"
+rayon = "1.7.0"
 
 [dev-dependencies]
 criterion = "0.4.0"
@@ -23,4 +25,6 @@ name = "bench"
 harness = false
 
 [features]
-bench = []
+mfsk = []
+fsk = []
+ask = []

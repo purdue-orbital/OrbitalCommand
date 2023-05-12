@@ -9,14 +9,14 @@ fn self_test_128bytes()
     let err = radio::RadioStream::new();
 
     // if an error happens, most likely the radio is not connected so skip
-    if err.is_err(){
+    if err.is_err() {
         println!("Radio doesn't seem to be connected. Skipping radio test...");
         return;
     }
 
     let mut stream = err.unwrap();
 
-    let mut test_arr:[u8; 4] = [4,252,112,128];
+    let mut test_arr: [u8; 4] = [4, 252, 112, 128];
 
     // Allow for some delay
     thread::sleep(Duration::from_secs(1));

@@ -1,9 +1,9 @@
 #[test]
-fn frame_test(){
+fn frame_test() {
 
     // Test bytes
-    let test_arr1 = [4,252,112,128];
-    let test_arr2 = [32,22,69,22];
+    let test_arr1 = [4, 252, 112, 128];
+    let test_arr2 = [32, 22, 69, 22];
 
     // Make a frame
     let frame_1 = radio::Frame::new(test_arr1.clone().as_mut_slice());
@@ -20,7 +20,6 @@ fn frame_test(){
     let mut frame_3 = radio::Frame::from(for_transmission1.as_str());
 
     // Ensure frames match
-    assert_eq!(frame_2.assemble(),frame_3.pop().unwrap().assemble());
-    assert_eq!(frame_1.assemble(),frame_3.pop().unwrap().assemble());
-
+    assert_eq!(frame_2.assemble(), frame_3.pop().unwrap().assemble());
+    assert_eq!(frame_1.assemble(), frame_3.pop().unwrap().assemble());
 }

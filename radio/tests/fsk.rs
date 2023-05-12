@@ -42,7 +42,7 @@ struct TestData {
 impl Default for TestData {
     fn default() -> Self {
         let mut instance = Testy::new();
-        instance.update(SAMPLE_RATE,BAUD_RATE);
+        instance.update(SAMPLE_RATE, BAUD_RATE);
         TestData {
             signal_1byte: instance.mod_fsk(BYTE_1),
             signal_2bytes: instance.mod_fsk(BYTES_2),

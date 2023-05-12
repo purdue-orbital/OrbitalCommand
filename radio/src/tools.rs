@@ -1,3 +1,6 @@
+
+use std::str::Chars;
+
 /// Subtract values with the value to their left. This will remove 1 element from the array size
 ///
 /// # Arguments
@@ -73,25 +76,42 @@ pub fn normalize(arr: Vec<f32>) -> Vec<f32>
 /// # Arguments
 /// * `num` - Number to
 /// * `len` - Fixed length of binary
-///
-pub fn i32_to_bin(mut num:i32, len:usize) -> String{
-    let mut to_return = String::with_capacity(len);
+#[inline]
+pub fn i32_to_char_bin(num: i32, len: usize) -> Vec<char> {
+    let mut to_return = Vec::with_capacity(len);
 
-    while num > 0{
-        if num % 2 == 1{
-            to_return.insert(0,'1');
+    for i in (0..(len) as i32).rev(){
+        let k = num >> i;
 
-            num -= 1;
-        } else{
-            to_return.insert(0,'0');
+        if (k & 1) == 1 {
+            to_return.push('1')
+        }else{
+            to_return.push('0')
         }
-
-        num /= 2;
-    }
-
-    while to_return.len() < len{
-        to_return.insert(0,'0');
     }
 
     to_return
+}
+
+
+/// Although the format! macro does this for us, we sometimes want to dynamically set the fixed
+/// length of the formatted binary
+///
+/// # Arguments
+/// * `num` - Number to
+/// * `len` - Fixed length of binary
+#[inline]
+pub fn bin_char_arr_to_usize_unchecked(bin: Chars) -> usize {
+    let mut total = 0;
+    let mut multiplier = 1;
+
+    for x in bin.rev() {
+        if x == '1' {
+            total += multiplier;
+        }
+
+        multiplier *= 2;
+    }
+
+    total
 }

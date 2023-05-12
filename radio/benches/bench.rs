@@ -2,19 +2,28 @@
 
 use criterion::{criterion_group, criterion_main};
 
+use ask_bench::ask_benchmark;
+use fsk_bench::fsk_benchmark;
+use mfsk_bench::mfsk_benchmark;
+
 // ask benchmarks
 mod ask_bench;
-use ask_bench::ask_benchmark;
 
 // fsk benchmarks
 mod fsk_bench;
-use fsk_bench::fsk_benchmark;
 
 // mfsk benchmarks
 mod mfsk_bench;
-use mfsk_bench::mfsk_benchmark;
 
 criterion_group!(mfsk, mfsk_benchmark);
 criterion_group!(fsk, fsk_benchmark);
 criterion_group!(ask, ask_benchmark);
-criterion_main!(mfsk,fsk,ask);
+
+#[cfg(feature = "mfsk")]
+criterion_main!(mfsk);
+
+#[cfg(feature = "fsk")]
+criterion_main!(fsk);
+
+#[cfg(feature = "ask")]
+criterion_main!(ask);
