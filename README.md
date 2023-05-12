@@ -22,7 +22,7 @@ docker run --privileged launch:latest
 
 ## Benchmarks
 
-All benchmarks are run on a Raspberry PI 4B running Raspbian.
+All benchmarks are run on a Raspberry PI 4B running Raspbian aarch64.
 
 ### Radio
 
@@ -33,8 +33,8 @@ cargo bench --features ask --manifest-path=radio/Cargo.toml
 ```
 Result:
 ```
-Mod 2048 Bytes:  [1.4402 ms, 1.5494 ms, 1.6884 ms]
-Demod 2048 Bytes:  [2.8386 ms, 2.8494 ms, 2.8656 ms]
+Mod 2048 Bytes:  [269.31 µs, 271.27 µs, 273.32 µs]
+Demod 2048 Bytes:  [2.3152 ms 2.3168 ms 2.3187 ms]
 ```
 
 #### FSK
@@ -44,8 +44,8 @@ cargo bench --features fsk --manifest-path=radio/Cargo.toml
 ```
 Result:
 ```
-Mod 2048 Bytes:  [3.4526 ms, 3.5275 ms, 3.26085 ms]
-Demod 2048 Bytes:  [31.533 ms, 31.629 ms, 33.682 ms]
+Mod 2048 Bytes:  [1.2463 ms, 1.2528 ms, 1.2596 ms]
+Demod 2048 Bytes:  [11.239 ms, 11.242 ms, 11.245 ms]
 ```
 
 #### MFSK-8
@@ -55,8 +55,8 @@ cargo bench --features mfsk --manifest-path=radio/Cargo.toml
 ```
 Result:
 ```
-Mod 2048 Bytes:  [8.0488 ms, 8.0799 ms, 8.1309 ms]
-Demod 2048 Bytes:  [10.279 ms, 10.313 ms, 10.369 ms]
+Mod 2048 Bytes:  [7.0469 ms, 7.0577 ms, 7.0683 ms]
+Demod 2048 Bytes:  [8.9959 ms, 8.9997 ms, 9.0036 ms]
 ```
 
 ## Testing
