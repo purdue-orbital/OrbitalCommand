@@ -1,8 +1,10 @@
+use std::env::Args;
 use std::sync::{Arc, Mutex};
 use std::thread::spawn;
 
 use anyhow::{Error, Result};
 use num_complex::Complex;
+use soapysdr::Device;
 
 use crate::dsp::{Demodulators, Modulators};
 use crate::radio::Radio;
@@ -18,7 +20,6 @@ static TRANSMISSION_SIZE: usize = 100;
 static PREAMBLE: [u8; 4] = [16, 32, 64, 128];
 // Start of transmission sequence
 static END: [u8; 4] = [255, 69, 55, 2]; // End of transmission sequence
-
 
 /// u8 array to binary string
 fn u8_to_bin(arr: &[u8]) -> String {

@@ -7,7 +7,6 @@ use num_complex::Complex;
 use rand::distributions::uniform::SampleBorrow;
 use rand_distr::Distribution;
 use rand_distr::Normal;
-use rayon::prelude::*;
 use rustfft::{Fft, FftPlanner};
 use rustfft::num_traits::Pow;
 

@@ -4,4 +4,5 @@ members = [
     "ground",
     "launch",
     "common",
+    "net",
 ]

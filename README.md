@@ -72,3 +72,8 @@ To test all radio components work properly, run the code seen below.
 cargo test --manifest-path=radio/Cargo.toml
 ```
 
+## Developer Introduction
+![](./images/TCPModel.png) (Credit: https://stackoverflow.com/questions/31446777/difference-between-packets-and-frames)
+
+
+
