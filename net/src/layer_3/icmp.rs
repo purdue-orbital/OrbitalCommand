@@ -1,4 +1,5 @@
 use ux::u13;
+
 use crate::layer_3::ipv4::{Address, DifferentiatedServices, ECN, IPPrecedence, IPV4};
 use crate::layer_3::ipv4::AssuredForwarding::{AFx0, AFx2};
 use crate::layer_3::ipv4::IPPrecedence::DF;
@@ -81,45 +82,44 @@ pub enum IcmpTypes {
 
 /// Internet Control Message Protocol (ICMP) is also sometimes called a "ping" packet. This is the
 /// protocol that is used to help troubleshoot networks and make sure everything is working
-pub struct ICMPv4{
+pub struct ICMPv4 {
     /// The header section of this packet
-    pub header:IPV4,
+    pub header: IPV4,
 
-    pub message_type:u8,
-    code:u8,
-    checksum:u16,
+    pub message_type: u8,
+    code: u8,
+    checksum: u16,
 
     /// this isn't uniform what is in here and often acts like the "data" section of the packet
-    rest_of_header:u32,
+    pub rest_of_header: u32,
 
-    data:Vec<u8>
+    data: Vec<u8>,
 }
 
-impl ICMPv4{
-
-    pub fn new(icmp_type:IcmpTypes,time_to_live:u8,source_ip:Address, dest_ip:Address, rest_of_header:u32, data:&[u8]) -> ICMPv4{
+impl ICMPv4 {
+    pub fn new(icmp_type: IcmpTypes, time_to_live: u8, source_ip: Address, dest_ip: Address, rest_of_header: u32, data: &[u8]) -> ICMPv4 {
 
         // create header
         let header = IPV4::new(
             &[],
             &[],
             &DifferentiatedServices::new(DF, AFx0), // ICMP really isn't important
-            ECN::new(false,false), // ICMP doesn't use ECN
+            ECN::new(false, false), // ICMP doesn't use ECN
             9210,
             u13::new(0),
             time_to_live,
             1,
             source_ip.encode(),
-            dest_ip.encode()
+            dest_ip.encode(),
         );
 
-        let mut out = ICMPv4{
+        let mut out = ICMPv4 {
             header,
             message_type: icmp_type as u8,
             code: 0,
             checksum: 0,
             rest_of_header,
-            data:data.to_vec(),
+            data: data.to_vec(),
         };
 
         // calculate checksum and return
@@ -148,7 +148,7 @@ impl ICMPv4{
     }
 
     /// Verify the packet with the checksum
-    pub fn verify(&mut self) -> bool{
+    pub fn verify(&mut self) -> bool {
         // encode
         let encoded = self.encode(true);
 
@@ -160,8 +160,7 @@ impl ICMPv4{
     }
 
     // encode icmp
-    pub fn encode(&mut self, ignore_ipv4_header:bool) -> Vec<u8>{
-
+    pub fn encode(&mut self, ignore_ipv4_header: bool) -> Vec<u8> {
         let mut to_return = vec![
             self.message_type,
             self.code,
@@ -187,11 +186,11 @@ impl ICMPv4{
     }
 
     /// Decode an array of u8 into a ICMP packet
-    pub fn decode(input:&[u8]) -> ICMPv4{
+    pub fn decode(input: &[u8]) -> ICMPv4 {
         let ipv4 = IPV4::decode(input);
-        let data:Vec<u8> = ipv4.get_data();
+        let data: Vec<u8> = ipv4.get_data();
 
-        ICMPv4{
+        ICMPv4 {
             header: ipv4,
             message_type: data[0],
             code: data[1],

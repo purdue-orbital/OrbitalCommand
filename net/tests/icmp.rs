@@ -1,59 +1,51 @@
-use std::process::Command;
 use std::thread;
 use std::time::Duration;
-use tun_tap::{Iface, Mode};
+
+use net::{list_devices, NetworkStream};
 use net::layer_3::icmp::{IcmpTypes, ICMPv4};
 use net::layer_3::ipv4::Address;
 
 #[test]
 pub fn live_test()
 {
-    let source_ip = Address::from_str("10.107.1.3").unwrap();
-    let dest_ip = Address::from_str("127.0.0.1").unwrap();
+    let source_ip = Address::from_str("192.168.69.1").unwrap();
+    let dest_ip = Address::from_str("8.8.8.8").unwrap();
 
-    let identifier:u16 = 6987;
-    let seq_num:u16 = 1;
+    let identifier: u16 = 642;
+    let mut seq_num: u16 = 1;
 
-    let mut packet = ICMPv4::new(IcmpTypes::EchoRequest,64, source_ip, dest_ip, (identifier as u32) << 16 | seq_num as u32, &[0; 46]);
+    let mut packet = ICMPv4::new(IcmpTypes::EchoRequest, 64, source_ip, dest_ip, (identifier as u32) << 16 | seq_num as u32, &[0; 56]);
 
-    let sys = Iface::without_packet_info("tun0", Mode::Tun).unwrap();
+    let dev = list_devices().get(0).unwrap().clone();
 
+    dev.set_ip("192.168.69.0/24", "192.168.69.1");
 
-    let arr = ["addr", "add", "dev", sys.name(), "10.107.1.3/24"];
-    Command::new("ip").args(arr.as_slice()).spawn().unwrap().wait().unwrap();
+    // Create network stream
+    let mut stream = NetworkStream::new(dev);
 
-    let arr = ["link", "set", "up", "dev", sys.name()];
-    Command::new("ip").args(arr.as_slice()).spawn().unwrap().wait().unwrap();
-
-    let mut encoded = packet.encode(false);
-
-    //encoded.extend_from_slice(&[0, 0, 8, 0]);
-
-
-
-    println!("{}",packet.encode(true).len());
-
-    let mut buffer = vec![0; 1504];
-
-
-
+    // send packets
     loop {
         thread::sleep(Duration::from_secs(1));
 
-        let size = sys.send(encoded.as_slice()).unwrap();
+        let  encoded = packet.encode(false);
 
-        println!("{size}");
+        stream.send(encoded.as_slice());
+
+        seq_num += 1;
+        packet.rest_of_header = (identifier as u32) << 16 | seq_num as u32;
+
+        packet.update_checksum();
     }
 }
 
 #[test]
 pub fn encode_decode() {
     let mut x = ICMPv4::new(
-        IcmpTypes::EchoRequest,128,
+        IcmpTypes::EchoRequest, 128,
         Address::from_str("192.168.1.4").unwrap(),
         Address::from_str("192.168.1.4").unwrap(),
         u32::MAX - 1,
-        &[]
+        &[],
     );
 
     // encode
@@ -70,25 +62,25 @@ pub fn encode_decode() {
 #[test]
 pub fn checksum() {
     let mut x = ICMPv4::new(
-        IcmpTypes::EchoRequest,128,
+        IcmpTypes::EchoRequest, 128,
         Address::from_str("192.168.1.4").unwrap(),
         Address::from_str("192.168.1.4").unwrap(),
         21780,
-        &[]
+        &[],
     );
 
     // this should be true
-    assert!(x.verify(),"Failed to verify checksum as true!");
+    assert!(x.verify(), "Failed to verify checksum as true!");
 
     // make an unchecked update
     x.message_type = 4;
 
     // this should be false
-    assert!(!x.verify(),"Failed to verify checksum as false!");
+    assert!(!x.verify(), "Failed to verify checksum as false!");
 
     // update checksum
     x.update_checksum();
 
     // this should be true
-    assert!(x.verify(),"Failed to verify checksum as true after update!");
+    assert!(x.verify(), "Failed to verify checksum as true after update!");
 }

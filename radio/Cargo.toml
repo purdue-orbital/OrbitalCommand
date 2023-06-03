@@ -25,3 +25,5 @@ harness = false
 mfsk = []
 fsk = []
 ask = []
+bpsk = []
+qpsk = []

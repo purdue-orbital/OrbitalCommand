@@ -80,12 +80,12 @@ pub fn normalize(arr: Vec<f32>) -> Vec<f32>
 pub fn u32_to_char_bin(num: u32, len: usize) -> Vec<char> {
     let mut to_return = Vec::with_capacity(len);
 
-    for i in (0..(len) as u32).rev(){
+    for i in (0..(len) as u32).rev() {
         let k = num >> i;
 
         if (k & 1) == 1 {
             to_return.push('1')
-        }else{
+        } else {
             to_return.push('0')
         }
     }
@@ -117,20 +117,20 @@ pub fn bin_char_arr_to_usize_unchecked(bin: Chars) -> usize {
 }
 
 /// Calculate sum of an array of u16s while adding carries to the beginning
-pub fn sum_with_carries(to_sum:&[u16]) -> u16 {
+pub fn sum_with_carries(to_sum: &[u16]) -> u16 {
     // keep track of the number of carries
     let mut carries = 0;
 
     // sum all values
-    let mut sum:u16 = 0;
+    let mut sum: u16 = 0;
 
-    for &x in to_sum{
+    for &x in to_sum {
 
         // check for a carry
         let to_check = sum.checked_add(x);
 
         // add to carry counter if a carry happened
-        if to_check.is_none(){
+        if to_check.is_none() {
             carries += 1;
         }
 
@@ -141,7 +141,7 @@ pub fn sum_with_carries(to_sum:&[u16]) -> u16 {
     let to_check = sum.checked_add(carries);
 
     // add to carry counter if a carry happened
-    if to_check.is_none(){
+    if to_check.is_none() {
         carries += 1;
     }
 
@@ -150,11 +150,11 @@ pub fn sum_with_carries(to_sum:&[u16]) -> u16 {
 
 
 /// Convert an array of u8s to an array of u16s
-pub fn u8_arr_to_u16_arr(arr:&[u8]) -> Vec<u16>{
+pub fn u8_arr_to_u16_arr(arr: &[u8]) -> Vec<u16> {
     let mut to_return = Vec::with_capacity(arr.len() / 2);
 
-    for x in (1..arr.len()).step_by(2){
-        to_return.push(((arr[x-1] as u16) << 8) | (arr[x] as u16))
+    for x in (1..arr.len()).step_by(2) {
+        to_return.push(((arr[x - 1] as u16) << 8) | (arr[x] as u16))
     }
 
     to_return

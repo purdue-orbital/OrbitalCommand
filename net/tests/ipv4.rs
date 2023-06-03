@@ -1,9 +1,8 @@
 use ux::u13;
 use net::layer_3::ipv4::{Address, AssuredForwarding, DifferentiatedServices, ECN, IPPrecedence, IPV4};
 
-
 #[test]
-pub fn ipv4_address(){
+pub fn ipv4_address() {
     // test from string
     let test1 = Address::from_str("192.168.1.4").unwrap();
 
@@ -11,7 +10,7 @@ pub fn ipv4_address(){
     let test2 = Address::decode(test1.encode());
 
     // test verbatim creation
-    let test3 = Address::new(192,168,1,4);
+    let test3 = Address::new(192, 168, 1, 4);
 
     // Run tests
     assert_eq!(test1.to_string(), "192.168.1.4".to_string(), "Failed to create from string");
@@ -23,19 +22,19 @@ pub fn ipv4_address(){
 #[test]
 pub fn encode_decode() {
     let x = IPV4::new(
-        [255,255,255,255,255,255,255,255,255,255].as_slice(),
-        [255,255,255,255,255,255,255,255,255,255].as_slice(),
+        [255, 255, 255, 255, 255, 255, 255, 255, 255, 255].as_slice(),
+        [255, 255, 255, 255, 255, 255, 255, 255, 255, 255].as_slice(),
 
         // Picking this option, specifically CS7, for production use is a really bad idea to do but
         // in terms of the encoding process, this option would be the hardest to encode
         &DifferentiatedServices::new(IPPrecedence::CS7, AssuredForwarding::AFx2),
-        ECN::new(true,true),
+        ECN::new(true, true),
         u16::MAX,
         u13::MAX,
         u8::MAX,
         u8::MAX,
         u32::MAX,
-        u32::MAX
+        u32::MAX,
     );
 
     // encode
@@ -53,34 +52,33 @@ pub fn encode_decode() {
 }
 
 
-
 #[test]
 pub fn checksum() {
     let mut x = IPV4::new(
         [].as_slice(),
         [].as_slice(),
         &DifferentiatedServices::new(IPPrecedence::CS2, AssuredForwarding::AFx0),
-        ECN::new(false,false),
+        ECN::new(false, false),
         1,
         u13::new(0),
         64,
         0,
         50,
-        u32::MAX - 1
+        u32::MAX - 1,
     );
 
     // this should be true
-    assert!(x.verify(),"Failed to verify checksum as true!");
+    assert!(x.verify(), "Failed to verify checksum as true!");
 
     // make an unchecked update
     x.protocol = 1;
 
     // this should be false
-    assert!(!x.verify(),"Failed to verify checksum as false!");
+    assert!(!x.verify(), "Failed to verify checksum as false!");
 
     // update checksum
     x.update_checksum();
 
     // this should be true
-    assert!(x.verify(),"Failed to verify checksum as true after update!");
+    assert!(x.verify(), "Failed to verify checksum as true after update!");
 }

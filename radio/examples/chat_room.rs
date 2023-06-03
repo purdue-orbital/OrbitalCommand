@@ -17,9 +17,6 @@ fn main() {
     // This is the thread we read transmissions from asynchronously
     spawn(move || {
 
-        // This will hold message history per a read and remove redundant transmissions
-        let mut hold = Vec::new();
-
         loop {
 
             // Read transmissions
@@ -31,22 +28,12 @@ fn main() {
                 // Turn bytes into a string
                 let check = str::from_utf8(x.as_slice());
 
-                if check.is_ok() {
+                if let Ok(..) = check {
                     let out = check.unwrap().to_string();
 
-                    // check to see if string is in hold
-                    if !hold.contains(&out) {
-
-                        // if not print and add to hold
-                        println!("{}", out.as_str());
-
-                        hold.push(out);
-                    }
+                    println!("{out}")
                 }
             }
-
-            // clear hold for next batch
-            hold.clear();
 
             // Wait for more transmissions
             thread::sleep(Duration::from_secs(1));
@@ -62,14 +49,7 @@ fn main() {
         // Take in user input
         std::io::stdin().read_line(&mut line).unwrap();
 
-        // Radio doesn't yet have the ability to tell frames are incomplete so they just get dropped.
-        // To compensate for now, we just spam transmissions and remove the redundant ones
-        for _ in 0..5 {
-            // preform delay so we don't lose all the packets
-            thread::sleep(Duration::from_millis(100));
-
-            // Send transmission
-            stream.lock().unwrap().transmit(line.as_bytes()).unwrap();
-        }
+        // Send transmission
+        stream.lock().unwrap().transmit(line.as_bytes()).unwrap();
     }
 }

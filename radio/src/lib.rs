@@ -1,25 +1,22 @@
-use std::env::Args;
 use std::sync::{Arc, Mutex};
 use std::thread::spawn;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Error, Result};
 use num_complex::Complex;
-use soapysdr::Device;
 
 use crate::dsp::{Demodulators, Modulators};
 use crate::radio::Radio;
 use crate::streams::{RadioSettings, Rx, Tx};
+use crate::tools::bin_char_arr_to_usize_unchecked;
 
 pub mod dsp;
 mod radio;
 mod tools;
 mod streams;
 
-static TRANSMISSION_SIZE: usize = 100;
-// Maximum number of bytes to transmit per a frame
-static PREAMBLE: [u8; 4] = [16, 32, 64, 128];
-// Start of transmission sequence
-static END: [u8; 4] = [255, 69, 55, 2]; // End of transmission sequence
+/// Transmit at the top of x milliseconds (EX: x == 100, transmit and receive at every 100 milliseconds)
+static TRANSMISSION_SYNC_TIME: usize = 200;
 
 /// u8 array to binary string
 fn u8_to_bin(arr: &[u8]) -> String {
@@ -54,50 +51,73 @@ fn bin_to_u8(bin: &str) -> Vec<u8> {
     to_return
 }
 
+static AMBLE: &str = "101010101011110101110101010101010101010101010101010111111";
 
+/// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
+/// spacecraft and space bound communication
+///
+/// Here is the official standard: https://public.ccsds.org/Pubs/132x0b3.pdf
 pub struct Frame {
-    data: Vec<u8>,
+    //--------------------------------
+    // Transfer Frame Primary Header
+    //--------------------------------
+
+    // 2 bits
+    Version_Number: u8,
+
+    // 10 bits
+    Spacecraft_ID: u16,
+
+    // 3 bits
+    Virtual_Channel_ID: u8,
+
+    // 1 bits
+    OCF: bool,
+
+    // 8 bits
+    Master_Frame_Count: u8,
+
+    // 8 bits
+    Virtual_Frame_Count: u8,
+
+    // 16 bits
+    Data_Status: u16,
+
+
+    //--------------------------------
+    // Main body
+    //--------------------------------
+
+    data:Vec<u8>
+
 }
 
 impl Frame {
     pub fn new(bytes: &[u8]) -> Frame {
-
-        // Ensure transmission size
-        //assert!(bytes.len() <= TRANSMISSION_SIZE);
-
-        Frame { data: Vec::from(bytes) }
+        Frame { Version_Number: 0, Spacecraft_ID: 0, Virtual_Channel_ID: 0, OCF: false, Master_Frame_Count: 0, Virtual_Frame_Count: 0, Data_Status: 0, data: bytes.to_vec()}
     }
 
-    /// Turn a string into frame segments if any
+    /// Turn a string into frame segments (if any)
     pub fn from(data: &str) -> Vec<Frame>
     {
         // Create return vector
         let mut to_return = Vec::new();
 
-        // Make the preamble and post-amble bytes into binary strings
-        let pre = u8_to_bin(PREAMBLE.clone().as_mut_slice());
-        let post = u8_to_bin(END.clone().as_mut_slice());
+        // remove "ambles"
+        let clear = data.split(AMBLE).collect::<Vec<&str>>();
 
-        let part_1: Vec<&str> = data.split(pre.as_str()).collect();
-
-        for x in part_1 {
-            let test: Vec<&str> = x.split(post.as_str()).collect();
-
-            if test.len() == 2 {
-                to_return.push(Frame::new(bin_to_u8(test[0]).as_mut_slice()));
-            }
+        for x in (1..clear.len()).step_by(2){
+            to_return.push( Frame { Version_Number: 0, Spacecraft_ID: 0, Virtual_Channel_ID: 0, OCF: false, Master_Frame_Count: 0, Virtual_Frame_Count: 0, Data_Status: 0, data: bin_to_u8(clear[x])});
         }
-
 
         to_return
     }
 
     pub fn assemble(&self) -> String {
-        let pre = u8_to_bin(PREAMBLE.clone().as_mut_slice());
-        let body = u8_to_bin(self.data.clone().as_mut_slice());
-        let post = u8_to_bin(END.clone().as_mut_slice());
 
-        format!("{pre}{body}{post}")
+        let bin = u8_to_bin(self.data.as_slice());
+
+        format!("{AMBLE}{bin}{AMBLE}")
     }
 }
 
@@ -151,11 +171,15 @@ impl RadioStream {
 
             // rx loop
             loop {
-                let signal = rx_stream.fetch((set.clone().sample_rate * 0.5) as usize).expect("Reading stream");
+
+                // // Wait till time to listen
+                while SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() % TRANSMISSION_SYNC_TIME as u128 != 0{
+
+                }
+
+                let signal = rx_stream.fetch((set.clone().sample_rate * 0.2) as usize).expect("Reading stream");
 
                 let demod = instance.ask(signal);
-
-                //println!("{demod}");
 
                 let mut data = buffer.lock().unwrap();
                 *data = format!("{}{}", *data, demod);
@@ -169,21 +193,20 @@ impl RadioStream {
     /// This will transmit binary data to the radio
     pub fn transmit(&mut self, data: &[u8]) -> Result<()> {
 
-        // Break bytes into multiple frames if needed
-        let arr = data.chunks(TRANSMISSION_SIZE - 1);
+        // Wait till time to transmit
+        while SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() % TRANSMISSION_SYNC_TIME as u128 != 0{
 
-        // Go through each chunk and transmit
-        for x in arr {
+        }
 
-            // bytes into frames
-            let frame = Frame::new(x);
+        // add layer 2 data (frame header and trailer)
+        let frame = Frame::new(data);
 
-            // Modulate
-            let signal = self.modulation.ask(frame.assemble().as_str());
+        // Modulate
+        let signal = self.modulation.ask(frame.assemble().as_str());
 
             // Send
-            self.tx_stream.send(signal.as_slice()).unwrap();
-        }
+        self.tx_stream.send(signal.as_slice()).unwrap();
+
 
         Ok(())
     }
@@ -200,7 +223,7 @@ impl RadioStream {
         let mut to_return = Vec::new();
 
         for x in arr {
-            to_return.push(x.data);
+            to_return.push(x.data)
         }
 
         // Clear buffer
@@ -260,6 +283,27 @@ impl Benchy {
     {
         self.demodulation.lock().unwrap().mfsk(arr)
     }
+
+    // BPSK
+    pub fn mod_bpsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    {
+        self.modulation.lock().unwrap().bpsk(bin)
+    }
+    pub fn demod_bpsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    {
+        self.demodulation.lock().unwrap().bpsk(arr)
+    }
+
+    // QPSK
+    pub fn mod_qpsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    {
+        self.modulation.lock().unwrap().qpsk(bin)
+    }
+    pub fn demod_qpsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    {
+        self.demodulation.lock().unwrap().qpsk(arr)
+    }
+
 }
 
 
@@ -309,4 +353,25 @@ impl Testy {
     {
         self.demodulation.lock().unwrap().mfsk(arr)
     }
+
+    // BPSK
+    pub fn mod_bpsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    {
+        self.modulation.lock().unwrap().bpsk(bin)
+    }
+    pub fn demod_bpsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    {
+        self.demodulation.lock().unwrap().bpsk(arr)
+    }
+
+    // QPSK
+    pub fn mod_qpsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    {
+        self.modulation.lock().unwrap().qpsk(bin)
+    }
+    pub fn demod_qpsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    {
+        self.demodulation.lock().unwrap().qpsk(arr)
+    }
+
 }

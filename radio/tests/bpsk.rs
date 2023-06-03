@@ -43,19 +43,20 @@ impl Default for TestData {
     fn default() -> Self {
         let mut instance = Testy::new();
         instance.update(SAMPLE_RATE, BAUD_RATE);
+
         TestData {
-            signal_1byte: instance.mod_fsk(BYTE_1),
-            signal_2bytes: instance.mod_fsk(BYTES_2),
-            signal_4bytes: instance.mod_fsk(BYTES_4),
-            signal_8bytes: instance.mod_fsk(BYTES_8),
-            signal_16bytes: instance.mod_fsk(BYTES_16),
-            signal_32bytes: instance.mod_fsk(BYTES_32),
-            signal_64bytes: instance.mod_fsk(BYTES_64),
-            signal_128bytes: instance.mod_fsk(BYTES_128),
-            signal_256bytes: instance.mod_fsk(BYTES_256),
-            signal_512bytes: instance.mod_fsk(BYTES_512),
-            signal_1024bytes: instance.mod_fsk(BYTES_1024),
-            signal_2048bytes: instance.mod_fsk(BYTES_2048),
+            signal_1byte: instance.mod_bpsk(BYTE_1),
+            signal_2bytes: instance.mod_bpsk(BYTES_2),
+            signal_4bytes: instance.mod_bpsk(BYTES_4),
+            signal_8bytes: instance.mod_bpsk(BYTES_8),
+            signal_16bytes: instance.mod_bpsk(BYTES_16),
+            signal_32bytes: instance.mod_bpsk(BYTES_32),
+            signal_64bytes: instance.mod_bpsk(BYTES_64),
+            signal_128bytes: instance.mod_bpsk(BYTES_128),
+            signal_256bytes: instance.mod_bpsk(BYTES_256),
+            signal_512bytes: instance.mod_bpsk(BYTES_512),
+            signal_1024bytes: instance.mod_bpsk(BYTES_1024),
+            signal_2048bytes: instance.mod_bpsk(BYTES_2048),
             instance,
         }
     }
@@ -67,8 +68,8 @@ lazy_static! {
 
 
 #[test]
-pub fn fsk_byte_1() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_1byte.clone());
+pub fn bpsk_byte_1() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_1byte.clone());
 
     let expected = BYTE_1;
 
@@ -76,7 +77,7 @@ pub fn fsk_byte_1() {
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 1 Byte of Data.\
+        "Testing bpsk With 1 Byte of Data.\
             Expected: {}\
             Got: {}",
         expected,
@@ -86,8 +87,8 @@ pub fn fsk_byte_1() {
 
 
 #[test]
-pub fn fsk_byte_2() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_2bytes.clone());
+pub fn bpsk_byte_2() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_2bytes.clone());
 
     let expected = BYTES_2;
 
@@ -95,7 +96,7 @@ pub fn fsk_byte_2() {
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 2 Bytes of Data.\
+        "Testing bpsk With 2 Bytes of Data.\
             Expected: {}\
             Got: {}",
         expected,
@@ -104,8 +105,8 @@ pub fn fsk_byte_2() {
 }
 
 #[test]
-pub fn fsk_byte_4() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_4bytes.clone());
+pub fn bpsk_byte_4() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_4bytes.clone());
 
     let expected = BYTES_4;
 
@@ -113,7 +114,7 @@ pub fn fsk_byte_4() {
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 4 Bytes of Data.\
+        "Testing bpsk With 4 Bytes of Data.\
             Expected: {}\
             Got: {}",
         expected,
@@ -122,8 +123,8 @@ pub fn fsk_byte_4() {
 }
 
 #[test]
-pub fn fsk_byte_8() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_8bytes.clone());
+pub fn bpsk_byte_8() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_8bytes.clone());
 
     let expected = BYTES_8;
 
@@ -131,7 +132,7 @@ pub fn fsk_byte_8() {
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 8 Bytes of Data.\
+        "Testing bpsk With 8 Bytes of Data.\
             Expected: {}\
             Got: {}",
         expected,
@@ -140,8 +141,8 @@ pub fn fsk_byte_8() {
 }
 
 #[test]
-pub fn fsk_byte_16() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_16bytes.clone());
+pub fn bpsk_byte_16() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_16bytes.clone());
 
     let expected = BYTES_16;
 
@@ -149,7 +150,7 @@ pub fn fsk_byte_16() {
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 16 Bytes of Data.\
+        "Testing bpsk With 16 Bytes of Data.\
             Expected: {}\
             Got: {}",
         expected,
@@ -158,15 +159,16 @@ pub fn fsk_byte_16() {
 }
 
 #[test]
-pub fn fsk_byte_32() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_32bytes.clone());
+pub fn bpsk_byte_32() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_32bytes.clone());
 
     let expected = BYTES_32;
+
 
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 32 Bytes of Data.\
+        "Testing bpsk With 32 Bytes of Data.\
             Expected: {}\
             Got: {}",
         expected,
@@ -175,8 +177,8 @@ pub fn fsk_byte_32() {
 }
 
 #[test]
-pub fn fsk_byte_64() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_64bytes.clone());
+pub fn bpsk_byte_64() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_64bytes.clone());
 
     let expected = BYTES_64;
 
@@ -184,7 +186,7 @@ pub fn fsk_byte_64() {
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 64 Bytes of Data.\
+        "Testing bpsk With 64 Bytes of Data.\
             Expected: {}\
             Got: {}",
         expected,
@@ -193,8 +195,8 @@ pub fn fsk_byte_64() {
 }
 
 #[test]
-pub fn fsk_byte_128() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_128bytes.clone());
+pub fn bpsk_byte_128() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_128bytes.clone());
 
     let expected = BYTES_128;
 
@@ -202,7 +204,7 @@ pub fn fsk_byte_128() {
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 128 Bytes of Data.\
+        "Testing bpsk With 128 Bytes of Data.\
             Expected: {}\
             Got: {}",
         expected,
@@ -211,8 +213,8 @@ pub fn fsk_byte_128() {
 }
 
 #[test]
-pub fn fsk_byte_256() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_256bytes.clone());
+pub fn bpsk_byte_256() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_256bytes.clone());
 
     let expected = BYTES_256;
 
@@ -220,7 +222,7 @@ pub fn fsk_byte_256() {
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 256 Bytes of Data.\
+        "Testing bpsk With 256 Bytes of Data.\
             Expected: {}\
             Got: {}",
         expected,
@@ -229,8 +231,8 @@ pub fn fsk_byte_256() {
 }
 
 #[test]
-pub fn fsk_byte_512() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_512bytes.clone());
+pub fn bpsk_byte_512() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_512bytes.clone());
 
     let expected = BYTES_512;
 
@@ -238,7 +240,7 @@ pub fn fsk_byte_512() {
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 512 Bytes of Data.\
+        "Testing bpsk With 512 Bytes of Data.\
             Expected: {}\
             Got: {}",
         expected,
@@ -247,8 +249,8 @@ pub fn fsk_byte_512() {
 }
 
 #[test]
-pub fn fsk_byte_1024() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_1024bytes.clone());
+pub fn bpsk_byte_1024() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_1024bytes.clone());
 
     let expected = BYTES_1024;
 
@@ -256,7 +258,7 @@ pub fn fsk_byte_1024() {
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 1024 Bytes of Data.\
+        "Testing bpsk With 1024 Bytes of Data.\
             Expected: {}\
             Got: {}",
         expected,
@@ -265,8 +267,8 @@ pub fn fsk_byte_1024() {
 }
 
 #[test]
-pub fn fsk_byte_2048() {
-    let test = DATA.clone().instance.demod_fsk(DATA.signal_2048bytes.clone());
+pub fn bpsk_byte_2048() {
+    let test = DATA.clone().instance.demod_bpsk(DATA.signal_2048bytes.clone());
 
     let expected = BYTES_2048;
 
@@ -274,7 +276,7 @@ pub fn fsk_byte_2048() {
     assert_eq!(
         test,
         expected,
-        "Testing fsk With 2048 Bytes of Data.\
+        "Testing bpsk With 2048 Bytes of Data.\
             Expected: {}\
             Got: {}",
         expected,

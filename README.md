@@ -34,7 +34,7 @@ cargo bench --features ask --manifest-path=radio/Cargo.toml
 Result:
 ```
 Mod 2048 Bytes:  [269.31 µs, 271.27 µs, 273.32 µs]
-Demod 2048 Bytes:  [2.3152 ms 2.3168 ms 2.3187 ms]
+Demod 2048 Bytes:  [1.5399 ms 1.5415 ms 1.5433 ms]
 ```
 
 #### FSK
@@ -45,7 +45,7 @@ cargo bench --features fsk --manifest-path=radio/Cargo.toml
 Result:
 ```
 Mod 2048 Bytes:  [1.2463 ms, 1.2528 ms, 1.2596 ms]
-Demod 2048 Bytes:  [11.239 ms, 11.242 ms, 11.245 ms]
+Demod 2048 Bytes:  [5.0906 ms 5.1181 ms 5.1592 ms]
 ```
 
 #### MFSK-8
@@ -58,6 +58,29 @@ Result:
 Mod 2048 Bytes:  [7.0469 ms, 7.0577 ms, 7.0683 ms]
 Demod 2048 Bytes:  [8.9959 ms, 8.9997 ms, 9.0036 ms]
 ```
+
+#### BPSK
+To Run:
+```shell
+cargo bench --features bpsk --manifest-path=radio/Cargo.toml
+```
+Result:
+```
+Mod 2048 Bytes:  [5.1202 ms 5.1264 ms 5.1342 ms]
+Demod 2048 Bytes:  [8.5702 ms 9.5472 ms 10.642 ms]
+```
+
+#### QPSK
+To Run:
+```shell
+cargo bench --features qpsk --manifest-path=radio/Cargo.toml
+```
+Result:
+```
+Mod 2048 Bytes:  [6.8521 ms 7.3044 ms 7.7264 ms]
+Demod 2048 Bytes:  [5.1894 ms 5.8040 ms 6.4660 ms]
+```
+
 
 ## Testing
 

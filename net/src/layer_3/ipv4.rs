@@ -1,24 +1,25 @@
-use std::{fmt, vec};
-use std::fmt::Formatter;
-use anyhow::{bail, Result};
-use ux::{u13, u2, u3, u4, u6};
-use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
-
 extern crate num;
 
+use std::{fmt, vec};
+use std::fmt::Formatter;
+
+use anyhow::{bail, Result};
+use ux::{u13, u2, u3, u4, u6};
+
+use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
 
 
 /// IPv4 IP address object
-pub struct Address{
-    field1:u8,
-    field2:u8,
-    field3:u8,
-    field4:u8,
+pub struct Address {
+    field1: u8,
+    field2: u8,
+    field3: u8,
+    field4: u8,
 }
 
-impl Address{
+impl Address {
     /// Convert string to IP address
-    pub fn from_str(input:&str) -> Result<Address>{
+    pub fn from_str(input: &str) -> Result<Address> {
         let arr = input.split('.').collect::<Vec<&str>>();
 
         // Ensure at least 4 fields are present
@@ -26,22 +27,22 @@ impl Address{
             bail!("Invalid IP input")
         }
 
-        Ok(Address{ field1: arr[0].parse()?, field2: arr[1].parse()?, field3: arr[2].parse()?, field4: arr[3].parse()?})
+        Ok(Address { field1: arr[0].parse()?, field2: arr[1].parse()?, field3: arr[2].parse()?, field4: arr[3].parse()? })
     }
 
     /// Create ipv4 address
-    pub fn new(field1:u8,field2:u8,field3:u8,field4:u8) -> Address {
-        Address{field1,field2,field3,field4}
+    pub fn new(field1: u8, field2: u8, field3: u8, field4: u8) -> Address {
+        Address { field1, field2, field3, field4 }
     }
 
     /// Convert address to a u32 value
-    pub fn encode(&self) -> u32{
+    pub fn encode(&self) -> u32 {
         (self.field1 as u32) << 24 | (self.field2 as u32) << 16 | (self.field3 as u32) << 8 | (self.field4 as u32)
     }
 
     /// Take a u32 and return an address object
-    pub fn decode(input:u32) -> Address {
-        Address{
+    pub fn decode(input: u32) -> Address {
+        Address {
             field1: (input >> 24) as u8,
             field2: (input >> 16) as u8,
             field3: (input >> 8) as u8,
@@ -51,9 +52,9 @@ impl Address{
 }
 
 /// make a clean version to represent an address
-impl fmt::Display for Address{
+impl fmt::Display for Address {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}.{}.{}.{}",self.field1,self.field2,self.field3,self.field4)
+        write!(f, "{}.{}.{}.{}", self.field1, self.field2, self.field3, self.field4)
     }
 }
 
@@ -62,13 +63,13 @@ impl fmt::Display for Address{
 /// packet will just be dropped
 pub struct Flags {
     /// This value is currently not in use and can just be ignored
-    reserved:bool,
+    reserved: bool,
 
     /// This is set if this packet should not be broken up
-    dont_fragment:bool,
+    dont_fragment: bool,
 
     /// This is set if the packet is too large and needs to broken up more
-    more_fragment:bool,
+    more_fragment: bool,
 }
 
 /// Explicit Congestion Notification (ECN) is a much more recent addition to IPV4 and is not fully
@@ -84,8 +85,8 @@ pub struct ECN {
 
 impl ECN {
     /// Create ECN
-    pub fn new(enabled:bool, congested:bool) -> ECN {
-        ECN{enabled, congested}
+    pub fn new(enabled: bool, congested: bool) -> ECN {
+        ECN { enabled, congested }
     }
 
     pub fn is_enabled(&self) -> bool {
@@ -100,8 +101,8 @@ impl ECN {
         u2::new((2 * self.enabled as u8) + (self.congested as u8))
     }
 
-    pub fn decode(input:u2) -> ECN {
-        ECN{enabled: input > u2::new(2), congested: u32::from(input) % 2 == 1}
+    pub fn decode(input: u2) -> ECN {
+        ECN { enabled: input > u2::new(2), congested: u32::from(input) % 2 == 1 }
     }
 }
 
@@ -136,11 +137,11 @@ pub enum AssuredForwarding {
 #[derive(Clone, Copy, FromPrimitive, Debug)]
 pub enum IPPrecedence {
     /// "Default" setting - Used for standard traffic.
-    DF ,
+    DF,
 
     /// Priority - Data that, if given the choice, should have priority. It's recommended
     /// this to be used for the FTP or SMB protocols for file transfers
-    CS1 ,
+    CS1,
 
     /// Immediate - This is given higher precedence in transmission. It's recommended to use
     /// this level for ssh, ping, or syslog transmissions
@@ -182,23 +183,23 @@ pub struct DifferentiatedServices {
     assured_forwarding: AssuredForwarding,
 }
 
-impl DifferentiatedServices{
-    pub fn new(ip_precedence:IPPrecedence, assured_forwarding:AssuredForwarding) -> DifferentiatedServices {
-        DifferentiatedServices {ip_precedence, assured_forwarding}
+impl DifferentiatedServices {
+    pub fn new(ip_precedence: IPPrecedence, assured_forwarding: AssuredForwarding) -> DifferentiatedServices {
+        DifferentiatedServices { ip_precedence, assured_forwarding }
     }
 
-    pub fn encode(&self) -> u6{
+    pub fn encode(&self) -> u6 {
         u6::new((8 * self.ip_precedence as u8) + (2 * self.assured_forwarding as u8))
     }
 
-    pub fn decode(input:u6) -> DifferentiatedServices {
-        DifferentiatedServices{
+    pub fn decode(input: u6) -> DifferentiatedServices {
+        DifferentiatedServices {
             ip_precedence: num::FromPrimitive::from_u8(u8::from(input) / 8).unwrap(),
-            assured_forwarding: num::FromPrimitive::from_u8((u8::from(input) % 8) / 2).unwrap()
+            assured_forwarding: num::FromPrimitive::from_u8((u8::from(input) % 8) / 2).unwrap(),
         }
     }
 
-    pub fn get_ip_precedence(&self) -> IPPrecedence{
+    pub fn get_ip_precedence(&self) -> IPPrecedence {
         self.ip_precedence
     }
 
@@ -227,9 +228,9 @@ pub struct IPV4 {
 }
 
 /// Default implementation of IPV4
-impl Default for IPV4{
+impl Default for IPV4 {
     fn default() -> Self {
-        IPV4{
+        IPV4 {
             version: u4::new(4),
             internet_header_length: Default::default(),
             differentiated_services_code_point: Default::default(),
@@ -244,14 +245,13 @@ impl Default for IPV4{
             source_ip_address: 0,
             destination_ip_address: 0,
             option: vec![],
-            data: vec![]
+            data: vec![],
         }
     }
 }
 
 /// Functions for IPV4 to use
 impl IPV4 {
-
     /// Calculate checksum
     pub fn calc_checksum(&self) -> u16 {
         // get encoded header only
@@ -269,7 +269,7 @@ impl IPV4 {
     }
 
     /// verify header with checksum
-    pub fn verify(&self) -> bool{
+    pub fn verify(&self) -> bool {
         // get encoded header only
         let arr = self.encode(true);
 
@@ -282,17 +282,17 @@ impl IPV4 {
 
     #[warn(clippy::too_many_arguments)]
     pub fn new(
-        data:&[u8],
-        options:&[u8],
-        differentiated_services:&DifferentiatedServices,
-        ecn:ECN,
-        identification:u16,
-        fragment_offset:u13,
-        time_to_live:u8,
-        protocol:u8,
-        source_ip_address:u32,
-        destination_ip_address:u32
-    ) -> IPV4{
+        data: &[u8],
+        options: &[u8],
+        differentiated_services: &DifferentiatedServices,
+        ecn: ECN,
+        identification: u16,
+        fragment_offset: u13,
+        time_to_live: u8,
+        protocol: u8,
+        source_ip_address: u32,
+        destination_ip_address: u32,
+    ) -> IPV4 {
         // Create ipv4
         let mut to_return = IPV4::default();
 
@@ -334,25 +334,25 @@ impl IPV4 {
     }
 
     /// Update the packet checksum
-    pub fn update_checksum(&mut self){
+    pub fn update_checksum(&mut self) {
         self.header_checksum = self.calc_checksum();
     }
 
-    pub fn set_data(&mut self,data: &[u8] ){
+    pub fn set_data(&mut self, data: &[u8]) {
         self.total_length = (u16::from(self.internet_header_length) * 4) + data.len() as u16;
         self.data = data.to_vec();
     }
 
 
-    pub fn get_data(&self) -> Vec<u8>{
+    pub fn get_data(&self) -> Vec<u8> {
         self.data.clone()
     }
 
     /// Encodes the values set in the IPV4 header into bytes (for transmission)
-    pub fn encode(&self,ignore_data:bool) -> Vec<u8>{
+    pub fn encode(&self, ignore_data: bool) -> Vec<u8> {
 
         // Convert each section into a u8
-        let mut to_return = vec!{
+        let mut to_return = vec! {
             (u8::from(self.version) << 4) | (u8::from(self.internet_header_length)),
             u8::from(self.differentiated_services_code_point) << 2 | u8::from(self.explicit_congestion_notification),
             (self.total_length >> 8) as u8,
@@ -365,12 +365,10 @@ impl IPV4 {
             self.protocol,
             (self.header_checksum >> 8) as u8,
             self.header_checksum as u8,
-
             (self.source_ip_address >> 24) as u8,
             (self.source_ip_address >> 16) as u8,
             (self.source_ip_address >> 8) as u8,
             self.source_ip_address as u8,
-
             (self.destination_ip_address >> 24) as u8,
             (self.destination_ip_address >> 16) as u8,
             (self.destination_ip_address >> 8) as u8,
@@ -386,13 +384,12 @@ impl IPV4 {
         to_return
     }
 
-    pub fn decode(arr:&[u8]) -> IPV4 {
-
+    pub fn decode(arr: &[u8]) -> IPV4 {
         let total_length = ((arr[2] as u16) << 8) | (arr[3] as u16);
-        let internet_header_length =  u4::new((arr[0] << 4) >> 4); // Who said hacks are bad?
+        let internet_header_length = u4::new((arr[0] << 4) >> 4); // Who said hacks are bad?
 
         // Scary looking bit manipulations
-        IPV4{
+        IPV4 {
             version: u4::new(4),
             internet_header_length,
             differentiated_services_code_point: u6::new(arr[1] >> 2),
