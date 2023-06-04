@@ -151,10 +151,17 @@ pub fn sum_with_carries(to_sum: &[u16]) -> u16 {
 
 /// Convert an array of u8s to an array of u16s
 pub fn u8_arr_to_u16_arr(arr: &[u8]) -> Vec<u16> {
-    let mut to_return = Vec::with_capacity(arr.len() / 2);
+    let mut new_arr = arr.to_vec();
 
-    for x in (1..arr.len()).step_by(2) {
-        to_return.push(((arr[x - 1] as u16) << 8) | (arr[x] as u16))
+    // pad out array if needed
+    if arr.len() % 2 == 1 {
+        new_arr.push(0);
+    }
+
+    let mut to_return = Vec::with_capacity(new_arr.len() / 2);
+
+    for x in (1..new_arr.len()).step_by(2) {
+        to_return.push(((new_arr[x - 1] as u16) << 8) | (new_arr[x] as u16))
     }
 
     to_return

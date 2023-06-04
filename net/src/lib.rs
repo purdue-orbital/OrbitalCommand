@@ -20,6 +20,11 @@ pub mod layer_3 {
     pub mod icmp;
 }
 
+pub mod layer_4 {
+    pub mod udp;
+    pub mod tcp;
+}
+
 /// These are possible interfaces that could be present on a device
 #[derive(PartialEq)]
 #[derive(Clone, Copy)]
@@ -184,9 +189,14 @@ impl NetworkStream {
 
             self.mtu.clone()
         } else {
-
             // Handle if SDR is preferred
-            self.device.radio.lock().unwrap().as_mut().unwrap().read().expect("Error trying to send data through SDR")
+            let out = self.device.radio.lock().unwrap().as_mut().unwrap().read().expect("Error trying to send data through SDR");
+
+            if !out.is_empty() {
+                out[0].clone()
+            } else {
+                Vec::new()
+            }
         }
     }
 }

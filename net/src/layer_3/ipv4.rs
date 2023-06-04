@@ -8,7 +8,6 @@ use ux::{u13, u2, u3, u4, u6};
 
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
 
-
 /// IPv4 IP address object
 pub struct Address {
     field1: u8,
