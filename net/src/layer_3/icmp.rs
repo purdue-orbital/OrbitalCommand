@@ -1,4 +1,5 @@
 use ux::u13;
+use anyhow::{Result, Error};
 
 use crate::layer_3::ipv4::{Address, DifferentiatedServices, ECN, IPPrecedence, IPV4};
 use crate::layer_3::ipv4::AssuredForwarding::{AFx0, AFx2};
@@ -145,6 +146,7 @@ impl ICMPv4 {
 
     pub fn update_checksum(&mut self) {
         self.checksum = self.calc_checksum();
+        self.header.update_checksum()
     }
 
     /// Verify the packet with the checksum
@@ -156,7 +158,7 @@ impl ICMPv4 {
         let arr = u8_arr_to_u16_arr(encoded.as_slice());
 
         // calculate and return the one's complement
-        sum_with_carries(arr.as_slice()) == 65535
+        sum_with_carries(arr.as_slice()) == 65535 && self.header.verify()
     }
 
     // encode icmp
@@ -186,10 +188,19 @@ impl ICMPv4 {
     }
 
     /// Decode an array of u8 into a ICMP packet
-    pub fn decode(input: &[u8]) -> ICMPv4 {
-        let ipv4 = IPV4::decode(input);
+    pub fn decode(input: &[u8]) -> Result<ICMPv4> {
+        // Decode packet
+        let ipv4 = IPV4::decode(input)?;
+
+        // Get data
         let data: Vec<u8> = ipv4.get_data();
 
+        // Ensure data integrity
+        if data.len() <= 8{
+            return Err(Error::msg("Packet too short for ICMP!"))
+        }
+
+        Ok(
         ICMPv4 {
             header: ipv4,
             message_type: data[0],
@@ -197,6 +208,6 @@ impl ICMPv4 {
             checksum: (data[2] as u16) << 8 | data[3] as u16,
             rest_of_header: (data[4] as u32) << 24 | (data[5] as u32) << 16 | (data[6] as u32) << 8 | data[7] as u32,
             data: data[8..].to_vec(),
-        }
+        })
     }
 }

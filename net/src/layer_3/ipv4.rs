@@ -3,7 +3,7 @@ extern crate num;
 use std::{fmt, vec};
 use std::fmt::Formatter;
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Error, Result};
 use ux::{u13, u2, u3, u4, u6};
 
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
@@ -383,12 +383,20 @@ impl IPV4 {
         to_return
     }
 
-    pub fn decode(arr: &[u8]) -> IPV4 {
+    pub fn decode(arr: &[u8]) -> Result<IPV4> {
+
+        // ensure integrity of the input
+        if arr.len() <= 20{
+            return Err(Error::msg("Array not long enough"))
+        }else if arr[0] >> 4 != 4{
+            return Err(Error::msg("Improper format"))
+        }
+
         let total_length = ((arr[2] as u16) << 8) | (arr[3] as u16);
         let internet_header_length = u4::new((arr[0] << 4) >> 4); // Who said hacks are bad?
 
         // Scary looking bit manipulations
-        IPV4 {
+        Ok(IPV4 {
             version: u4::new(4),
             internet_header_length,
             differentiated_services_code_point: u6::new(arr[1] >> 2),
@@ -396,7 +404,7 @@ impl IPV4 {
             total_length,
             identification: ((arr[4] as u16) << 8) | (arr[5] as u16),
             flags: u3::new(arr[6] >> 5),
-            fragment_offset: u13::new(((arr[6] as u16) << 8) | (arr[7] as u16)),
+            fragment_offset: u13::new((((arr[6] as u16) << 11 ) >> 3) | (arr[7] as u16)),
             time_to_live: arr[8],
             protocol: arr[9],
             header_checksum: (arr[10] as u16) << 8 | (arr[11] as u16),
@@ -404,6 +412,6 @@ impl IPV4 {
             destination_ip_address: (arr[16] as u32) << 24 | (arr[17] as u32) << 16 | (arr[18] as u32) << 8 | (arr[19] as u32),
             option: arr[20..(u8::from(internet_header_length) * 4) as usize].to_vec(),
             data: arr[(u8::from(internet_header_length) * 4) as usize..total_length as usize].to_vec(),
-        }
+        })
     }
 }

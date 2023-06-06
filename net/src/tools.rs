@@ -1,4 +1,5 @@
 use std::num::Wrapping;
+use std::process::Command;
 use std::str::Chars;
 
 /// Subtract values with the value to their left. This will remove 1 element from the array size
@@ -162,6 +163,28 @@ pub fn u8_arr_to_u16_arr(arr: &[u8]) -> Vec<u16> {
 
     for x in (1..new_arr.len()).step_by(2) {
         to_return.push(((new_arr[x - 1] as u16) << 8) | (new_arr[x] as u16))
+    }
+
+    to_return
+}
+
+/// Run multiple commands seperated by enter keys on the system
+pub fn run_commands(command: &str) -> String {
+
+    // breakup commands
+    let brokenup = command.split('\n').map(|b| { b.split(' ').collect::<Vec<&str>>() }).collect::<Vec<Vec<&str>>>();
+
+    let mut to_return = String::new();
+
+    // Run command
+    for x in brokenup {
+        if x.len() > 1 {
+            let op = Command::new(x[0]).args(&x[1..]).output().unwrap();
+
+            let output = String::from_utf8_lossy(&op.stdout);
+
+            to_return.push_str(&output);
+        }
     }
 
     to_return

@@ -1,4 +1,5 @@
 use ux::u13;
+use anyhow::{Result, Error};
 
 use crate::layer_3::ipv4::{Address, AssuredForwarding, DifferentiatedServices, ECN, IPPrecedence, IPV4};
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
@@ -146,17 +147,25 @@ impl UDPv4 {
     }
 
     /// decode an array of u8s into an UDP packet
-    pub fn decode(arr: &[u8]) -> UDPv4 {
-        let ipv4 = IPV4::decode(arr);
+    pub fn decode(arr: &[u8]) -> Result<UDPv4> {
+        // decode into ipv4
+        let ipv4 = IPV4::decode(arr)?;
+
+        // get data
         let data = ipv4.get_data();
 
-        UDPv4 {
+        // ensure data integrity
+        if data.len() <= 8{
+            return Err(Error::msg("Packet too short for UDP!"))
+        }
+
+        Ok(UDPv4 {
             ipv4,
             src_port: ((data[0] as u16) << 8) | data[1] as u16,
             dst_port: ((data[2] as u16) << 8) | data[3] as u16,
             length: ((data[4] as u16) << 8) | data[5] as u16,
             checksum: ((data[6] as u16) << 8) | data[7] as u16,
             data: data[8..].to_vec(),
-        }
+        })
     }
 }

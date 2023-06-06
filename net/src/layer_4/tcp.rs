@@ -1,4 +1,5 @@
 use ux::{u13, u4};
+use anyhow::{Result, Error};
 
 use crate::layer_3::ipv4::{Address, AssuredForwarding, DifferentiatedServices, ECN, Flags, IPPrecedence, IPV4};
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
@@ -252,15 +253,22 @@ impl TCPv4 {
     }
 
     /// decode an array of u8s into an tcp packet
-    pub fn decode(arr: &[u8]) -> TCPv4 {
-        let ipv4 = IPV4::decode(arr);
+    pub fn decode(arr: &[u8]) -> Result<TCPv4> {
+        
+        // decode to ipv4
+        let ipv4 = IPV4::decode(arr)?;
+        
+        // get ipv4 data
         let data = ipv4.get_data();
+        
+        // ensure integrity
+        if data.len() <= 20{
+            return Err(Error::msg("Packet too short for TCP!"))
+        }
 
         let data_offset = u4::new(data[12] >> 4);
-        println!("{data_offset}");
-        println!("{}", data[12]);
 
-        TCPv4 {
+        Ok(TCPv4 {
             ipv4,
             src_port: ((data[0] as u16) << 8) | data[1] as u16,
             dst_port: ((data[2] as u16) << 8) | data[3] as u16,
@@ -281,5 +289,6 @@ impl TCPv4 {
             options: data[20..(u8::from(data_offset) as usize * 4)].to_vec(),
             data: data[(u8::from(data_offset) as usize * 4)..].to_vec(),
         }
+        )
     }
 }

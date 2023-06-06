@@ -1,5 +1,4 @@
 use ux::u13;
-
 use net::layer_3::ipv4::{Address, AssuredForwarding, DifferentiatedServices, ECN, IPPrecedence, IPV4};
 
 #[test]
@@ -42,7 +41,7 @@ pub fn encode_decode() {
     let encode = x.encode(false);
 
     // decode
-    let decode = IPV4::decode(encode.as_slice());
+    let decode = IPV4::decode(encode.as_slice()).unwrap();
 
     // make sure different parts are encoded and decoded properly
     assert_eq!(decode.source_ip_address, x.source_ip_address);
