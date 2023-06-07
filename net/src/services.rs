@@ -1,9 +1,13 @@
+use std::cell::RefCell;
+use std::ops::DerefMut;
+use std::rc::Rc;
+use std::sync::{Arc, Mutex, RwLock};
 use crate::device::Device;
 use crate::layer_3::icmp::{IcmpTypes, ICMPv4};
 use anyhow::{Error, Result};
 
 /// This trait is what allows different services to run on internet ports
-pub trait Service{
+pub trait Service: Send + Sync {
 
     /// **MUST BE THREAD SAFE**
     ///
@@ -18,39 +22,11 @@ pub trait Service{
 }
 
 #[derive(Clone)]
-pub struct Ping {
-    device: Device
+struct PingServer{
+    device: Arc<Mutex<Device>>
 }
 
-impl Ping {
-
-    /// This will create and start a ping instance. (This device will become pingable)
-    pub fn new(device: &mut Device) -> Result<Ping> {
-        let mut out = Ping{device: device.clone()};
-
-        //out.enable();
-
-        Ok(out)
-    }
-
-    /// This will start a ping server (device will become pingable
-    pub fn enable(&mut self){
-        let dont_care = self.device.add_listen_service_without_port(Box::from(self.clone()),1);
-
-        if let Ok(..) = dont_care{
-            dont_care.unwrap();
-        }else{
-            // welp ¯\_(ツ)_/¯
-        }
-    }
-
-    /// This will disable the current ping server
-    pub fn disable(&mut self){
-        self.device.stop_listen_service_without_port(1);
-    }
-}
-
-impl Service for Ping {
+impl Service for PingServer {
     fn run_service(&self, inbound: &[u8]) -> bool {
 
         let mut packet = ICMPv4::decode(inbound).unwrap();
@@ -61,9 +37,29 @@ impl Service for Ping {
 
         packet.update_checksum();
 
-        self.device.iface.lock().unwrap().as_mut().unwrap().send(packet.encode(false).as_slice()).unwrap();
+        self.device.lock().unwrap().iface.read().unwrap().as_ref().unwrap().send(packet.encode(false).as_slice()).unwrap();
 
         false
+    }
+}
+
+pub struct Ping<'a>{
+    device: &'a mut Device,
+}
+
+impl<'a> Ping<'a>{
+    pub fn new(device:&'a mut Device) -> Ping{
+        Ping{device}
+    }
+
+    /// This will start the ping service on the network device (device will become pingable)
+    pub fn enable(&mut self){
+        self.device.add_listen_service_without_port(Box::from(PingServer { device: Arc::new(Mutex::new(self.device.clone())) }), 1).unwrap();
+    }
+
+    /// This will stop the ping service on the network device (device will no longer be pingable)
+    pub fn disable(&mut self){
+        self.device.stop_listen_service_without_port(1);
     }
 }
 

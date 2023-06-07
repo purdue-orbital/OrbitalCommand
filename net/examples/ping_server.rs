@@ -1,7 +1,7 @@
 use std::thread;
 use std::time::Duration;
 use net::device::list_devices;
-use net::services::Ping;
+use net::services::{Ping};
 
 fn main(){
     // Test settings
@@ -11,17 +11,17 @@ fn main(){
     // Create/find a device
     let mut device = list_devices()[0].clone();
 
-    // create ping service
-    let ping = Ping::new(&mut device).unwrap();
-
-    // add service to device
-    device.add_listen_service_without_port(Box::from(ping), 1).unwrap();
-
-    // start device
-    device.initialize();
-
     // set IP and gateway
     device.set_ip(gateway,ip);
+
+    // start device
+    device.start();
+
+    // Make ping instance
+    let mut ping = Ping::new(&mut device);
+
+    // Enable ping
+    ping.enable();
 
     // notify
     println!("Ping service started! Try pinging {ip}!");
