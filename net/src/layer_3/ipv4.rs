@@ -9,6 +9,7 @@ use ux::{u13, u2, u3, u4, u6};
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
 
 /// IPv4 IP address object
+#[derive(Clone)]
 pub struct Address {
     field1: u8,
     field2: u8,
@@ -208,12 +209,13 @@ impl DifferentiatedServices {
 }
 
 /// IPV4 datagram
+#[derive(Clone)]
 pub struct IPV4 {
     version: u4,
     internet_header_length: u4,
     pub differentiated_services_code_point: u6,
     pub explicit_congestion_notification: u2,
-    total_length: u16,
+    pub total_length: u16,
     pub identification: u16,
     pub flags: u3,
     pub fragment_offset: u13,

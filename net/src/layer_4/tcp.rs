@@ -1,7 +1,7 @@
 use ux::{u13, u4};
 use anyhow::{Result, Error};
 
-use crate::layer_3::ipv4::{Address, AssuredForwarding, DifferentiatedServices, ECN, Flags, IPPrecedence, IPV4};
+use crate::layer_3::ipv4::{Address, AssuredForwarding, DifferentiatedServices, ECN, IPPrecedence, IPV4};
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
 
 /// These are flags to specify the specifics of this packet

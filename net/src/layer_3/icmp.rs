@@ -1,8 +1,8 @@
 use ux::u13;
 use anyhow::{Result, Error};
 
-use crate::layer_3::ipv4::{Address, DifferentiatedServices, ECN, IPPrecedence, IPV4};
-use crate::layer_3::ipv4::AssuredForwarding::{AFx0, AFx2};
+use crate::layer_3::ipv4::{Address, DifferentiatedServices, ECN, IPV4};
+use crate::layer_3::ipv4::AssuredForwarding::{AFx0};
 use crate::layer_3::ipv4::IPPrecedence::DF;
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
 
@@ -83,6 +83,7 @@ pub enum IcmpTypes {
 
 /// Internet Control Message Protocol (ICMP) is also sometimes called a "ping" packet. This is the
 /// protocol that is used to help troubleshoot networks and make sure everything is working
+#[derive(Clone)]
 pub struct ICMPv4 {
     /// The header section of this packet
     pub header: IPV4,
@@ -94,7 +95,7 @@ pub struct ICMPv4 {
     /// this isn't uniform what is in here and often acts like the "data" section of the packet
     pub rest_of_header: u32,
 
-    data: Vec<u8>,
+    pub data: Vec<u8>,
 }
 
 impl ICMPv4 {

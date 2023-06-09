@@ -1,9 +1,9 @@
 use std::{vec};
-use std::f32::consts::{E, PI};
+use std::f32::consts::{PI};
 
 use std::sync::Arc;
 
-use num_complex::{Complex, ComplexFloat};
+use num_complex::{Complex};
 use rand::distributions::uniform::SampleBorrow;
 use rand_distr::Distribution;
 use rand_distr::Normal;
@@ -122,7 +122,7 @@ pub struct Windows {}
 
 impl Windows{
     /// Preform rectangular window on a given array
-    pub fn rectangular(arr:&[Complex<f32>], window_len:usize, offset:usize) -> Vec<Complex<f32>>
+    pub fn rectangular(arr:&[Complex<f32>], window_len:usize, _offset:usize) -> Vec<Complex<f32>>
     {
         // create window
         let mut window = Vec::new();
@@ -447,9 +447,9 @@ pub fn generate_sinusoid(frequency: f32, sample_rate: f32, num_samples: i32, sam
 /// * `amplitude_max` - The largest amplitude allowed
 ///
 /// * `points` - The number of points to make for this quadrant
-pub fn generate_quadrants(phase_max:f32, amplitude_max:f32, points:i32, frequency: f32, sample_rate: f32, num_samples: i32) -> Vec<Vec<Complex<f32>>>{
+pub fn generate_quadrants(_phase_max:f32, _amplitude_max:f32, points:i32, _frequency: f32, _sample_rate: f32, _num_samples: i32) -> Vec<Vec<Complex<f32>>>{
 
-    let mut to_return = Vec::with_capacity(points as usize);
+    let to_return = Vec::with_capacity(points as usize);
 
 
 
@@ -631,7 +631,7 @@ impl Modulators {
         let mut to_return = Vec::with_capacity(bin.len() * self.samples_per_symbol);
 
         // for ease of calculation
-        let mut step_size = PI / 4.0;
+        let step_size = PI / 4.0;
 
         for x in (0..bin.len()).step_by(2){
             let val = bin_char_arr_to_usize_unchecked(bin[x..x+2].chars());
@@ -771,11 +771,11 @@ impl Demodulators {
     ///
     /// # Arguments
     /// * `arr` - Array of radio samples to
-    pub fn bpsk(&mut self, mut arr: Vec<Complex<f32>>) -> String
+    pub fn bpsk(&mut self, arr: Vec<Complex<f32>>) -> String
     {
         let mut to_return = String::with_capacity(arr.len() / self.samples_per_symbol);
 
-        let phi = 2.0 * PI * BPSK_FREQUENCY * (1.0 / self.sample_rate);
+        let _phi = 2.0 * PI * BPSK_FREQUENCY * (1.0 / self.sample_rate);
 
 
         for x in (0..arr.len()).step_by(self.samples_per_symbol) {
@@ -808,7 +808,7 @@ impl Demodulators {
     ///
     /// # Arguments
     /// * `arr` - Array of radio samples to
-    pub fn qpsk(&mut self, mut arr: Vec<Complex<f32>>) -> String
+    pub fn qpsk(&mut self, arr: Vec<Complex<f32>>) -> String
     {
         let mut to_return = String::with_capacity(arr.len() / self.samples_per_symbol);
 

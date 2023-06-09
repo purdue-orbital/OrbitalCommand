@@ -12,7 +12,7 @@ fn main(){
     let mut device = list_devices()[0].clone();
 
     // set IP and gateway
-    device.set_ip(gateway,ip);
+    device.set_ip(gateway,ip).unwrap();
 
     // start device
     device.start();

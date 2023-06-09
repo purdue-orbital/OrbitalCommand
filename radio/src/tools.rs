@@ -1,4 +1,3 @@
-
 use std::str::Chars;
 
 /// Subtract values with the value to their left. This will remove 1 element from the array size

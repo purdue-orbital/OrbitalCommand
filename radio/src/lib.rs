@@ -8,7 +8,7 @@ use num_complex::Complex;
 use crate::dsp::{Demodulators, Modulators};
 use crate::radio::Radio;
 use crate::streams::{RadioSettings, Rx, Tx};
-use crate::tools::bin_char_arr_to_usize_unchecked;
+
 
 pub mod dsp;
 mod radio;
@@ -63,25 +63,25 @@ pub struct Frame {
     //--------------------------------
 
     // 2 bits
-    Version_Number: u8,
+    version_number: u8,
 
     // 10 bits
-    Spacecraft_ID: u16,
+    spacecraft_id: u16,
 
     // 3 bits
-    Virtual_Channel_ID: u8,
+    virtual_channel_id: u8,
 
     // 1 bits
-    OCF: bool,
+    ocf: bool,
 
     // 8 bits
-    Master_Frame_Count: u8,
+    master_frame_count: u8,
 
     // 8 bits
-    Virtual_Frame_Count: u8,
+    virtual_frame_count: u8,
 
     // 16 bits
-    Data_Status: u16,
+    data_status: u16,
 
 
     //--------------------------------
@@ -94,7 +94,7 @@ pub struct Frame {
 
 impl Frame {
     pub fn new(bytes: &[u8]) -> Frame {
-        Frame { Version_Number: 0, Spacecraft_ID: 0, Virtual_Channel_ID: 0, OCF: false, Master_Frame_Count: 0, Virtual_Frame_Count: 0, Data_Status: 0, data: bytes.to_vec()}
+        Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bytes.to_vec()}
     }
 
     /// Turn a string into frame segments (if any)
@@ -107,7 +107,7 @@ impl Frame {
         let clear = data.split(AMBLE).collect::<Vec<&str>>();
 
         for x in (1..clear.len()).step_by(2){
-            to_return.push( Frame { Version_Number: 0, Spacecraft_ID: 0, Virtual_Channel_ID: 0, OCF: false, Master_Frame_Count: 0, Virtual_Frame_Count: 0, Data_Status: 0, data: bin_to_u8(clear[x])});
+            to_return.push( Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bin_to_u8(clear[x])});
         }
 
         to_return

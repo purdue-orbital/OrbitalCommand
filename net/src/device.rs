@@ -1,8 +1,6 @@
-use std::sync::{Arc, mpsc, Mutex, RwLock};
-use std::sync::mpsc::Sender;
-use std::thread;
-use std::thread::{JoinHandle, spawn};
-use std::time::Duration;
+use std::sync::{Arc, mpsc, RwLock};
+use std::sync::mpsc::{Receiver, Sender};
+use std::thread::{spawn};
 
 use tun_tap::{Iface, Mode};
 
@@ -12,11 +10,26 @@ use anyhow::{Error, Result};
 
 use crate::interface::Interface;
 use crate::interface::Interface::{ETHER, System, WLAN};
-use crate::layer_3::ipv4::IPV4;
+use crate::layer_3::ipv4::{Address};
 use crate::layer_4::tcp::TCPv4;
 use crate::layer_4::udp::UDPv4;
 use crate::services::Service;
 use crate::tools::run_commands;
+
+fn new_read_thread(iface: Arc<RwLock<Option<Iface>>>) -> Receiver<(usize, [u8; 1500])> {
+    // This is for communicating with the read thread
+    let (thread_tx, thread_rx) = mpsc::channel();
+
+    spawn(move||{
+        let mut mtu = [0; 1500];
+
+        let size = iface.read().unwrap().as_ref().unwrap().recv(mtu.as_mut_slice()).unwrap();
+
+        thread_tx.send((size, mtu))
+    });
+
+    thread_rx
+}
 
 /// This is a instance of a device that can be connected to
 #[derive(Clone)]
@@ -30,12 +43,17 @@ pub struct Device {
     pub name: String,
     pub interface_name: String,
 
+
     //-----------------------------------
     // Internet based information
     //-----------------------------------
 
     pub protocols: Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>,
     pub ports: Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>,
+
+    pub ip_addr: Option<Address>,
+    pub dns_addr: Option<Address>,
+    //pub gateway: Option<Address>,
 
     //-----------------------------------
     // Physical Devices
@@ -69,57 +87,66 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
         tx.send((self.ports.clone(), self.protocols.clone(), self.iface.clone())).unwrap();
         self.tx = Some(tx);
 
-        let mut mtu = [0; 1500];
-        let empty_arr = [0;1500];
-        let empty_vec = Vec::new();
-
-
         // start listen thread
         spawn(move ||{
 
             // Get initial values
+            let empty_vec = Vec::new();
 
             let (mut ports, mut proto, mut iface) = rx.recv().unwrap();
 
+            let mut thread_rx = new_read_thread(iface.clone());
+
             loop {
 
-                // // check for updates on protocols
+                // check for updates on protocols
                 if let Ok(x) = rx.try_recv(){
                     // ide throws an error here but no error actually occurs
                     (ports, proto, iface) = x;
                 }
 
-                let size = iface.read().unwrap().as_ref().unwrap().recv(mtu.as_mut_slice()).unwrap();
-                let buff = if size > 0 {
-                    let hold = mtu[..size].to_vec();
-                    mtu = empty_arr;
-                    hold
-                } else { empty_vec.clone() };
+                // check read channel
+                let buff =
+
+
+                if let Ok(x) = thread_rx.try_recv(){
+
+                    thread_rx = new_read_thread(iface.clone());
+
+                    // return packet
+                    x.1[..x.0].to_vec()
+                }else{
+                    // return nothing by default
+                    empty_vec.clone()
+                };
 
                 // ensure it is a proper IPv4 packet
-                if size > 0 && buff[0] >> 4 == 4 {
+                if !buff.is_empty() && buff[0] >> 4 == 4 {
 
                     // Check protocols (non port numbers)
                     if proto.get(buff[9] as usize).unwrap().read().unwrap().is_some() {
 
                         // run service
-                        proto[buff[9] as usize].read().unwrap().as_ref().unwrap().run_service(buff.as_slice());
+                        if proto[buff[9] as usize].write().unwrap().as_mut().unwrap().run_service(buff.as_slice()){
+                            // service asks to be disabled, disable
+                            proto[buff[9] as usize].write().unwrap().take();
+                        };
 
                         // Check if UDP
                     } else if buff[9] == 17 {
                         let udp = UDPv4::decode(buff.as_slice()).unwrap();
 
                         // ensure port is open
-                        if let Some(x) = ports[udp.dst_port as usize].read().unwrap().as_ref() {
+                        if let Some(x) = ports[udp.dst_port as usize].write().unwrap().as_mut() {
                             x.run_service(buff.as_slice());
                         }
 
-                        // check if tcp
+                        // Check if tcp
                     } else if buff[9] == 6 {
                         let tcp = TCPv4::decode(buff.as_slice()).unwrap();
 
                         // ensure port is open
-                        if let Some(x) = ports[tcp.dst_port as usize].read().unwrap().as_ref()  {
+                        if let Some(x) = ports[tcp.dst_port as usize].write().unwrap().as_mut()  {
                             x.run_service(buff.as_slice());
                         }
                     }
@@ -139,10 +166,14 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
     /// # Parameter(s):
     /// - 'gateway' - this the gateway to all VNICs on this system (EX: 192.168.69.0/24)
     /// - 'ip' - IP address of this device on the VLAN (EX: 192.168.69.1)
-    pub fn set_ip(&self, gateway: &str, ip: &str) {
+    pub fn set_ip(&mut self, gateway: &str, ip: &str) -> Result<()>{
+        self.ip_addr = Some(Address::from_str(ip)?);
+
         let command = format!("ip addr add dev {} local {gateway} remote {ip}", self.name);
 
         run_commands(command.as_str());
+
+        Ok(())
     }
 
     /// Add a new service to listen on a given port number (Event based)
@@ -175,7 +206,7 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
     pub fn stop_listen_service(&mut self, host_port_num:u16){
         if self.ports.get(host_port_num as usize).is_some(){
             // disable port
-            self.ports[host_port_num as usize] = Arc::new(RwLock::from(None));
+            self.ports[host_port_num as usize].write().unwrap().take();
         }
 
         self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.iface.clone())).unwrap();
@@ -213,27 +244,27 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
     pub fn stop_listen_service_without_port(&mut self, protocol_num:u16){
         if self.protocols.get(protocol_num as usize).unwrap().read().unwrap().is_some(){
             // disable listening
-            self.protocols[protocol_num as usize] = Arc::new(RwLock::from(None));
+            self.protocols[protocol_num as usize].write().unwrap().take();
         }
 
         self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.iface.clone())).unwrap();
     }
 
-    /// This will run a service once on startup then listen
-    ///
-    /// # Parameter(s):
-    /// - 'service' - the service that will be run once then be set to listen
-    /// - 'host_port_num' - port to use
-    /// - 'data' - initial data that is passed to service
-    /// # Error(s):
-    /// 1. Returns an error if port is already in use
-    pub fn run_and_listen(&mut self, service: Box<dyn Service + Send>, host_port_num:u16 , data: &[u8]) -> Result<()>{
-        self.add_listen_service(service, host_port_num)?;
-
-        self.ports[host_port_num as usize].read().unwrap().as_ref().unwrap().run_service(data);
-
-        Ok(())
-    }
+    // /// This will run a service once on startup then listen
+    // ///
+    // /// # Parameter(s):
+    // /// - 'service' - the service that will be run once then be set to listen
+    // /// - 'host_port_num' - port to use
+    // /// - 'data' - initial data that is passed to service
+    // /// # Error(s):
+    // /// 1. Returns an error if port is already in use
+    // pub fn run_and_listen(&mut self, service: Box<dyn Service + Send>, host_port_num:u16 , data: &[u8]) -> Result<()>{
+    //     self.add_listen_service(service, host_port_num)?;
+    //
+    //     self.ports[host_port_num as usize].read().unwrap().as_ref().unwrap().run_service(data);
+    //
+    //     Ok(())
+    // }
 }
 
 impl AsRef<Device> for Device {
@@ -293,6 +324,8 @@ pub fn list_devices() -> Vec<Device> {
             protocols: empty.clone(),
             ports: empty.clone(),
 
+            ip_addr: None,
+            dns_addr: None,
             iface: Arc::new(RwLock::new(Some(sys))),
             //radio: Arc::new(RwLock::from(None)),
 
@@ -313,6 +346,8 @@ pub fn list_devices() -> Vec<Device> {
             protocols: empty.clone(),
             ports: empty.clone(),
 
+            ip_addr: None,
+            dns_addr: None,
             iface: Arc::new(RwLock::new(None)),
             //radio: Arc::new(RwLock::from(Option::from(sdr.unwrap()))),
 
