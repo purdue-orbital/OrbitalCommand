@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 use std::thread::spawn;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -51,7 +51,7 @@ fn bin_to_u8(bin: &str) -> Vec<u8> {
     to_return
 }
 
-static AMBLE: &str = "101010101011110101110101010101010101010101010101010111111";
+static AMBLE: &str = "101010101011110101010101010111111";
 
 /// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
 /// spacecraft and space bound communication
@@ -124,7 +124,7 @@ impl Frame {
 pub struct RadioStream {
     tx_stream: Tx,
     modulation: Modulators,
-    rx_buffer: Arc<Mutex<String>>,
+    rx_buffer: Arc<RwLock<String>>,
     settings: RadioSettings,
 }
 
@@ -142,18 +142,18 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-            sample_rate: 1e5,
+            sample_rate: 2e6,
             lo_frequency: 916e6,
             lpf_filter: 0.0,
             channels_in_use: 0,
             gain: 50.0,
             radio,
-            baud_rate: 1e4,
+            baud_rate: 2e5,
             size: 0,
         };
 
         // Read buffer
-        let buffer = Arc::new(Mutex::new(String::from("")));
+        let buffer = Arc::new(RwLock::new(String::from("")));
 
         // Make radio streams
         let me = RadioStream {
@@ -165,24 +165,60 @@ impl RadioStream {
 
         // Spawn rx thread
         spawn(move || {
+            // create stream
             let mut rx_stream = Rx::new(set.clone()).expect("Starting RX stream");
+            let instance = Demodulators::new(set.sample_rate as f32, set.baud_rate);
 
-            let mut instance = Demodulators::new(set.sample_rate as f32, set.baud_rate);
+            // create mtu
+            let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
+            let mut mtu = vec![Complex::new(0.0,0.0); samples_per_a_symbol as usize];
+
+            // create window
+            let mut window = AMBLE.to_string();
+            let mut flip = false;
+
+            let mut size = AMBLE.len();
+
+            let mut buf = String::from("");
 
             // rx loop
             loop {
 
-                // // Wait till time to listen
-                while SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() % TRANSMISSION_SYNC_TIME as u128 != 0{
+                // remove first char
+                window.remove(0);
 
+                // take samples
+                rx_stream.fetch(&[mtu.as_mut_slice()]).expect("Reading stream");
+
+                // demodulate
+                let demod = instance.ask(mtu.clone());
+
+                // add to window
+                window.push(demod.parse().unwrap());
+
+                // check window
+                if window.contains(AMBLE){
+                    flip = !flip;
+
+                    if !flip{
+                        // write
+                        buffer.write().unwrap().push_str(&buf[1..buf.len() - size]);
+
+                        //clear
+                        buf = "".to_string();
+                    }
                 }
 
-                let signal = rx_stream.fetch((set.clone().sample_rate * 0.2) as usize).expect("Reading stream");
+                if flip{
+                    buf.push(demod.parse().unwrap());
 
-                let demod = instance.ask(signal);
+                    if buf.len() > 524288 {
+                        flip = !flip;
+                        buf.clear();
+                    }
+                }
 
-                let mut data = buffer.lock().unwrap();
-                *data = format!("{}{}", *data, demod);
+
             }
         });
 
@@ -193,18 +229,13 @@ impl RadioStream {
     /// This will transmit binary data to the radio
     pub fn transmit(&mut self, data: &[u8]) -> Result<()> {
 
-        // Wait till time to transmit
-        while SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() % TRANSMISSION_SYNC_TIME as u128 != 0{
-
-        }
-
         // add layer 2 data (frame header and trailer)
         let frame = Frame::new(data);
 
         // Modulate
         let signal = self.modulation.ask(frame.assemble().as_str());
 
-            // Send
+        // Send
         self.tx_stream.send(signal.as_slice()).unwrap();
 
 
@@ -212,22 +243,22 @@ impl RadioStream {
     }
 
     /// This process samples read and return any data received
-    pub fn read(&mut self) -> Result<Vec<Vec<u8>>> {
-
-        // Read
-        let s = self.rx_buffer.clone();
-        // Turn Signal into frames
-        let arr = Frame::from(s.lock().unwrap().as_str());
+    pub fn read(&self) -> Result<Vec<Vec<u8>>> {
 
         // Turn frames into data and return the raw data
-        let mut to_return = Vec::new();
+        let mut to_return = vec![];
 
-        for x in arr {
-            to_return.push(x.data)
+        let stuff = self.rx_buffer.read().unwrap().clone();
+
+        let hold = bin_to_u8(stuff.as_str());
+
+        if !hold.is_empty(){
+
+            to_return.push(hold);
         }
 
         // Clear buffer
-        self.rx_buffer.lock().unwrap().clear();
+        self.rx_buffer.write().unwrap().clear();
 
         Ok(to_return)
     }

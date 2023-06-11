@@ -558,25 +558,25 @@ impl Modulators {
     ///
     /// # Arguments
     /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
-    pub fn ask(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn ask(&self, bin: &str) -> Vec<Complex<f32>>
     {
-        bi_signal_modulation(bin, self.ask_off_signal.as_mut_slice(), self.ask_on_signal.as_mut_slice(), self.samples_per_symbol)
+        bi_signal_modulation(bin, self.ask_off_signal.as_slice(), self.ask_on_signal.as_slice(), self.samples_per_symbol)
     }
 
     /// Modulate a radio signal using FSK
     ///
     /// # Arguments
     /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
-    pub fn fsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn fsk(&self, bin: &str) -> Vec<Complex<f32>>
     {
-        bi_signal_modulation(bin, self.fsk_zero_signal.as_mut_slice(), self.fsk_one_signal.as_mut_slice(), self.samples_per_symbol)
+        bi_signal_modulation(bin, self.fsk_zero_signal.as_slice(), self.fsk_one_signal.as_slice(), self.samples_per_symbol)
     }
 
     /// Modulate a radio signal using MFSK
     ///
     /// # Arguments
     /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
-    pub fn mfsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn mfsk(&self, bin: &str) -> Vec<Complex<f32>>
     {
         // initialize vector
         let mut to_return = Vec::with_capacity(bin.len() * self.samples_per_symbol);
@@ -595,7 +595,7 @@ impl Modulators {
     ///
     /// # Arguments
     /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
-    pub fn bpsk(&mut self, bin: &str) -> Vec<Complex<f32>> {
+    pub fn bpsk(&self, bin: &str) -> Vec<Complex<f32>> {
         // initialize vector
         let mut to_return = Vec::with_capacity(bin.len() * self.samples_per_symbol);
 
@@ -626,7 +626,7 @@ impl Modulators {
     ///
     /// # Arguments
     /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
-    pub fn qpsk(&mut self, bin: &str) -> Vec<Complex<f32>> {
+    pub fn qpsk(&self, bin: &str) -> Vec<Complex<f32>> {
         // initialize vector
         let mut to_return = Vec::with_capacity(bin.len() * self.samples_per_symbol);
 
@@ -732,7 +732,7 @@ impl Demodulators {
     ///
     /// # Arguments
     /// * `arr` - Array of radio samples to
-    pub fn ask(&mut self, mut arr: Vec<Complex<f32>>) -> String
+    pub fn ask(&self, mut arr: Vec<Complex<f32>>) -> String
     {
         bi_signal_demodulation(arr.as_mut_slice(), &self.goertzel_algorithm_ask, &(self.symbol_threshold as f32), self.samples_per_symbol.borrow())
     }
@@ -741,7 +741,7 @@ impl Demodulators {
     ///
     /// # Arguments
     /// * `arr` - Array of radio samples to
-    pub fn fsk(&mut self, mut arr: Vec<Complex<f32>>) -> String
+    pub fn fsk(&self, mut arr: Vec<Complex<f32>>) -> String
     {
         bi_signal_demodulation(arr.as_mut_slice(), &self.goertzel_algorithm_fsk, &(self.symbol_threshold as f32), self.samples_per_symbol.borrow())
     }
@@ -771,7 +771,7 @@ impl Demodulators {
     ///
     /// # Arguments
     /// * `arr` - Array of radio samples to
-    pub fn bpsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn bpsk(&self, arr: Vec<Complex<f32>>) -> String
     {
         let mut to_return = String::with_capacity(arr.len() / self.samples_per_symbol);
 
@@ -808,7 +808,7 @@ impl Demodulators {
     ///
     /// # Arguments
     /// * `arr` - Array of radio samples to
-    pub fn qpsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn qpsk(&self, arr: Vec<Complex<f32>>) -> String
     {
         let mut to_return = String::with_capacity(arr.len() / self.samples_per_symbol);
 

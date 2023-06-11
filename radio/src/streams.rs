@@ -1,3 +1,4 @@
+use std::sync::RwLock;
 use anyhow::Result;
 use num_complex::Complex;
 use soapysdr::{Args, Direction, RxStream, TxStream};
@@ -119,19 +120,18 @@ impl Rx {
         Ok(rx)
     }
 
-    pub fn fetch(&mut self, len: usize) -> Result<Vec<Complex<f32>>> {
-        let mut to_return = vec![Complex::new(0.0, 0.0); len];
-        // to_return.resize(len,Complex::new(0.0,0.0));
+    /// This function fetches the sample in place (to improve performance)
+    pub fn fetch(&mut self, arr: &[&mut [Complex<f32>]]) -> Result<()> {
 
-        self.Stream.read(&[to_return.as_mut_slice()], 100000000_i64)?;
+        self.Stream.read(arr, 100000000_i64)?;
 
-        Ok(to_return)
+        Ok(())
     }
 }
 
 /// Tx Stream For Radio
 pub struct Tx {
-    Stream: TxStream<Complex<f32>>,
+    Stream: RwLock<TxStream<Complex<f32>>>,
 }
 
 impl Tx {
@@ -153,13 +153,13 @@ impl Tx {
 
         // Get rx stream
         let mut tx = Tx {
-            Stream: device.tx_stream(&[settings.channels_in_use])?
+            Stream: RwLock::new(device.tx_stream(&[settings.channels_in_use])?)
         };
 
         // Activate RX stream
-        tx.Stream.activate(Default::default())?;
+        tx.Stream.write().unwrap().activate(Default::default())?;
 
-        settings.size = tx.Stream.mtu()?;
+        settings.size = tx.Stream.read().unwrap().mtu()?;
 
         // Increase counter
         settings.channels_in_use += 1;
@@ -167,8 +167,9 @@ impl Tx {
         Ok(tx)
     }
 
-    pub fn send(&mut self, arr: &[Complex<f32>]) -> Result<()> {
-        self.Stream.write_all(&[arr], Default::default(), true, 100000000_i64)?;
+    pub fn send(&self, arr: &[Complex<f32>]) -> Result<()> {
+
+        self.Stream.write().unwrap().write_all(&[arr], Default::default(), true, 100000000_i64)?;
 
         Ok(())
     }

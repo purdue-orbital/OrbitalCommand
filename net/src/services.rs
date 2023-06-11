@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 use std::thread::sleep;
 use std::time::{Duration, SystemTime};
 use crate::device::Device;
@@ -23,7 +23,15 @@ pub trait Service: Send + Sync {
 
 #[derive(Clone)]
 struct PingServer{
-    device: Arc<Mutex<Device>>
+    device: Arc<RwLock<Device>>
+}
+
+unsafe impl Send for PingServer{
+
+}
+
+unsafe impl Sync for PingServer{
+
 }
 
 impl Service for PingServer {
@@ -37,7 +45,7 @@ impl Service for PingServer {
 
         packet.update_checksum();
 
-        self.device.lock().unwrap().iface.read().unwrap().as_ref().unwrap().send(packet.encode(false).as_slice()).unwrap();
+        self.device.read().unwrap().iface.read().unwrap().as_ref().unwrap().send(packet.encode(false).as_slice()).unwrap();
 
         false
     }
@@ -98,7 +106,7 @@ impl<'a> Ping<'a>{
 
     /// This will start the ping service on the network device (device will become pingable)
     pub fn enable(&mut self){
-        self.device.add_listen_service_without_port(Box::from(PingServer { device: Arc::new(Mutex::new(self.device.clone())) }), 1).unwrap();
+        self.device.add_listen_service_without_port(Box::from(PingServer { device: Arc::new(RwLock::new(self.device.clone())) }), 1).unwrap();
     }
 
     /// This will stop the ping service on the network device (device will no longer be pingable)

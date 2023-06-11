@@ -60,7 +60,7 @@ pub struct Device {
     //-----------------------------------
 
     pub iface: Arc<RwLock<Option<Iface>>>,
-    //pub radio: Arc<RwLock<Option<RadioStream>>>,
+    pub radio: Arc<RwLock<Option<RadioStream>>>,
 
     tx: Option<Sender<( Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>, Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>, Arc<RwLock<Option<Iface>>>)>>
 }
@@ -327,7 +327,7 @@ pub fn list_devices() -> Vec<Device> {
             ip_addr: None,
             dns_addr: None,
             iface: Arc::new(RwLock::new(Some(sys))),
-            //radio: Arc::new(RwLock::from(None)),
+            radio: Arc::new(RwLock::from(None)),
 
             tx: None,
         });
@@ -349,11 +349,39 @@ pub fn list_devices() -> Vec<Device> {
             ip_addr: None,
             dns_addr: None,
             iface: Arc::new(RwLock::new(None)),
-            //radio: Arc::new(RwLock::from(Option::from(sdr.unwrap()))),
+            radio: Arc::new(RwLock::from(Option::from(sdr.unwrap()))),
 
             tx: None,
         })
     }
 
     list
+}
+
+/// This function streamlines using
+struct NetworkStream{
+    pub iface: Arc<RwLock<Option<Iface>>>,
+    pub radio: Arc<RwLock<Option<RadioStream>>>,
+}
+
+impl NetworkStream{
+    pub fn send(&self, arr:&[u8]) -> Result<()> {
+        if let Some(x) = self.iface.read().unwrap().as_ref(){
+            x.send(arr)?;
+        } else if let Some(x) = self.radio.read().unwrap().as_ref(){
+            x.transmit(arr).unwrap();
+        }
+
+        Err(Error::msg("No device set!"))
+    }
+
+    pub fn recv(&self, arr:&mut [u8]) -> Result<usize>{
+        if let Some(x) = self.iface.read().unwrap().as_ref(){
+            x.recv(arr)?;
+        } else if let Some(x) = self.radio.read().unwrap().as_ref(){
+             x.read().unwrap();
+        }
+
+        Err(Error::msg("No device set!"))
+    }
 }
