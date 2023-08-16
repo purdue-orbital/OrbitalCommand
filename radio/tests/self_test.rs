@@ -19,17 +19,17 @@ fn self_test_128bytes()
     let mut test_arr: [u8; 4] = [4, 252, 112, 128];
 
     // Allow for some delay
-    thread::sleep(Duration::from_secs(1));
+    thread::sleep(Duration::from_secs(10));
 
     // Transmit
     stream.transmit(test_arr.as_mut_slice()).expect("Transmit");
 
     // Allow for some more delay
-    thread::sleep(Duration::from_secs(1));
+    thread::sleep(Duration::from_secs(2));
 
     // Read
-    let arr = stream.read().expect("Reading...");
+    let arr = stream.read();
 
     // Verify
-    assert_eq!(test_arr, arr.as_slice())
+    assert_eq!(test_arr, arr.as_slice());
 }

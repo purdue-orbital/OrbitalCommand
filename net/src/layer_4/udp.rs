@@ -2,7 +2,7 @@ use ux::u13;
 use anyhow::{Result, Error};
 
 use crate::layer_3::ipv4::{Address, AssuredForwarding, DifferentiatedServices, ECN, IPPrecedence, IPV4};
-use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
+use crate::tools::{sum_with_carries, u8_arr_to_u16_arr, u8s_to_u16};
 
 /// IPv4 version of the UDP protocol. UDP is an OSI Layer 4 encapsulation that is connectionless or
 /// stateless
@@ -161,10 +161,10 @@ impl UDPv4 {
 
         Ok(UDPv4 {
             ipv4,
-            src_port: ((data[0] as u16) << 8) | data[1] as u16,
-            dst_port: ((data[2] as u16) << 8) | data[3] as u16,
-            length: ((data[4] as u16) << 8) | data[5] as u16,
-            checksum: ((data[6] as u16) << 8) | data[7] as u16,
+            src_port: u8s_to_u16(&data[0..2]),
+            dst_port: u8s_to_u16(&data[2..4]),
+            length: u8s_to_u16(&data[4..6]),
+            checksum: u8s_to_u16(&data[6..8]),
             data: data[8..].to_vec(),
         })
     }

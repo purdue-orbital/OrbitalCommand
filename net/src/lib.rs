@@ -4,10 +4,14 @@ extern crate radio;
 extern crate tun_tap;
 
 /// Get dependent crates
-mod tools;
+pub mod tools;
 pub mod device;
 pub mod interface;
 pub mod services;
+
+pub mod datagrams{
+    pub mod dns;
+}
 
 pub mod layer_4 {
     pub mod udp;

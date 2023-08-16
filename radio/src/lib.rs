@@ -1,6 +1,6 @@
-use std::sync::{Arc, Mutex};
-use std::thread::spawn;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::{Arc, Mutex, RwLock};
+use std::thread::{sleep, spawn};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{Error, Result};
 use num_complex::Complex;
@@ -17,6 +17,14 @@ mod streams;
 
 /// Transmit at the top of x milliseconds (EX: x == 100, transmit and receive at every 100 milliseconds)
 static TRANSMISSION_SYNC_TIME: usize = 200;
+
+unsafe impl Send for RadioStream{
+
+}
+
+unsafe impl Sync for RadioStream{
+
+}
 
 /// u8 array to binary string
 fn u8_to_bin(arr: &[u8]) -> String {
@@ -51,7 +59,7 @@ fn bin_to_u8(bin: &str) -> Vec<u8> {
     to_return
 }
 
-static AMBLE: &str = "101010101011110101110101010101010101010101010101010111111";
+static AMBLE: &str = "101010101011110101010101010111111";
 
 /// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
 /// spacecraft and space bound communication
@@ -124,7 +132,7 @@ impl Frame {
 pub struct RadioStream {
     tx_stream: Tx,
     modulation: Modulators,
-    rx_buffer: Arc<Mutex<String>>,
+    rx_buffer: Arc<RwLock<String>>,
     settings: RadioSettings,
 }
 
@@ -142,18 +150,18 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-            sample_rate: 1e5,
+            sample_rate: 2e6,
             lo_frequency: 916e6,
             lpf_filter: 0.0,
             channels_in_use: 0,
             gain: 50.0,
             radio,
-            baud_rate: 1e4,
+            baud_rate: 2e4,
             size: 0,
         };
 
         // Read buffer
-        let buffer = Arc::new(Mutex::new(String::from("")));
+        let buffer = Arc::new(RwLock::new(String::from("")));
 
         // Make radio streams
         let me = RadioStream {
@@ -165,24 +173,53 @@ impl RadioStream {
 
         // Spawn rx thread
         spawn(move || {
+            // create stream
             let mut rx_stream = Rx::new(set.clone()).expect("Starting RX stream");
+            let instance = Demodulators::new(set.sample_rate as f32, set.baud_rate);
 
-            let mut instance = Demodulators::new(set.sample_rate as f32, set.baud_rate);
+            // create mtu
+            let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
+            let mut mtu = vec![Complex::new(0.0,0.0); samples_per_a_symbol as usize];
+
+            // create window
+            let mut window = String::from("");
+            let mut save_to_buffer = false;
+
+            let mut size = AMBLE.len();
+
+            let mut buf = String::from("");
 
             // rx loop
             loop {
+                // take samples
+                rx_stream.fetch(&[mtu.as_mut_slice()]).expect("Reading stream");
 
-                // // Wait till time to listen
-                while SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() % TRANSMISSION_SYNC_TIME as u128 != 0{
+                // Demodulate signal
+                let signal_demod = instance.ask(mtu.clone());
 
+                // check if AMBLE appears once
+                if !save_to_buffer{
+
+                    if !window.contains(AMBLE) {
+                        if window.len() > size{
+                            window.remove(0);
+                        }
+                    }else{
+                        save_to_buffer = true
+                    }
+
+                    // if a head is detected and a tail is as well, take the data and save to buffer
+                }else if window.matches(AMBLE).count() >= 2 {
+
+                    buffer.write().unwrap().push_str(window.split(AMBLE).skip(1).collect::<Vec<&str>>()[0]);
+
+                    window.clear();
+
+                    save_to_buffer = false;
                 }
 
-                let signal = rx_stream.fetch((set.clone().sample_rate * 0.2) as usize).expect("Reading stream");
 
-                let demod = instance.ask(signal);
-
-                let mut data = buffer.lock().unwrap();
-                *data = format!("{}{}", *data, demod);
+                window.push_str(&*signal_demod);
             }
         });
 
@@ -191,12 +228,7 @@ impl RadioStream {
     }
 
     /// This will transmit binary data to the radio
-    pub fn transmit(&mut self, data: &[u8]) -> Result<()> {
-
-        // Wait till time to transmit
-        while SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() % TRANSMISSION_SYNC_TIME as u128 != 0{
-
-        }
+    pub fn transmit(&self, data: &[u8]) -> Result<()> {
 
         // add layer 2 data (frame header and trailer)
         let frame = Frame::new(data);
@@ -204,32 +236,27 @@ impl RadioStream {
         // Modulate
         let signal = self.modulation.ask(frame.assemble().as_str());
 
-            // Send
+        // Send
         self.tx_stream.send(signal.as_slice()).unwrap();
-
 
         Ok(())
     }
 
     /// This process samples read and return any data received
-    pub fn read(&mut self) -> Result<Vec<Vec<u8>>> {
+    pub fn read(&self) -> Vec<u8> {
 
-        // Read
-        let s = self.rx_buffer.clone();
-        // Turn Signal into frames
-        let arr = Frame::from(s.lock().unwrap().as_str());
+        let mut stuff = self.rx_buffer.read().unwrap().clone();
 
-        // Turn frames into data and return the raw data
-        let mut to_return = Vec::new();
+        while stuff.is_empty(){
+            stuff = self.rx_buffer.read().unwrap().clone();
 
-        for x in arr {
-            to_return.push(x.data)
+            sleep(Duration::from_millis(5))
         }
 
         // Clear buffer
-        self.rx_buffer.lock().unwrap().clear();
+        self.rx_buffer.write().unwrap().clear();
 
-        Ok(to_return)
+        bin_to_u8(stuff.as_str())
     }
 }
 
