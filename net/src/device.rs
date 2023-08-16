@@ -1,6 +1,7 @@
+use std::io::Write;
 use std::sync::{Arc, mpsc, RwLock};
 use std::sync::mpsc::{Receiver, Sender};
-use std::thread::{spawn};
+use std::thread::{JoinHandle, spawn};
 
 use tun_tap::{Iface, Mode};
 
@@ -16,19 +17,24 @@ use crate::layer_4::udp::UDPv4;
 use crate::services::Service;
 use crate::tools::run_commands;
 
-fn new_read_thread(iface: Arc<RwLock<Option<Iface>>>) -> Receiver<(usize, [u8; 1500])> {
-    // This is for communicating with the read thread
+fn new_read_thread(stream: NetworkStream) -> (Receiver<Option<(usize, [u8; 1500])>>, JoinHandle<()>){
     let (thread_tx, thread_rx) = mpsc::channel();
 
-    spawn(move||{
+    let handle = spawn(move ||{
         let mut mtu = [0; 1500];
 
-        let size = iface.read().unwrap().as_ref().unwrap().recv(mtu.as_mut_slice()).unwrap();
-
-        thread_tx.send((size, mtu))
+        match stream.recv(mtu.as_mut_slice()) {
+            Ok(size) => {
+                thread_tx.send(Some((size, mtu))).unwrap();
+            }
+            Err(e) => {
+                eprintln!("Error reading from stream: {}", e);
+                thread_tx.send(None).unwrap();
+            }
+        }
     });
 
-    thread_rx
+    (thread_rx, handle)
 }
 
 /// This is a instance of a device that can be connected to
@@ -59,10 +65,12 @@ pub struct Device {
     // Physical Devices
     //-----------------------------------
 
-    pub iface: Arc<RwLock<Option<Iface>>>,
-    pub radio: Arc<RwLock<Option<RadioStream>>>,
+    //pub iface: Arc<RwLock<Option<Iface>>>,
+    //pub radio: Arc<RwLock<Option<RadioStream>>>,
 
-    tx: Option<Sender<( Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>, Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>, Arc<RwLock<Option<Iface>>>)>>
+    pub stream: NetworkStream,
+
+    tx: Option<Sender<( Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>, Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>, NetworkStream)>>
 }
 
 impl Device {
@@ -84,7 +92,7 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
         run_commands(command.as_str());
 
         let (tx, rx) = mpsc::channel();
-        tx.send((self.ports.clone(), self.protocols.clone(), self.iface.clone())).unwrap();
+        tx.send((self.ports.clone(), self.protocols.clone(), self.stream.clone())).unwrap();
         self.tx = Some(tx);
 
         // start listen thread
@@ -93,28 +101,28 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
             // Get initial values
             let empty_vec = Vec::new();
 
-            let (mut ports, mut proto, mut iface) = rx.recv().unwrap();
+            let (mut ports, mut proto, mut stream) = rx.recv().unwrap();
 
-            let mut thread_rx = new_read_thread(iface.clone());
+            let mut thread_rx = new_read_thread(stream.clone());
 
             loop {
 
                 // check for updates on protocols
                 if let Ok(x) = rx.try_recv(){
                     // ide throws an error here but no error actually occurs
-                    (ports, proto, iface) = x;
+                    (ports, proto, stream) = x;
                 }
 
                 // check read channel
                 let buff =
 
 
-                if let Ok(x) = thread_rx.try_recv(){
+                if let Ok(x) = thread_rx.0.try_recv(){
 
-                    thread_rx = new_read_thread(iface.clone());
+                    thread_rx = new_read_thread(stream.clone());
 
                     // return packet
-                    x.1[..x.0].to_vec()
+                    x.unwrap().1[..x.unwrap().0].to_vec()
                 }else{
                     // return nothing by default
                     empty_vec.clone()
@@ -193,7 +201,7 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
 
         //send update if device is running and had been updated
         if hold.is_ok() && self.tx.is_some(){
-            self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.iface.clone())).unwrap();
+            self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.stream.clone())).unwrap();
         }
 
         hold
@@ -209,7 +217,7 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
             self.ports[host_port_num as usize].write().unwrap().take();
         }
 
-        self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.iface.clone())).unwrap();
+        self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.stream.clone())).unwrap();
     }
 
 
@@ -231,7 +239,7 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
 
         //send update if device is running and had been updated
         if hold.is_ok() && self.tx.is_some(){
-            self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.iface.clone())).unwrap();
+            self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.stream.clone())).unwrap();
         }
 
         hold
@@ -247,24 +255,8 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
             self.protocols[protocol_num as usize].write().unwrap().take();
         }
 
-        self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.iface.clone())).unwrap();
+        self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.stream.clone())).unwrap();
     }
-
-    // /// This will run a service once on startup then listen
-    // ///
-    // /// # Parameter(s):
-    // /// - 'service' - the service that will be run once then be set to listen
-    // /// - 'host_port_num' - port to use
-    // /// - 'data' - initial data that is passed to service
-    // /// # Error(s):
-    // /// 1. Returns an error if port is already in use
-    // pub fn run_and_listen(&mut self, service: Box<dyn Service + Send>, host_port_num:u16 , data: &[u8]) -> Result<()>{
-    //     self.add_listen_service(service, host_port_num)?;
-    //
-    //     self.ports[host_port_num as usize].read().unwrap().as_ref().unwrap().run_service(data);
-    //
-    //     Ok(())
-    // }
 }
 
 impl AsRef<Device> for Device {
@@ -326,8 +318,11 @@ pub fn list_devices() -> Vec<Device> {
 
             ip_addr: None,
             dns_addr: None,
-            iface: Arc::new(RwLock::new(Some(sys))),
-            radio: Arc::new(RwLock::from(None)),
+
+            //iface: Arc::new(RwLock::new(Some(sys))),
+            //radio: Arc::new(RwLock::from(None)),
+
+            stream: NetworkStream {iface: Arc::new(RwLock::new(Some(sys))), radio: Arc::new(RwLock::from(None))},
 
             tx: None,
         });
@@ -348,8 +343,11 @@ pub fn list_devices() -> Vec<Device> {
 
             ip_addr: None,
             dns_addr: None,
-            iface: Arc::new(RwLock::new(None)),
-            radio: Arc::new(RwLock::from(Option::from(sdr.unwrap()))),
+
+            //iface: Arc::new(RwLock::new(None)),
+            //radio: Arc::new(RwLock::from(Option::from(sdr.unwrap()))),
+
+            stream: NetworkStream {iface: Arc::new(RwLock::new(None)), radio: Arc::new(RwLock::from(Some(sdr.unwrap())))},
 
             tx: None,
         })
@@ -359,7 +357,8 @@ pub fn list_devices() -> Vec<Device> {
 }
 
 /// This function streamlines using
-struct NetworkStream{
+#[derive(Clone)]
+pub struct NetworkStream{
     pub iface: Arc<RwLock<Option<Iface>>>,
     pub radio: Arc<RwLock<Option<RadioStream>>>,
 }
@@ -368,8 +367,13 @@ impl NetworkStream{
     pub fn send(&self, arr:&[u8]) -> Result<()> {
         if let Some(x) = self.iface.read().unwrap().as_ref(){
             x.send(arr)?;
-        } else if let Some(x) = self.radio.read().unwrap().as_ref(){
-            x.transmit(arr).unwrap();
+
+            return Ok(())
+        } else if let Some(x) = self.radio.write().unwrap().as_mut(){
+            x.transmit(arr)?;
+
+            return Ok(())
+
         }
 
         Err(Error::msg("No device set!"))
@@ -377,9 +381,9 @@ impl NetworkStream{
 
     pub fn recv(&self, arr:&mut [u8]) -> Result<usize>{
         if let Some(x) = self.iface.read().unwrap().as_ref(){
-            x.recv(arr)?;
+            return Ok(x.recv(arr)?)
         } else if let Some(x) = self.radio.read().unwrap().as_ref(){
-             x.read().unwrap();
+             return Ok(arr.as_mut().write(x.read().as_slice()).unwrap())
         }
 
         Err(Error::msg("No device set!"))

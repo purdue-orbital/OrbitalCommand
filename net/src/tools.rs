@@ -189,3 +189,8 @@ pub fn run_commands(command: &str) -> String {
 
     to_return
 }
+
+/// This will convert 2 u8s to a 16
+pub fn u8s_to_u16(data: &[u8]) -> u16 {
+    ((data[0] as u16) << 8) | data[1] as u16
+}

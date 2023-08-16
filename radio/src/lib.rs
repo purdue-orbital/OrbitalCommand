@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex, RwLock};
-use std::thread::spawn;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::thread::{sleep, spawn};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{Error, Result};
 use num_complex::Complex;
@@ -17,6 +17,14 @@ mod streams;
 
 /// Transmit at the top of x milliseconds (EX: x == 100, transmit and receive at every 100 milliseconds)
 static TRANSMISSION_SYNC_TIME: usize = 200;
+
+unsafe impl Send for RadioStream{
+
+}
+
+unsafe impl Sync for RadioStream{
+
+}
 
 /// u8 array to binary string
 fn u8_to_bin(arr: &[u8]) -> String {
@@ -148,7 +156,7 @@ impl RadioStream {
             channels_in_use: 0,
             gain: 50.0,
             radio,
-            baud_rate: 2e5,
+            baud_rate: 2e4,
             size: 0,
         };
 
@@ -174,8 +182,8 @@ impl RadioStream {
             let mut mtu = vec![Complex::new(0.0,0.0); samples_per_a_symbol as usize];
 
             // create window
-            let mut window = AMBLE.to_string();
-            let mut flip = false;
+            let mut window = String::from("");
+            let mut save_to_buffer = false;
 
             let mut size = AMBLE.len();
 
@@ -183,42 +191,35 @@ impl RadioStream {
 
             // rx loop
             loop {
-
-                // remove first char
-                window.remove(0);
-
                 // take samples
                 rx_stream.fetch(&[mtu.as_mut_slice()]).expect("Reading stream");
 
-                // demodulate
-                let demod = instance.ask(mtu.clone());
+                // Demodulate signal
+                let signal_demod = instance.ask(mtu.clone());
 
-                // add to window
-                window.push(demod.parse().unwrap());
+                // check if AMBLE appears once
+                if !save_to_buffer{
 
-                // check window
-                if window.contains(AMBLE){
-                    flip = !flip;
-
-                    if !flip{
-                        // write
-                        buffer.write().unwrap().push_str(&buf[1..buf.len() - size]);
-
-                        //clear
-                        buf = "".to_string();
+                    if !window.contains(AMBLE) {
+                        if window.len() > size{
+                            window.remove(0);
+                        }
+                    }else{
+                        save_to_buffer = true
                     }
-                }
 
-                if flip{
-                    buf.push(demod.parse().unwrap());
+                    // if a head is detected and a tail is as well, take the data and save to buffer
+                }else if window.matches(AMBLE).count() >= 2 {
 
-                    if buf.len() > 524288 {
-                        flip = !flip;
-                        buf.clear();
-                    }
+                    buffer.write().unwrap().push_str(window.split(AMBLE).skip(1).collect::<Vec<&str>>()[0]);
+
+                    window.clear();
+
+                    save_to_buffer = false;
                 }
 
 
+                window.push_str(&*signal_demod);
             }
         });
 
@@ -227,7 +228,7 @@ impl RadioStream {
     }
 
     /// This will transmit binary data to the radio
-    pub fn transmit(&mut self, data: &[u8]) -> Result<()> {
+    pub fn transmit(&self, data: &[u8]) -> Result<()> {
 
         // add layer 2 data (frame header and trailer)
         let frame = Frame::new(data);
@@ -238,29 +239,24 @@ impl RadioStream {
         // Send
         self.tx_stream.send(signal.as_slice()).unwrap();
 
-
         Ok(())
     }
 
     /// This process samples read and return any data received
-    pub fn read(&self) -> Result<Vec<Vec<u8>>> {
+    pub fn read(&self) -> Vec<u8> {
 
-        // Turn frames into data and return the raw data
-        let mut to_return = vec![];
+        let mut stuff = self.rx_buffer.read().unwrap().clone();
 
-        let stuff = self.rx_buffer.read().unwrap().clone();
+        while stuff.is_empty(){
+            stuff = self.rx_buffer.read().unwrap().clone();
 
-        let hold = bin_to_u8(stuff.as_str());
-
-        if !hold.is_empty(){
-
-            to_return.push(hold);
+            sleep(Duration::from_millis(5))
         }
 
         // Clear buffer
         self.rx_buffer.write().unwrap().clear();
 
-        Ok(to_return)
+        bin_to_u8(stuff.as_str())
     }
 }
 
