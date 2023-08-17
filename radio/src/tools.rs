@@ -1,4 +1,5 @@
 use std::str::Chars;
+use num_complex::Complex;
 
 /// Subtract values with the value to their left. This will remove 1 element from the array size
 ///
@@ -49,6 +50,15 @@ pub fn moving_average(arr: Vec<f32>, size: usize) -> Vec<f32>
     }
 
     out
+}
+
+pub fn average_complex(arr: Vec<Complex<f32>>) -> f32{
+    let mut sum = 0.0;
+    for x in arr.clone(){
+        sum += x.norm_sqr().sqrt()
+    }
+
+    sum / arr.len() as f32
 }
 
 /// Normalize values of an array of numbers

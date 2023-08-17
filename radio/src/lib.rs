@@ -15,9 +15,6 @@ mod radio;
 mod tools;
 mod streams;
 
-/// Transmit at the top of x milliseconds (EX: x == 100, transmit and receive at every 100 milliseconds)
-static TRANSMISSION_SYNC_TIME: usize = 200;
-
 unsafe impl Send for RadioStream{
 
 }
@@ -129,6 +126,12 @@ impl Frame {
     }
 }
 
+/// Current demodulating function
+pub fn demod(instance:&mut Demodulators, arr:Vec<Complex<f32>>) -> String {
+    instance.ask(arr)
+}
+
+
 pub struct RadioStream {
     tx_stream: Tx,
     modulation: Modulators,
@@ -156,7 +159,7 @@ impl RadioStream {
             channels_in_use: 0,
             gain: 50.0,
             radio,
-            baud_rate: 2e4,
+            baud_rate: 2e5,
             size: 0,
         };
 
@@ -175,7 +178,7 @@ impl RadioStream {
         spawn(move || {
             // create stream
             let mut rx_stream = Rx::new(set.clone()).expect("Starting RX stream");
-            let instance = Demodulators::new(set.sample_rate as f32, set.baud_rate);
+            let mut instance = Demodulators::new(set.sample_rate as f32, set.baud_rate);
 
             // create mtu
             let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
@@ -185,41 +188,34 @@ impl RadioStream {
             let mut window = String::from("");
             let mut save_to_buffer = false;
 
-            let mut size = AMBLE.len();
-
-            let mut buf = String::from("");
-
             // rx loop
             loop {
-                // take samples
-                rx_stream.fetch(&[mtu.as_mut_slice()]).expect("Reading stream");
-
-                // Demodulate signal
-                let signal_demod = instance.ask(mtu.clone());
-
-                // check if AMBLE appears once
+                // Handle if a head has yet to appear
                 if !save_to_buffer{
-
-                    if !window.contains(AMBLE) {
-                        if window.len() > size{
-                            window.remove(0);
-                        }
-                    }else{
-                        save_to_buffer = true
+                    // check if a header exists
+                    if window == AMBLE{
+                        save_to_buffer = true;
+                        window.clear();
+                        // trim window to size
+                    }else if window.len() == AMBLE.len(){
+                        window.remove(0);
                     }
 
-                    // if a head is detected and a tail is as well, take the data and save to buffer
-                }else if window.matches(AMBLE).count() >= 2 {
-
-                    buffer.write().unwrap().push_str(window.split(AMBLE).skip(1).collect::<Vec<&str>>()[0]);
-
-                    window.clear();
-
+                    // check if the tail appears
+                }else if window.contains(AMBLE){
+                    buffer.write().unwrap().push_str(&window.as_str()[0..window.len() - AMBLE.len()]);
                     save_to_buffer = false;
+                    window.clear()
+
+                    // if we're still waiting on the tail of a transmission, just drop this whole transmission
+                }else if window.len() > 500 {
+                    save_to_buffer = false;
+                    window.clear()
                 }
 
+                rx_stream.fetch(&[mtu.as_mut_slice()]).unwrap();
+                window.push_str(demod(&mut instance, mtu.clone()).as_str())
 
-                window.push_str(&*signal_demod);
             }
         });
 

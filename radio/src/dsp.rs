@@ -248,7 +248,18 @@ pub fn bi_signal_demodulation(arr: &mut [Complex<f32>], algo:&GoertzelAlgorithm,
 
     out
 }
+/// Collection of error correcting code methods and algorithms
+pub struct ECC{
 
+}
+
+impl ECC {
+    // /// This function will encode binary into a convoluted, non-systematic, form. This is required
+    // /// to be done for most ECC decoding algorithms
+    // pub fn convolutional_encode(bin:String, code_size:usize) -> String{
+    //
+    // }
+}
 
 /// Collection of radio focused tools
 pub struct Tools{
