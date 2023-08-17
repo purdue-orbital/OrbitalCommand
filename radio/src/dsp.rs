@@ -784,35 +784,19 @@ impl Demodulators {
     /// * `arr` - Array of radio samples to
     pub fn bpsk(&self, arr: Vec<Complex<f32>>) -> String
     {
-        let mut to_return = String::with_capacity(arr.len() / self.samples_per_symbol);
+        let mut toreturn = "".to_string();
 
-        let _phi = 2.0 * PI * BPSK_FREQUENCY * (1.0 / self.sample_rate);
+        let step = self.samples_per_symbol / 2;
 
-
-        for x in (0..arr.len()).step_by(self.samples_per_symbol) {
-
-            // make average value
-            let mut to_avg = 0.0;
-
-            // sum all values in the sample
-            for y in 0..self.samples_per_symbol {
-                to_avg += arr[x + y].re.asin() - arr[x + y].im.asin();
+        for x in (0..arr.len()).step_by(self.samples_per_symbol){
+            if (arr[x + step].re - arr[x + step].im).abs() > 1.0{
+                toreturn.push('0')
+            }else{
+                toreturn.push('1')
             }
-
-            // preform average
-            to_avg /= self.samples_per_symbol as f32;
-
-            // evaluate
-            to_return.push(
-                if to_avg < PI / 2.0{
-                    '1'
-                }else{
-                    '0'
-                }
-            )
         }
 
-        to_return
+        toreturn
     }
 
     /// Demodulate a radio signal using QPSK

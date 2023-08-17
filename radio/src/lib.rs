@@ -128,7 +128,7 @@ impl Frame {
 
 /// Current demodulating function
 pub fn demod(instance:&mut Demodulators, arr:Vec<Complex<f32>>) -> String {
-    instance.ask(arr)
+    instance.bpsk(arr)
 }
 
 
@@ -208,7 +208,7 @@ impl RadioStream {
                     window.clear()
 
                     // if we're still waiting on the tail of a transmission, just drop this whole transmission
-                }else if window.len() > 500 {
+                }else if window.len() > 520000 {
                     save_to_buffer = false;
                     window.clear()
                 }
@@ -230,7 +230,7 @@ impl RadioStream {
         let frame = Frame::new(data);
 
         // Modulate
-        let signal = self.modulation.ask(frame.assemble().as_str());
+        let signal = self.modulation.bpsk(frame.assemble().as_str());
 
         // Send
         self.tx_stream.send(signal.as_slice()).unwrap();
