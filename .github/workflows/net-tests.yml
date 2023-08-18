@@ -17,5 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install soapysdr
+        run: sudo apt install -y libsoapysdr-dev
+
       - name: Run tests
         run: cargo test --verbose -p net
