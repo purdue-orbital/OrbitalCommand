@@ -11,7 +11,7 @@ fn frame_test() {
 
     // Turn the frame into a string
     let mut for_transmission1 = frame_1.assemble();
-    let mut for_transmission2 = frame_2.assemble();
+    let for_transmission2 = frame_2.assemble();
 
     // Add some noise
     for_transmission1 = format!("0000000000110110100000000000000000001100000{for_transmission1}0000000001110000001100101000000010101010{for_transmission2}11010110101010000010110101010");

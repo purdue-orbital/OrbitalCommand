@@ -14,7 +14,7 @@ fn self_test_128bytes()
         return;
     }
 
-    let mut stream = err.unwrap();
+    let stream = err.unwrap();
 
     let mut test_arr: [u8; 4] = [4, 252, 112, 128];
 

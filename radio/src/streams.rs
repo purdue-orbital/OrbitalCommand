@@ -154,7 +154,7 @@ impl Tx {
         device.set_bandwidth(Direction::Tx, settings.channels_in_use, settings.lpf_filter)?;
 
         // Get rx stream
-        let mut tx = Tx {
+        let tx = Tx {
             Stream: RwLock::new(device.tx_stream(&[settings.channels_in_use])?)
         };
 
