@@ -1,0 +1,20 @@
+name: Radio Tests
+
+on:
+  push:
+    branches: [ "main", "Radio" ]
+  pull_request:
+    branches: [ "main", "Radio" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run tests
+        run: cargo test --verbose -p radio
