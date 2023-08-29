@@ -1,7 +1,5 @@
-use mimalloc::MiMalloc;
-
-#[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
+#![deny(clippy::unwrap_used)]
+#![deny(clippy::expect_used)]
 
 fn main() {
     println!("Hello, world!");

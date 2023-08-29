@@ -15,6 +15,12 @@ if [ -n "$2" ]; then
   fi
 fi
 
+cargo clippy
+
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
 if [ "$1" = "ground" ]; then
   echo "Ground Station Build"
   # Run ground command here

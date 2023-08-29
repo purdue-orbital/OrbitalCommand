@@ -1,14 +1,13 @@
+#![deny(clippy::unwrap_used)]
+#![deny(clippy::expect_used)]
+
 use actix_web::{post, get, App, HttpResponse, HttpServer, Either};
 use actix_web::Either::{Left, Right};
 use actix_web::web::{Data, Json};
 use async_mutex::Mutex;
-use mimalloc::MiMalloc;
 use common::Message;
 use radio::RadioStream;
 use serde::Serialize;
-
-#[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
 
 struct State {
     radio: Mutex<RadioStream>
@@ -16,19 +15,19 @@ struct State {
 
 #[post("/launch")]
 async fn launch(state: Data<State>) -> actix_web::Result<HttpResponse> {
-    state.radio.lock().await.transmit(Message::Launch.into()).unwrap();
+    state.radio.lock().await.transmit(&std::convert::TryInto::<Vec<_>>::try_into(Message::Launch).unwrap()).unwrap();
     Ok(HttpResponse::Ok().finish())
 }
 
 #[post("/abort")]
 async fn abort(state: Data<State>) -> actix_web::Result<HttpResponse> {
-    state.radio.lock().await.transmit(Message::Abort.into()).unwrap();
+    state.radio.lock().await.transmit(&std::convert::TryInto::<Vec<_>>::try_into(Message::Abort).unwrap()).unwrap();
     Ok(HttpResponse::Ok().finish())
 }
 
 #[post("/cut")]
 async fn cut(state: Data<State>) -> actix_web::Result<HttpResponse> {
-    state.radio.lock().await.transmit(Message::Cut.into()).unwrap();
+    state.radio.lock().await.transmit(&std::convert::TryInto::<Vec<_>>::try_into(Message::Cut).unwrap()).unwrap();
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -41,16 +40,16 @@ struct Telemetry {
 
 #[get("/telemetry")]
 async fn telemetry(state: Data<State>) -> actix_web::Result<Either<Json<Telemetry>, HttpResponse>> {
-    let messages = state.radio.lock().await.read().unwrap();
+    let messages = state.radio.lock().await.receive_frames().unwrap();
     for msg in messages.iter().rev() {
-        if let Ok(msg) = Message::try_from(msg.as_slice()) {
+        if let Ok(msg) = Message::try_from(msg.data.as_slice()) {
             return match msg {
                 Message::Telemetry { temperature, gps, acceleration } => Ok(Left(Json(Telemetry {
                     pos: vec![gps.x, gps.y, gps.z],
                     acc: vec![acceleration.x, acceleration.y, acceleration.z],
                     temp: temperature,
                 }))),
-                _ => {}
+                _ => Ok(Right(HttpResponse::BadRequest().finish())),
             };
         }
     }
@@ -60,7 +59,7 @@ async fn telemetry(state: Data<State>) -> actix_web::Result<Either<Json<Telemetr
 
 #[post("/update")]
 async fn update(state: Data<State>) -> actix_web::Result<HttpResponse> {
-    state.radio.transmit(Message::Update.into()).unwrap();
+    state.radio.lock().await.transmit(&std::convert::TryInto::<Vec<_>>::try_into(Message::Update).unwrap()).unwrap();
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -82,7 +81,8 @@ async fn main() -> std::io::Result<()> {
         radio: Mutex::new(RadioStream::new().unwrap()),
     });
 
-    HttpServer::new(|| {
+    HttpServer::new(move || {
+        let state = state.clone();
         App::new()
             .app_data(state)
             .service(launch)

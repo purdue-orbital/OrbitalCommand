@@ -582,7 +582,7 @@ impl Modulators {
         let mut to_return = Vec::with_capacity(bin.len() * self.samples_per_symbol);
 
         for x in (0..bin.len()).step_by(MFSK_BITS_ENCODED as usize) {
-            #[warn(clippy::needless_borrow)]  // This actually improves performance
+            #[allow(clippy::needless_borrow)]  // This actually improves performance
             let signal = self.mfsk_freq_map[bin_char_arr_to_usize_unchecked((&bin[x..(x as i32 + MFSK_BITS_ENCODED) as usize]).chars())].as_ref();
 
             to_return.extend_from_slice(signal);

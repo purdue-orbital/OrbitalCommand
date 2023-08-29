@@ -1,3 +1,6 @@
+#![deny(clippy::unwrap_used)]
+#![deny(clippy::expect_used)]
+
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread::{sleep, spawn};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -8,7 +11,6 @@ use num_complex::Complex;
 use crate::dsp::{Demodulators, Modulators};
 use crate::radio::Radio;
 use crate::streams::{RadioSettings, Rx, Tx};
-
 
 pub mod dsp;
 mod radio;
@@ -96,7 +98,7 @@ pub struct Frame {
     // Main body
     //--------------------------------
 
-    data:Vec<u8>
+    pub data:Vec<u8>
 
 }
 
@@ -242,6 +244,10 @@ impl RadioStream {
         Ok(())
     }
 
+    pub fn transmit_frame(&self, frame: &Frame) -> Result<()> {
+        self.transmit(frame.assemble().as_bytes())
+    }
+
     /// This process samples read and return any data received
     pub fn read(&self) -> Vec<u8> {
 
@@ -257,6 +263,11 @@ impl RadioStream {
         self.rx_buffer.write().unwrap().clear();
 
         bin_to_u8(stuff.as_str())
+    }
+
+    pub fn receive_frames(&self) -> Result<Vec<Frame>> {
+        let bytes = self.read();
+        Ok(Frame::from(&String::from_utf8(bytes)?))
     }
 }
 
