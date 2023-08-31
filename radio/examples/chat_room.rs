@@ -28,7 +28,7 @@ fn main() {
                 let out = check.unwrap().to_string();
 
                 if !out.is_empty(){
-                    println!("{out}")
+                    println!("Data: {out}")
                 }
             }
         }

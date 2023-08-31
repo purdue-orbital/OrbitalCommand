@@ -445,31 +445,6 @@ pub fn generate_sinusoid(frequency: f32, sample_rate: f32, num_samples: i32, sam
 }
 
 
-/// Generate waves for Quadrant for QAM (recursive)
-///
-/// # Arguments
-///
-/// * `phase_min` - The smallest phase allowed
-///
-/// * `phase_max` - The largest phase allowed
-///
-/// * `amplitude_min` - The smallest amplitude allowed
-///
-/// * `amplitude_max` - The largest amplitude allowed
-///
-/// * `points` - The number of points to make for this quadrant
-pub fn generate_quadrants(_phase_max:f32, _amplitude_max:f32, points:i32, _frequency: f32, _sample_rate: f32, _num_samples: i32) -> Vec<Vec<Complex<f32>>>{
-
-    let to_return = Vec::with_capacity(points as usize);
-
-
-
-
-
-    to_return
-}
-
-
 /// Radio modulators for digital signal processing
 #[derive(Clone)]
 pub struct Modulators {
@@ -490,7 +465,10 @@ pub struct Modulators {
     mfsk_freq_map: Vec<Vec<Complex<f32>>>,
 
     // Mapped values to their pre generated waves
-    qam_freq_map: Vec<Vec<Complex<f32>>>
+    qam_freq_map: Vec<Vec<Complex<f32>>>,
+
+    bpsk_one_signal: Vec<Complex<f32>>,
+    bpsk_zero_signal: Vec<Complex<f32>>,
 }
 
 /// Radio demodulators for digital signal processing
@@ -508,7 +486,6 @@ pub struct Demodulators {
     ask_fft_index: usize,
 
     mfsk_fft_size: usize,
-
     mfsk_fft_index_map: Vec<i32>,
 
     // pre-planned fft operation
@@ -531,7 +508,7 @@ impl Modulators {
     pub fn new(sample_rate: f32, baud_rate: f32) -> Modulators {
 
         // Create empty struct
-        let mut out = Modulators { samples_per_symbol: 0, sample_rate: 0.0, ask_on_signal: vec![], ask_off_signal: vec![], fsk_one_signal: vec![], fsk_zero_signal: vec![], mfsk_freq_map: vec![], qam_freq_map: vec![] };
+        let mut out = Modulators { samples_per_symbol: 0, sample_rate: 0.0, ask_on_signal: vec![], ask_off_signal: vec![], fsk_one_signal: vec![], fsk_zero_signal: vec![], mfsk_freq_map: vec![], qam_freq_map: vec![], bpsk_one_signal: vec![], bpsk_zero_signal: vec![] };
 
         // Update struct
         out.update(sample_rate, baud_rate);
@@ -562,6 +539,9 @@ impl Modulators {
 
             counter += transmission_window as f32;
         }
+
+        self.bpsk_zero_signal = generate_wave(BPSK_FREQUENCY, self.sample_rate, self.samples_per_symbol as i32, 0, 1.0, PI, 0.0);
+        self.bpsk_one_signal = generate_wave(BPSK_FREQUENCY, self.sample_rate, self.samples_per_symbol as i32, 0, 1.0, 0.0, 0.0);
 
     }
 
@@ -607,30 +587,7 @@ impl Modulators {
     /// # Arguments
     /// * `bin` - String of binary bits (ONLY 1s & 0s) to modulate (AKA Symbols)
     pub fn bpsk(&self, bin: &str) -> Vec<Complex<f32>> {
-        // initialize vector
-        let mut to_return = Vec::with_capacity(bin.len() * self.samples_per_symbol);
-
-        // Generate wave
-        for x in bin.chars() {
-            to_return.extend_from_slice(
-                generate_wave(
-                    BPSK_FREQUENCY,
-                    self.sample_rate,
-                    self.samples_per_symbol as i32,
-                    0,
-                    1.0,
-                    0.0,
-                    if x == '1' {
-                        // for BPSK
-                        PI / 2.0
-                    }else{
-                        -PI / 2.0
-                    }
-            ).as_slice()
-            )
-        }
-
-        to_return
+        bi_signal_modulation(bin, &self.bpsk_zero_signal, &self.bpsk_one_signal, self.samples_per_symbol)
     }
 
     /// Modulate a radio signal using qpsk
@@ -788,8 +745,10 @@ impl Demodulators {
 
         let step = self.samples_per_symbol / 2;
 
+
         for x in (0..arr.len()).step_by(self.samples_per_symbol){
-            if (arr[x + step].re - arr[x + step].im).abs() > 1.0{
+            //println!("{}", arr[x + step].re - arr[x + step].im);
+            if arr[x + step].re < 0.0 {
                 toreturn.push('0')
             }else{
                 toreturn.push('1')

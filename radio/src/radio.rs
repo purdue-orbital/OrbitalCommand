@@ -19,7 +19,7 @@ impl Radio {
         // Set that we are looking for lime devices
         let mut args = soapysdr::Args::new();
 
-        args.set("driver", "lime");
+        args.set("driver", "bladerf");
 
         // get list of radios
         let err = Device::new(args);

@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex, RwLock};
+use std::cmp::Ordering;
+use std::ops::Not;
+use std::sync::{Arc, atomic, Mutex, RwLock};
+use std::sync::atomic::AtomicBool;
 use std::thread::{sleep, spawn};
 use std::time::{Duration};
 
@@ -56,7 +59,8 @@ fn bin_to_u8(bin: &str) -> Vec<u8> {
     to_return
 }
 
-static AMBLE: &str = "101010101011110101010101010111111";
+static AMBLE: &str = "101010101010101010101010";
+static IDENT: &str = "1100110011001100";
 
 /// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
 /// spacecraft and space bound communication
@@ -103,16 +107,13 @@ impl Frame {
     }
 
     /// Turn a string into frame segments (if any)
-    pub fn from(data: &str) -> Vec<Frame>
+    pub fn from(data: Vec<String>) -> Vec<Frame>
     {
         // Create return vector
         let mut to_return = Vec::new();
 
-        // remove "ambles"
-        let clear = data.split(AMBLE).collect::<Vec<&str>>();
-
-        for x in (1..clear.len()).step_by(2){
-            to_return.push( Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bin_to_u8(clear[x])});
+        for x in data{
+            to_return.push( Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bin_to_u8(x.as_str())});
         }
 
         to_return
@@ -122,7 +123,11 @@ impl Frame {
 
         let bin = u8_to_bin(self.data.as_slice());
 
-        format!("{AMBLE}{bin}{AMBLE}")
+        let len = self.data.len() as u8;
+
+        let len_bin = u8_to_bin(&[len]);
+
+        format!("{AMBLE}{IDENT}{len_bin}{bin}")
     }
 }
 
@@ -135,9 +140,85 @@ pub fn demod(instance:&mut Demodulators, arr:Vec<Complex<f32>>) -> String {
 pub struct RadioStream {
     tx_stream: Tx,
     modulation: Modulators,
-    rx_buffer: Arc<RwLock<String>>,
-    settings: RadioSettings,
+    rx_buffer: Arc<RwLock<Vec<String>>>,
+    settings: RadioSettings
 }
+
+struct RXLoop{
+    len: usize,
+    buffer: Arc<RwLock<Vec<String>>>,
+    counter: usize,
+    arr: [fn(rxloop:&mut RXLoop ,window: &mut String)->u8; 4],
+
+}
+
+
+impl RXLoop {
+
+    pub fn new(buffer:Arc<RwLock<Vec<String>>>)->RXLoop{
+        RXLoop{
+            len: 0,
+            buffer,
+            counter: 0,
+            arr: [RXLoop::listen,RXLoop::sync,RXLoop::read_frame,RXLoop::record],
+        }
+    }
+
+    pub fn run(&mut self, window:&mut String){
+        self.counter = (self.counter + self.arr[self.counter](self, window) as usize) % 4;
+    }
+
+    fn listen(rxloop: &mut RXLoop, window: &mut String) -> u8{
+        if window.contains('1') {
+            1
+        }
+        else
+        {
+            window.clear();
+
+            0
+        }
+    }
+
+    fn sync(rxloop: &mut RXLoop, window: &mut String) -> u8{
+        if window.contains(IDENT)
+        {
+            window.clear();
+
+            1
+        }else if window.len() > 1000 {
+            window.clear();
+
+            3
+        }
+        else { 0 }
+    }
+
+    fn read_frame(rxloop: &mut RXLoop, window: &mut String) -> u8{
+        if window.len() >= 8 {
+
+            rxloop.len = bin_to_u8(window.as_str())[0] as usize * 8usize;
+
+            window.clear();
+
+            1
+        }else { 0 }
+    }
+
+    fn record(rxloop: &mut RXLoop, window: &mut String) -> u8{
+        if window.len() >= rxloop.len {
+            rxloop.buffer.write().unwrap().push(window.clone());
+
+            window.clear();
+
+            1
+
+        }else{
+            0
+        }
+    }
+}
+
 
 
 impl RadioStream {
@@ -153,18 +234,18 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-            sample_rate: 2e6,
+            sample_rate: 20e6,
             lo_frequency: 916e6,
-            lpf_filter: 0.0,
+            lpf_filter: 1e3,
             channels_in_use: 0,
-            gain: 50.0,
+            gain: 100.0,
             radio,
-            baud_rate: 2e5,
+            baud_rate: 1e5,
             size: 0,
         };
 
         // Read buffer
-        let buffer = Arc::new(RwLock::new(String::from("")));
+        let buffer = Arc::new(RwLock::new(Vec::new()));
 
         // Make radio streams
         let me = RadioStream {
@@ -173,6 +254,7 @@ impl RadioStream {
             settings: set.clone(),
             modulation: Modulators::new(set.sample_rate as f32, set.baud_rate),
         };
+
 
         // Spawn rx thread
         spawn(move || {
@@ -186,34 +268,20 @@ impl RadioStream {
 
             // create window
             let mut window = String::from("");
-            let mut save_to_buffer = false;
+
+            let mut rxloop = RXLoop::new(buffer);
 
             // rx loop
             loop {
-                // Handle if a head has yet to appear
-                if !save_to_buffer{
-                    // check if a header exists
-                    if window == AMBLE{
-                        save_to_buffer = true;
-                        window.clear();
-                        // trim window to size
-                    }else if window.len() == AMBLE.len(){
-                        window.remove(0);
-                    }
 
-                    // check if the tail appears
-                }else if window.contains(AMBLE){
-                    buffer.write().unwrap().push_str(&window.as_str()[0..window.len() - AMBLE.len()]);
-                    save_to_buffer = false;
-                    window.clear()
+                rxloop.run(&mut window);
 
-                    // if we're still waiting on the tail of a transmission, just drop this whole transmission
-                }else if window.len() > 520000 {
-                    save_to_buffer = false;
-                    window.clear()
+                let err = rx_stream.fetch(&[mtu.as_mut_slice()]);
+
+                if err.is_err(){
+
                 }
 
-                rx_stream.fetch(&[mtu.as_mut_slice()]).unwrap();
                 window.push_str(demod(&mut instance, mtu.clone()).as_str())
 
             }
@@ -252,7 +320,7 @@ impl RadioStream {
         // Clear buffer
         self.rx_buffer.write().unwrap().clear();
 
-        bin_to_u8(stuff.as_str())
+        bin_to_u8(stuff[0].as_str())
     }
 }
 

@@ -1,4 +1,8 @@
+use std::collections::HashMap;
 use std::sync::RwLock;
+use std::thread;
+use std::thread::Thread;
+use std::time::Duration;
 
 use anyhow::Result;
 use num_complex::Complex;
@@ -93,18 +97,21 @@ impl Rx {
         // Get radio
         let device = settings.radio.get_radio();
 
-        // Set radio sample rate
-        device.set_sample_rate(Direction::Rx, settings.channels_in_use, settings.sample_rate)?;
+        //device.set_bandwidth(Direction::Rx,settings.channels_in_use,settings.lpf_filter).unwrap();
+
 
         // Set gain
-        device.set_gain(Direction::Rx, settings.channels_in_use, settings.gain)?;
-        //device.set_gain_mode(Direction::Rx,settings.channels_in_use,true)?;
+        //device.set_gain(Direction::Rx, settings.channels_in_use, settings.gain)?;
+        device.set_gain_mode(Direction::Rx,settings.channels_in_use,true)?;
 
         // Set carrier frequency
         device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
 
-        // Set hardware low pass filter
-        device.set_bandwidth(Direction::Rx, settings.channels_in_use, settings.lpf_filter)?;
+        device.set_dc_offset_mode(Direction::Rx,settings.channels_in_use,true).unwrap();
+
+        // Set radio sample rate
+        device.set_sample_rate(Direction::Rx, settings.channels_in_use, settings.sample_rate)?;
+
 
         // Get rx stream
         let mut rx = Rx {
@@ -144,14 +151,14 @@ impl Tx {
         device.set_sample_rate(Direction::Tx, settings.channels_in_use, settings.sample_rate)?;
 
         // Set gain
-        device.set_gain(Direction::Tx, settings.channels_in_use, settings.gain)?;
-        //device.set_gain_mode(Direction::Tx,settings.channels_in_use,true)?;
+        //device.set_gain(Direction::Tx, settings.channels_in_use, settings.gain)?;
+        device.set_gain_mode(Direction::Tx,settings.channels_in_use,true)?;
 
         // Set carrier frequency
         device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
 
         // Set hardware low pass filter
-        device.set_bandwidth(Direction::Tx, settings.channels_in_use, settings.lpf_filter)?;
+        //device.set_bandwidth(Direction::Tx, settings.channels_in_use, settings.lpf_filter)?;
 
         // Get rx stream
         let tx = Tx {
