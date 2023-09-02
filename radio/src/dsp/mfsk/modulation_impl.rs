@@ -1,7 +1,7 @@
 use num_complex::Complex;
+
 use crate::dsp::mfsk::structs::modulation::Modulation;
 use crate::dsp::tools::generate_wave::generate_wave;
-
 
 ///
 /// You need to ensure that:
@@ -25,8 +25,7 @@ pub static MFSK_FFT_SIZE: usize = 1024;
 
 
 impl Modulation {
-
-    pub fn new(samples_per_symbol: usize, sample_rate:f32)->Modulation{
+    pub fn new(samples_per_symbol: usize, sample_rate: f32) -> Modulation {
 
         // Generate frequency map
         let mut mfsk_freq_map = Vec::with_capacity(2_i32.pow(MFSK_BITS_ENCODED as u32) as usize);
@@ -35,12 +34,12 @@ impl Modulation {
 
         // Create frequency map for MFSK
         for _ in 0..2_i32.pow(MFSK_BITS_ENCODED as u32) as usize {
-            mfsk_freq_map.push(generate_wave(counter, sample_rate, samples_per_symbol as i32, 0, 1.0,0.0,0.0));
+            mfsk_freq_map.push(generate_wave(counter, sample_rate, samples_per_symbol as i32, 0, 1.0, 0.0, 0.0));
 
             counter += transmission_window as f32;
         }
-        
-        Modulation{samples_per_symbol,sample_rate, mfsk_freq_map }
+
+        Modulation { samples_per_symbol, sample_rate, mfsk_freq_map }
     }
 
 

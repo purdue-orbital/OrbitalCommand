@@ -100,13 +100,12 @@ impl Rx {
 
         // Set gain
         //device.set_gain(Direction::Rx, settings.channels_in_use, settings.gain)?;
-        device.set_gain_mode(Direction::Rx,settings.channels_in_use,true)?;
+        device.set_gain_mode(Direction::Rx, settings.channels_in_use, true)?;
 
         // Set carrier frequency
         device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
 
         //device.set_dc_offset_mode(Direction::Rx,settings.channels_in_use,true).unwrap();
-
 
 
         // Get rx stream
@@ -148,7 +147,7 @@ impl Tx {
 
         // Set gain
         //device.set_gain(Direction::Tx, settings.channels_in_use, settings.gain)?;
-        device.set_gain_mode(Direction::Tx,settings.channels_in_use,true)?;
+        device.set_gain_mode(Direction::Tx, settings.channels_in_use, true)?;
 
         // Set carrier frequency
         device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency, Args::new())?;

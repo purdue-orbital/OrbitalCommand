@@ -1,21 +1,21 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
 
-pub mod dsp;
-mod radio;
-mod streams;
-
 use std::ops::{Deref, Index, Not};
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread::{sleep, spawn};
-use std::time::{Duration};
+use std::time::Duration;
 
 use anyhow::{Error, Result};
 use num_complex::Complex;
-use crate::dsp::{Demodulators, Modulators};
 
+use crate::dsp::{Demodulators, Modulators};
 use crate::radio::Radio;
 use crate::streams::{RadioSettings, Rx, Tx};
+
+pub mod dsp;
+mod radio;
+mod streams;
 
 static AMBLE: &str = "10101010";
 static IDENT: &str = "1111000011110000";
@@ -32,46 +32,41 @@ enum ModulationType {
 
 fn bits_per_symbol() -> u8 {
     match MOD_TYPE {
-        ModulationType::ASK => {1}
-        ModulationType::FSK => {1}
-        ModulationType::MFSK => {8}
-        ModulationType::BPSK => {1}
-        ModulationType::QPSK => {2}
+        ModulationType::ASK => { 1 }
+        ModulationType::FSK => { 1 }
+        ModulationType::MFSK => { 8 }
+        ModulationType::BPSK => { 1 }
+        ModulationType::QPSK => { 2 }
     }
 }
 
-fn demodulation(obj: &Demodulators,arr: Vec<Complex<f32>>) -> Vec<u8>{
+fn demodulation(obj: &Demodulators, arr: Vec<Complex<f32>>) -> Vec<u8> {
     match MOD_TYPE {
-        ModulationType::ASK => {obj.ask(arr)}
-        ModulationType::FSK => {obj.fsk(arr)}
-        ModulationType::MFSK => {obj.mfsk(arr)}
-        ModulationType::BPSK => {obj.bpsk(arr)}
-        ModulationType::QPSK => {obj.qpsk(arr)}
+        ModulationType::ASK => { obj.ask(arr) }
+        ModulationType::FSK => { obj.fsk(arr) }
+        ModulationType::MFSK => { obj.mfsk(arr) }
+        ModulationType::BPSK => { obj.bpsk(arr) }
+        ModulationType::QPSK => { obj.qpsk(arr) }
     }
 }
 
-fn modulation(obj: &Modulators,arr: &[u8]) -> Vec<Complex<f32>>{
+fn modulation(obj: &Modulators, arr: &[u8]) -> Vec<Complex<f32>> {
     match MOD_TYPE {
-        ModulationType::ASK => {obj.ask(arr)}
-        ModulationType::FSK => {obj.fsk(arr)}
-        ModulationType::MFSK => {obj.mfsk(arr)}
-        ModulationType::BPSK => {obj.bpsk(arr)}
-        ModulationType::QPSK => {obj.qpsk(arr)}
+        ModulationType::ASK => { obj.ask(arr) }
+        ModulationType::FSK => { obj.fsk(arr) }
+        ModulationType::MFSK => { obj.mfsk(arr) }
+        ModulationType::BPSK => { obj.bpsk(arr) }
+        ModulationType::QPSK => { obj.qpsk(arr) }
     }
 }
 
 
-unsafe impl Send for RadioStream{
+unsafe impl Send for RadioStream {}
 
-}
-
-unsafe impl Sync for RadioStream{
-
-}
+unsafe impl Sync for RadioStream {}
 
 /// u8 array to binary string
 fn u8_to_bin(arr: &[u8]) -> String {
-
     let mut binary_string = String::new();
 
     for &byte in arr {
@@ -140,13 +135,12 @@ pub struct Frame {
     // Main body
     //--------------------------------
 
-    pub data:Vec<u8>
-
+    pub data: Vec<u8>,
 }
 
 impl Frame {
     pub fn new(bytes: &[u8]) -> Frame {
-        Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bytes.to_vec()}
+        Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bytes.to_vec() }
     }
 
     /// Turn a string into frame segments (if any)
@@ -155,15 +149,14 @@ impl Frame {
         // Create return vector
         let mut to_return = Vec::new();
 
-        for x in data{
-            to_return.push( Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bin_to_u8(x.as_str())});
+        for x in data {
+            to_return.push(Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bin_to_u8(x.as_str()) });
         }
 
         to_return
     }
 
     pub fn assemble(&self) -> Vec<u8> {
-
         let bin = u8_to_bin(self.data.as_slice());
 
         let len = self.data.len() as u8;
@@ -178,79 +171,73 @@ pub struct RadioStream {
     tx_stream: Tx,
     modulation: Modulators,
     rx_buffer: Arc<RwLock<Vec<Vec<u8>>>>,
-    settings: RadioSettings
+    settings: RadioSettings,
 }
 
-struct RXLoop{
+struct RXLoop {
     len: usize,
     buffer: Arc<RwLock<Vec<String>>>,
     counter: usize,
-    arr: [fn(rxloop:&mut RXLoop ,window: &mut String)->u8; 4],
+    arr: [fn(rxloop: &mut RXLoop, window: &mut String) -> u8; 4],
 
 }
 
 
 impl RXLoop {
-
-    pub fn new(buffer:Arc<RwLock<Vec<String>>>)->RXLoop{
-        RXLoop{
+    pub fn new(buffer: Arc<RwLock<Vec<String>>>) -> RXLoop {
+        RXLoop {
             len: 0,
             buffer,
             counter: 0,
-            arr: [RXLoop::listen,RXLoop::sync,RXLoop::read_frame,RXLoop::record],
+            arr: [RXLoop::listen, RXLoop::sync, RXLoop::read_frame, RXLoop::record],
         }
     }
 
-    pub fn run(&mut self, window:&mut String){
+    pub fn run(&mut self, window: &mut String) {
         self.counter = (self.counter + self.arr[self.counter](self, window) as usize) % 4;
     }
 
-    fn listen(rxloop: &mut RXLoop, window: &mut String) -> u8{
+    fn listen(rxloop: &mut RXLoop, window: &mut String) -> u8 {
         if window.contains('1') {
             1
-        }
-        else
-        {
+        } else {
             window.clear();
 
             0
         }
     }
 
-    fn sync(rxloop: &mut RXLoop, window: &mut String) -> u8{
+    fn sync(rxloop: &mut RXLoop, window: &mut String) -> u8 {
         if window.contains(IDENT)
         {
             window.clear();
 
             1
-        }else if window.len() > 1000 {
+        } else if window.len() > 1000 {
             window.clear();
 
             3
-        }
-        else { 0 }
+        } else { 0 }
     }
 
-    fn read_frame(rxloop: &mut RXLoop, window: &mut String) -> u8{
+    fn read_frame(rxloop: &mut RXLoop, window: &mut String) -> u8 {
         if window.len() >= 8 {
-
             rxloop.len = bin_to_u8(window.as_str())[0] as usize * 8usize;
 
             window.clear();
 
             1
-        }else { 0 }
+        } else { 0 }
     }
 
-    fn record(rxloop: &mut RXLoop, window: &mut String) -> u8{
+    fn record(rxloop: &mut RXLoop, window: &mut String) -> u8 {
         if window.len() >= rxloop.len {
             rxloop.buffer.write().unwrap().push(window.clone());
 
             window.clear();
 
             1
-
-        }else{
+        } else {
             0
         }
     }
@@ -288,7 +275,7 @@ impl RadioStream {
             tx_stream: Tx::new(set.clone())?,
             rx_buffer: buffer.clone(),
             settings: set.clone(),
-            modulation: Modulators::new((set.sample_rate/set.baud_rate as f64) as usize, set.sample_rate as f32),
+            modulation: Modulators::new((set.sample_rate / set.baud_rate as f64) as usize, set.sample_rate as f32),
         };
 
 
@@ -300,7 +287,7 @@ impl RadioStream {
             let instance = Demodulators::new(samples_per_a_symbol as usize, set.sample_rate as f32);
 
             // create mtu
-            let mut mtu = vec![Complex::new(0.0,0.0); samples_per_a_symbol as usize];
+            let mut mtu = vec![Complex::new(0.0, 0.0); samples_per_a_symbol as usize];
 
             // create window
             let mut window = "000000000000000000000000000000000000".to_string();
@@ -312,25 +299,21 @@ impl RadioStream {
 
             // rx loop
             loop {
-
                 rxloop.run(&mut window);
 
                 let err = rx_stream.fetch(&[mtu.as_mut_slice()]);
 
-                if err.is_err(){
-
-                }
+                if err.is_err() {}
 
                 window.push(u8_to_bin(demodulation(&instance, mtu.clone()).as_slice()).chars().last().unwrap());
 
-                if !fake_buffer.as_ref().read().unwrap().is_empty(){
+                if !fake_buffer.as_ref().read().unwrap().is_empty() {
                     let m = bin_to_u8(fake_buffer.read().unwrap()[0].as_str());
 
                     buffer.write().unwrap().push(m.clone());
 
                     fake_buffer.write().unwrap().clear();
                 }
-
             }
         });
 
@@ -345,7 +328,7 @@ impl RadioStream {
         let frame = Frame::new(data);
 
         // Modulate
-        let signal = modulation(&self.modulation,frame.assemble().as_slice());
+        let signal = modulation(&self.modulation, frame.assemble().as_slice());
 
         // Send
         self.tx_stream.send(signal.as_slice()).unwrap();
@@ -355,10 +338,9 @@ impl RadioStream {
 
     /// This process samples read and return any data received
     pub fn read(&self) -> Vec<u8> {
-
         let mut stuff = self.rx_buffer.read().unwrap().clone();
 
-        while stuff.is_empty(){
+        while stuff.is_empty() {
             stuff = self.rx_buffer.read().unwrap().clone();
 
             sleep(Duration::from_millis(5))
@@ -378,7 +360,6 @@ impl RadioStream {
         let bytes = self.read();
         Ok(Frame::from(vec![String::from_utf8(bytes)?]))
     }
-
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -398,8 +379,8 @@ impl Benchy {
     }
 
     pub fn update(&mut self, sample_rate: f32, baud_rate: f32) {
-        self.modulation.lock().unwrap().update((sample_rate/baud_rate) as usize, sample_rate);
-        self.demodulation.lock().unwrap().update((sample_rate/baud_rate) as usize, sample_rate);
+        self.modulation.lock().unwrap().update((sample_rate / baud_rate) as usize, sample_rate);
+        self.demodulation.lock().unwrap().update((sample_rate / baud_rate) as usize, sample_rate);
     }
 
     // ASK
@@ -451,7 +432,6 @@ impl Benchy {
     {
         self.demodulation.lock().unwrap().qpsk(arr)
     }
-
 }
 
 
@@ -468,8 +448,8 @@ impl Testy {
     }
 
     pub fn update(&mut self, sample_rate: f32, baud_rate: f32) {
-        self.modulation.lock().unwrap().update((sample_rate/baud_rate) as usize, sample_rate);
-        self.demodulation.lock().unwrap().update((sample_rate/baud_rate) as usize, sample_rate);
+        self.modulation.lock().unwrap().update((sample_rate / baud_rate) as usize, sample_rate);
+        self.demodulation.lock().unwrap().update((sample_rate / baud_rate) as usize, sample_rate);
     }
 
     // ASK
@@ -497,8 +477,7 @@ impl Testy {
     {
         self.modulation.lock().unwrap().mfsk(bin)
     }
-    pub fn demod_mfsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
-    {
+    pub fn demod_mfsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>{
         self.demodulation.lock().unwrap().mfsk(arr)
     }
 
@@ -521,5 +500,4 @@ impl Testy {
     {
         self.demodulation.lock().unwrap().qpsk(arr)
     }
-
 }

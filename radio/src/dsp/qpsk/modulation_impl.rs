@@ -1,14 +1,15 @@
 use std::f32::consts::PI;
+
 use num_complex::Complex;
+
 use crate::dsp::qpsk::structs::modulation::Modulation;
 use crate::dsp::tools::generate_wave::generate_wave;
 
 static QPSK_FREQUENCY: f32 = 100.0;
 
 impl Modulation {
-
-    pub fn new(samples_per_symbol: usize, sample_rate:f32)->Modulation{
-        Modulation{samples_per_symbol, sample_rate}
+    pub fn new(samples_per_symbol: usize, sample_rate: f32) -> Modulation {
+        Modulation { samples_per_symbol, sample_rate }
     }
 
     /// Modulate a radio signal using qpsk
@@ -21,8 +22,7 @@ impl Modulation {
 
         for &x in bin {
             for y in (0..8).step_by(2) {
-
-                let val= (x << y) >> 6;
+                let val = (x << y) >> 6;
 
                 to_return.extend(
                     match val {

@@ -1,10 +1,10 @@
 use num_complex::Complex;
+
 use crate::dsp::qpsk::structs::demodulation::Demodulation;
 
 impl Demodulation {
-
-    pub fn new(samples_per_symbol: usize, sample_rate:f32)->Demodulation{
-        Demodulation{samples_per_symbol, sample_rate}
+    pub fn new(samples_per_symbol: usize, sample_rate: f32) -> Demodulation {
+        Demodulation { samples_per_symbol, sample_rate }
     }
 
 

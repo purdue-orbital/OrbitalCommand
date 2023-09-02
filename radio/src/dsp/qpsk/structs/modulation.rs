@@ -1,4 +1,4 @@
-pub struct Modulation{
+pub struct Modulation {
     // Calculate the number of samples per a symbol
     pub(crate) samples_per_symbol: usize,
 

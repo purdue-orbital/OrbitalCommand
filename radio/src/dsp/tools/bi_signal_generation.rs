@@ -15,14 +15,13 @@ pub fn bi_signal_modulation(bin: &[u8], zero_signal: &[Complex<f32>], one_signal
 
     // Generate wave
     for x in bin {
-        for y in (0..8).rev(){
-            if (x >> y) & 1 == 1{
+        for y in (0..8).rev() {
+            if (x >> y) & 1 == 1 {
                 to_return.extend_from_slice(one_signal)
-            }else{
+            } else {
                 to_return.extend_from_slice(zero_signal)
             }
         }
-
     }
 
     to_return

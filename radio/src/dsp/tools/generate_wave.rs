@@ -1,4 +1,5 @@
 use std::f32::consts::PI;
+
 use num_complex::Complex;
 
 /// Generate Complex Radio Wave
