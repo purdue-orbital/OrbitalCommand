@@ -1,22 +1,62 @@
-use std::cmp::Ordering;
-use std::ops::Not;
-use std::sync::{Arc, atomic, Mutex, RwLock};
-use std::sync::atomic::AtomicBool;
+pub mod dsp;
+mod radio;
+mod streams;
+
+use std::ops::{Deref, Index, Not};
+use std::sync::{Arc, Mutex, RwLock};
 use std::thread::{sleep, spawn};
 use std::time::{Duration};
 
 use anyhow::{Error, Result};
 use num_complex::Complex;
-
 use crate::dsp::{Demodulators, Modulators};
+
 use crate::radio::Radio;
 use crate::streams::{RadioSettings, Rx, Tx};
 
+static AMBLE: &str = "10101010";
+static IDENT: &str = "1111000011110000";
+static MOD_TYPE: ModulationType = ModulationType::BPSK;
 
-pub mod dsp;
-mod radio;
-mod tools;
-mod streams;
+
+enum ModulationType {
+    ASK,
+    FSK,
+    MFSK,
+    BPSK,
+    QPSK,
+}
+
+fn bits_per_symbol() -> u8 {
+    match MOD_TYPE {
+        ModulationType::ASK => {1}
+        ModulationType::FSK => {1}
+        ModulationType::MFSK => {8}
+        ModulationType::BPSK => {1}
+        ModulationType::QPSK => {2}
+    }
+}
+
+fn demodulation(obj: &Demodulators,arr: Vec<Complex<f32>>) -> Vec<u8>{
+    match MOD_TYPE {
+        ModulationType::ASK => {obj.ask(arr)}
+        ModulationType::FSK => {obj.fsk(arr)}
+        ModulationType::MFSK => {obj.mfsk(arr)}
+        ModulationType::BPSK => {obj.bpsk(arr)}
+        ModulationType::QPSK => {obj.qpsk(arr)}
+    }
+}
+
+fn modulation(obj: &Modulators,arr: &[u8]) -> Vec<Complex<f32>>{
+    match MOD_TYPE {
+        ModulationType::ASK => {obj.ask(arr)}
+        ModulationType::FSK => {obj.fsk(arr)}
+        ModulationType::MFSK => {obj.mfsk(arr)}
+        ModulationType::BPSK => {obj.bpsk(arr)}
+        ModulationType::QPSK => {obj.qpsk(arr)}
+    }
+}
+
 
 unsafe impl Send for RadioStream{
 
@@ -28,13 +68,15 @@ unsafe impl Sync for RadioStream{
 
 /// u8 array to binary string
 fn u8_to_bin(arr: &[u8]) -> String {
-    let mut name_in_binary = String::from("");
 
-    for character in arr {
-        name_in_binary += &format!("{:08b}", *character);
+    let mut binary_string = String::new();
+
+    for &byte in arr {
+        let binary_byte = format!("{:08b}", byte);
+        binary_string.push_str(&binary_byte);
     }
 
-    name_in_binary
+    binary_string
 }
 
 /// binary string to u8 array
@@ -59,8 +101,6 @@ fn bin_to_u8(bin: &str) -> Vec<u8> {
     to_return
 }
 
-static AMBLE: &str = "101010101010101010101010";
-static IDENT: &str = "1100110011001100";
 
 /// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
 /// spacecraft and space bound communication
@@ -119,7 +159,7 @@ impl Frame {
         to_return
     }
 
-    pub fn assemble(&self) -> String {
+    pub fn assemble(&self) -> Vec<u8> {
 
         let bin = u8_to_bin(self.data.as_slice());
 
@@ -127,20 +167,15 @@ impl Frame {
 
         let len_bin = u8_to_bin(&[len]);
 
-        format!("{AMBLE}{IDENT}{len_bin}{bin}")
+        bin_to_u8(format!("{AMBLE}{IDENT}{len_bin}{bin}").as_str())
     }
-}
-
-/// Current demodulating function
-pub fn demod(instance:&mut Demodulators, arr:Vec<Complex<f32>>) -> String {
-    instance.bpsk(arr)
 }
 
 
 pub struct RadioStream {
     tx_stream: Tx,
     modulation: Modulators,
-    rx_buffer: Arc<RwLock<Vec<String>>>,
+    rx_buffer: Arc<RwLock<Vec<Vec<u8>>>>,
     settings: RadioSettings
 }
 
@@ -220,7 +255,6 @@ impl RXLoop {
 }
 
 
-
 impl RadioStream {
     pub fn new() -> Result<RadioStream> {
 
@@ -234,13 +268,13 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-            sample_rate: 20e6,
+            sample_rate: 40e6,
             lo_frequency: 916e6,
             lpf_filter: 1e3,
             channels_in_use: 0,
             gain: 100.0,
             radio,
-            baud_rate: 1e5,
+            baud_rate: 4e4,
             size: 0,
         };
 
@@ -252,24 +286,27 @@ impl RadioStream {
             tx_stream: Tx::new(set.clone())?,
             rx_buffer: buffer.clone(),
             settings: set.clone(),
-            modulation: Modulators::new(set.sample_rate as f32, set.baud_rate),
+            modulation: Modulators::new((set.sample_rate/set.baud_rate as f64) as usize, set.sample_rate as f32),
         };
 
 
         // Spawn rx thread
         spawn(move || {
             // create stream
+            let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
             let mut rx_stream = Rx::new(set.clone()).expect("Starting RX stream");
-            let mut instance = Demodulators::new(set.sample_rate as f32, set.baud_rate);
+            let instance = Demodulators::new(samples_per_a_symbol as usize, set.sample_rate as f32);
 
             // create mtu
-            let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
             let mut mtu = vec![Complex::new(0.0,0.0); samples_per_a_symbol as usize];
 
             // create window
-            let mut window = String::from("");
+            let mut window = "000000000000000000000000000000000000".to_string();
 
-            let mut rxloop = RXLoop::new(buffer);
+            let fake_buffer = Arc::new(RwLock::new(Vec::new()));
+
+
+            let mut rxloop = RXLoop::new(fake_buffer.clone());
 
             // rx loop
             loop {
@@ -282,7 +319,15 @@ impl RadioStream {
 
                 }
 
-                window.push_str(demod(&mut instance, mtu.clone()).as_str())
+                window.push(u8_to_bin(demodulation(&instance, mtu.clone()).as_slice()).chars().last().unwrap());
+
+                if !fake_buffer.as_ref().read().unwrap().is_empty(){
+                    let m = bin_to_u8(fake_buffer.read().unwrap()[0].as_str());
+
+                    buffer.write().unwrap().push(m.clone());
+
+                    fake_buffer.write().unwrap().clear();
+                }
 
             }
         });
@@ -298,7 +343,7 @@ impl RadioStream {
         let frame = Frame::new(data);
 
         // Modulate
-        let signal = self.modulation.bpsk(frame.assemble().as_str());
+        let signal = modulation(&self.modulation,frame.assemble().as_slice());
 
         // Send
         self.tx_stream.send(signal.as_slice()).unwrap();
@@ -320,7 +365,7 @@ impl RadioStream {
         // Clear buffer
         self.rx_buffer.write().unwrap().clear();
 
-        bin_to_u8(stuff[0].as_str())
+        stuff[0].clone()
     }
 }
 
@@ -337,60 +382,60 @@ pub struct Benchy {
 
 impl Benchy {
     pub fn new() -> Benchy {
-        Benchy { modulation: Arc::from(Mutex::from(Modulators::new(0.0, 0.0))), demodulation: Arc::from(Mutex::from(Demodulators::new(0.0, 0.0))) }
+        Benchy { modulation: Arc::from(Mutex::from(Modulators::new(0, 0.0))), demodulation: Arc::from(Mutex::from(Demodulators::new(0, 0.0))) }
     }
 
     pub fn update(&mut self, sample_rate: f32, baud_rate: f32) {
-        self.modulation.lock().unwrap().update(sample_rate, baud_rate);
-        self.demodulation.lock().unwrap().update(sample_rate, baud_rate);
+        self.modulation.lock().unwrap().update((sample_rate/baud_rate) as usize, sample_rate);
+        self.demodulation.lock().unwrap().update((sample_rate/baud_rate) as usize, sample_rate);
     }
 
     // ASK
-    pub fn mod_ask(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn mod_ask(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
     {
         self.modulation.lock().unwrap().ask(bin)
     }
-    pub fn demod_ask(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn demod_ask(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
     {
         self.demodulation.lock().unwrap().ask(arr)
     }
 
     // FSK
-    pub fn mod_fsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn mod_fsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
     {
         self.modulation.lock().unwrap().fsk(bin)
     }
-    pub fn demod_fsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn demod_fsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
     {
         self.demodulation.lock().unwrap().fsk(arr)
     }
 
     // MFSK
-    pub fn mod_mfsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn mod_mfsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
     {
         self.modulation.lock().unwrap().mfsk(bin)
     }
-    pub fn demod_mfsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn demod_mfsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
     {
         self.demodulation.lock().unwrap().mfsk(arr)
     }
 
     // BPSK
-    pub fn mod_bpsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn mod_bpsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
     {
         self.modulation.lock().unwrap().bpsk(bin)
     }
-    pub fn demod_bpsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn demod_bpsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
     {
         self.demodulation.lock().unwrap().bpsk(arr)
     }
 
     // QPSK
-    pub fn mod_qpsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn mod_qpsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
     {
         self.modulation.lock().unwrap().qpsk(bin)
     }
-    pub fn demod_qpsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn demod_qpsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
     {
         self.demodulation.lock().unwrap().qpsk(arr)
     }
@@ -407,60 +452,60 @@ pub struct Testy {
 
 impl Testy {
     pub fn new() -> Testy {
-        Testy { modulation: Arc::from(Mutex::from(Modulators::new(0.0, 0.0))), demodulation: Arc::from(Mutex::from(Demodulators::new(0.0, 0.0))) }
+        Testy { modulation: Arc::from(Mutex::from(Modulators::new(0, 0.0))), demodulation: Arc::from(Mutex::from(Demodulators::new(0, 0.0))) }
     }
 
     pub fn update(&mut self, sample_rate: f32, baud_rate: f32) {
-        self.modulation.lock().unwrap().update(sample_rate, baud_rate);
-        self.demodulation.lock().unwrap().update(sample_rate, baud_rate);
+        self.modulation.lock().unwrap().update((sample_rate/baud_rate) as usize, sample_rate);
+        self.demodulation.lock().unwrap().update((sample_rate/baud_rate) as usize, sample_rate);
     }
 
     // ASK
-    pub fn mod_ask(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn mod_ask(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
     {
         self.modulation.lock().unwrap().ask(bin)
     }
-    pub fn demod_ask(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn demod_ask(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
     {
         self.demodulation.lock().unwrap().ask(arr)
     }
 
     // FSK
-    pub fn mod_fsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn mod_fsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
     {
         self.modulation.lock().unwrap().fsk(bin)
     }
-    pub fn demod_fsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn demod_fsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
     {
         self.demodulation.lock().unwrap().fsk(arr)
     }
 
     // MFSK
-    pub fn mod_mfsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn mod_mfsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
     {
         self.modulation.lock().unwrap().mfsk(bin)
     }
-    pub fn demod_mfsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn demod_mfsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
     {
         self.demodulation.lock().unwrap().mfsk(arr)
     }
 
     // BPSK
-    pub fn mod_bpsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn mod_bpsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
     {
         self.modulation.lock().unwrap().bpsk(bin)
     }
-    pub fn demod_bpsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn demod_bpsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
     {
         self.demodulation.lock().unwrap().bpsk(arr)
     }
 
     // QPSK
-    pub fn mod_qpsk(&mut self, bin: &str) -> Vec<Complex<f32>>
+    pub fn mod_qpsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
     {
         self.modulation.lock().unwrap().qpsk(bin)
     }
-    pub fn demod_qpsk(&mut self, arr: Vec<Complex<f32>>) -> String
+    pub fn demod_qpsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
     {
         self.demodulation.lock().unwrap().qpsk(arr)
     }

@@ -1,8 +1,4 @@
-use std::collections::HashMap;
 use std::sync::RwLock;
-use std::thread;
-use std::thread::Thread;
-use std::time::Duration;
 
 use anyhow::Result;
 use num_complex::Complex;
@@ -99,6 +95,8 @@ impl Rx {
 
         //device.set_bandwidth(Direction::Rx,settings.channels_in_use,settings.lpf_filter).unwrap();
 
+        // Set radio sample rate
+        device.set_sample_rate(Direction::Rx, settings.channels_in_use, settings.sample_rate)?;
 
         // Set gain
         //device.set_gain(Direction::Rx, settings.channels_in_use, settings.gain)?;
@@ -107,10 +105,8 @@ impl Rx {
         // Set carrier frequency
         device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
 
-        device.set_dc_offset_mode(Direction::Rx,settings.channels_in_use,true).unwrap();
+        //device.set_dc_offset_mode(Direction::Rx,settings.channels_in_use,true).unwrap();
 
-        // Set radio sample rate
-        device.set_sample_rate(Direction::Rx, settings.channels_in_use, settings.sample_rate)?;
 
 
         // Get rx stream
