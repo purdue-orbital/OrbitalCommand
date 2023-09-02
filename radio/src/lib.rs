@@ -12,9 +12,9 @@ use crate::dsp::{Demodulators, Modulators};
 use crate::radio::Radio;
 use crate::streams::{RadioSettings, Rx, Tx};
 
-pub mod dsp;
 mod radio;
 mod streams;
+mod dsp;
 
 static AMBLE: &str = "10101010";
 static IDENT: &str = "1111000011110000";
@@ -336,7 +336,7 @@ impl RadioStream {
     }
 
     pub fn transmit_frame(&self, frame: &Frame) -> Result<()> {
-        self.transmit(frame.assemble().as_bytes())
+        self.transmit(&frame.assemble())
     }
 
     /// This process samples read and return any data received
@@ -355,18 +355,9 @@ impl RadioStream {
         stuff[0].clone()
     }
 
-    pub fn transmit_frame(&self, frame: &Frame) -> Result<()> {
-        self.transmit(frame.assemble().as_slice())
-    }
-
     pub fn receive_frames(&self) -> Result<Vec<Frame>> {
         let bytes = self.read();
         Ok(Frame::from(vec![String::from_utf8(bytes)?]))
-    }
-
-    pub fn receive_frames(&self) -> Result<Vec<Frame>> {
-        let bytes = self.read();
-        Ok(Frame::from(&String::from_utf8(bytes)?))
     }
 }
 
