@@ -67,7 +67,7 @@ cargo bench --features bpsk --manifest-path=radio/Cargo.toml
 Result:
 ```
 Mod 2048 Bytes:  [5.1202 ms 5.1264 ms 5.1342 ms]
-Demod 2048 Bytes:  [8.5702 ms 9.5472 ms 10.642 ms]
+Demod 2048 Bytes:  [7.1631 ms 7.1662 ms 7.1697 ms]
 ```
 
 #### QPSK

@@ -1,2 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module classpath="CMake" type="CPP_MODULE" version="4" />
+<module type="CPP_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/common/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ground/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/launch/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/net/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/net/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/net/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/radio/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/radio/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/radio/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/radio/tests" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

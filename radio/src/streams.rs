@@ -1,4 +1,5 @@
 use std::sync::RwLock;
+
 use anyhow::Result;
 use num_complex::Complex;
 use soapysdr::{Args, Direction, RxStream, TxStream};
@@ -92,17 +93,20 @@ impl Rx {
         // Get radio
         let device = settings.radio.get_radio();
 
+        //device.set_bandwidth(Direction::Rx,settings.channels_in_use,settings.lpf_filter).unwrap();
+
         // Set radio sample rate
         device.set_sample_rate(Direction::Rx, settings.channels_in_use, settings.sample_rate)?;
 
         // Set gain
-        device.set_gain(Direction::Rx, settings.channels_in_use, settings.gain)?;
+        //device.set_gain(Direction::Rx, settings.channels_in_use, settings.gain)?;
+        device.set_gain_mode(Direction::Rx, settings.channels_in_use, true)?;
 
         // Set carrier frequency
         device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
 
-        // Set hardware low pass filter
-        //device.set_bandwidth(Direction::Rx, settings.channels_in_use,settings.lpf_filter)?;
+        //device.set_dc_offset_mode(Direction::Rx,settings.channels_in_use,true).unwrap();
+
 
         // Get rx stream
         let mut rx = Rx {
@@ -122,7 +126,6 @@ impl Rx {
 
     /// This function fetches the sample in place (to improve performance)
     pub fn fetch(&mut self, arr: &[&mut [Complex<f32>]]) -> Result<()> {
-
         self.Stream.read(arr, 100000000_i64)?;
 
         Ok(())
@@ -143,16 +146,17 @@ impl Tx {
         device.set_sample_rate(Direction::Tx, settings.channels_in_use, settings.sample_rate)?;
 
         // Set gain
-        device.set_gain(Direction::Tx, settings.channels_in_use, settings.gain)?;
+        //device.set_gain(Direction::Tx, settings.channels_in_use, settings.gain)?;
+        device.set_gain_mode(Direction::Tx, settings.channels_in_use, true)?;
 
         // Set carrier frequency
         device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
 
         // Set hardware low pass filter
-        //device.set_bandwidth(Direction::Tx, settings.channels_in_use,settings.lpf_filter)?;
+        //device.set_bandwidth(Direction::Tx, settings.channels_in_use, settings.lpf_filter)?;
 
         // Get rx stream
-        let mut tx = Tx {
+        let tx = Tx {
             Stream: RwLock::new(device.tx_stream(&[settings.channels_in_use])?)
         };
 
@@ -168,7 +172,6 @@ impl Tx {
     }
 
     pub fn send(&self, arr: &[Complex<f32>]) -> Result<()> {
-
         self.Stream.write().unwrap().write_all(&[arr], Default::default(), true, 100000000_i64)?;
 
         Ok(())

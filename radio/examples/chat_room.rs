@@ -1,7 +1,7 @@
-use std::{str, thread};
-use std::sync::{Arc, Mutex, RwLock};
-use std::thread::{sleep, spawn};
-use std::time::Duration;
+use std::{str};
+use std::sync::{Arc, RwLock};
+use std::thread::{spawn};
+
 
 fn main() {
     // Start Radio stream
@@ -28,7 +28,7 @@ fn main() {
                 let out = check.unwrap().to_string();
 
                 if !out.is_empty(){
-                    println!("{out}")
+                    println!("Data: {out}")
                 }
             }
         }
