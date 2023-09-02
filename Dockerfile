@@ -26,7 +26,7 @@ RUN printf "[workspace]\nmembers=[\"$TARGET_CRATE\"]" > Cargo.toml
 RUN USER=root cargo new --bin $TARGET_CRATE
 
 # Build external libraries
-WORKDIR ./$TARGET_CRATE
+WORKDIR /usr/src/orbital/$TARGET_CRATE
 COPY $TARGET_CRATE/Cargo.toml .
 # Clear all path-based (local) packages
 RUN sed --in-place '/path = "\.\./d' Cargo.toml
@@ -39,7 +39,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 # Client shit
 RUN mkdir client
 COPY $TARGET_CRATE/client/*.* ./client/
-WORKDIR ./client
+WORKDIR /usr/src/orbital/$TARGET_CRATE/client
 RUN if [ -e "package.json" ] ; then npm install ; fi
 
 # Copy and build internal libraries
@@ -48,7 +48,7 @@ COPY radio ./radio
 COPY common ./common
 RUN printf "[workspace]\nmembers=[\"radio\",\"common\",\"$TARGET_CRATE\"]" > ./Cargo.toml
 
-WORKDIR ./$TARGET_CRATE
+WORKDIR /usr/src/orbital/$TARGET_CRATE
 COPY $TARGET_CRATE/Cargo.toml ./Cargo.toml
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
@@ -68,7 +68,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/src/orbital/target \
     cargo build --release && mv ../target/release/$TARGET_CRATE ../out/app
 
-WORKDIR client
+WORKDIR /usr/src/orbital/$TARGET_CRATE/client
 RUN if [ -e "package.json" ] ; then npm run build ; fi
 RUN if [ -e "package.json" ] ; then mkdir -p ../../out/dist ; fi
 RUN if [ -e "package.json" ] ; then mv dist/* ../../out/dist ; fi
