@@ -19,4 +19,7 @@ pub struct Demodulation {
     // Pre allocated space for FFTs
     pub(crate) scratch: Vec<Complex<f32>>,
 
+    // Default index in the event no signal could be found
+    pub(crate) default_index: usize,
+
 }
