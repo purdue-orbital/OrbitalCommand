@@ -19,7 +19,7 @@ fn main() {
 
         loop {
             // Read transmissions
-            let arr = thread_clone.read().unwrap().read();
+            let arr = thread_clone.read().unwrap().read().unwrap();
 
             // Turn bytes into a string
             let check = str::from_utf8(arr.as_slice());
