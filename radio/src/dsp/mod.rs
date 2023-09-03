@@ -98,6 +98,8 @@ impl Modulators {
     pub fn fsk(&self, arr: &[u8]) -> Vec<Complex<f32>> {
         self.fsk.run(arr)
     }
+
+    #[deprecated(since="0.1.0", note="please use QPSK")]
     pub fn mfsk(&self, arr: &[u8]) -> Vec<Complex<f32>> {
         self.mfsk.run(arr)
     }
@@ -105,7 +107,6 @@ impl Modulators {
         self.bpsk.run(arr)
     }
 
-    #[deprecated(since="0.1.0", note="please use QPSK")]
     pub fn qpsk(&self, arr: &[u8]) -> Vec<Complex<f32>> {
         self.qpsk.run(arr)
     }
