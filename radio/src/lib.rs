@@ -17,7 +17,7 @@ mod streams;
 pub mod dsp;
 
 static AMBLE: &str = "10101010";
-static IDENT: &str = "1111000011110000";
+static IDENT: &str = "11110000111100001111000011110000";
 static MOD_TYPE: ModulationType = ModulationType::BPSK;
 
 
@@ -164,9 +164,9 @@ impl Frame {
     pub fn assemble(&self) -> Vec<u8> {
         let bin = u8_to_bin(self.data.as_slice());
 
-        let len = self.data.len() as u8;
+        let len = self.data.len() as u16;
 
-        let len_bin = u8_to_bin(&[len]);
+        let len_bin = u8_to_bin(&[(len >> 8) as u8, len as u8]);
 
         bin_to_u8(format!("{AMBLE}{IDENT}{len_bin}{bin}").as_str())
     }
@@ -226,8 +226,8 @@ impl RXLoop {
     }
 
     fn read_frame(rxloop: &mut RXLoop, window: &mut String) -> u8 {
-        if window.len() >= 8 {
-            rxloop.len = bin_to_u8(window.as_str())[0] as usize * 8usize;
+        if window.len() >= 16 {
+            rxloop.len = (((bin_to_u8(window.as_str())[0] as u16) << 8) + bin_to_u8(window.as_str())[1] as u16) as usize * 8usize;
 
             window.clear();
 
@@ -368,8 +368,6 @@ impl RadioStream {
         }else {
             Vec::new()
         };
-
-
 
         while stuff.is_empty() {
 

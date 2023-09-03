@@ -1,4 +1,3 @@
-use std::io::ErrorKind;
 use std::sync::{Arc, LockResult, RwLock};
 
 use anyhow::{Error, Result};
@@ -103,10 +102,14 @@ impl Rx {
         //device.set_gain(Direction::Rx, settings.channels_in_use, settings.gain)?;
         device.set_gain_mode(Direction::Rx, settings.channels_in_use, true)?;
 
-        // Set carrier frequency
-        device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
 
-        //device.set_dc_offset_mode(Direction::Rx,settings.channels_in_use,true).unwrap();
+        let mut pll_args = Args::new();
+        pll_args.set("reference", settings.lo_frequency.to_string());
+
+        // Set carrier frequency
+        device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, pll_args)?;
+
+        device.set_dc_offset_mode(Direction::Rx,settings.channels_in_use,true)?;
 
 
         // Get rx stream
@@ -151,8 +154,12 @@ impl Tx {
         //device.set_gain(Direction::Tx, settings.channels_in_use, settings.gain)?;
         device.set_gain_mode(Direction::Tx, settings.channels_in_use, true)?;
 
+        let mut pll_args = Args::new();
+        pll_args.set("reference", settings.lo_frequency.to_string());
+
         // Set carrier frequency
-        device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
+        device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency, pll_args)?;
+
 
         // Set hardware low pass filter
         //device.set_bandwidth(Direction::Tx, settings.channels_in_use, settings.lpf_filter)?;
