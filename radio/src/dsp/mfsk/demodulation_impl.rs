@@ -22,13 +22,23 @@ impl Demodulation {
             }
         }
 
+        let default_index =  0;
+
         let mut planner = FftPlanner::new();
         let fft = planner.plan_fft_forward(samples_per_symbol);
 
         let scratch = vec![Complex::new(0.0, 0.0); 10000usize];
 
 
-        Demodulation { samples_per_symbol, sample_rate, mfsk_fft_size, mfsk_fft_index_map, fft, scratch }
+        Demodulation {
+            samples_per_symbol,
+            sample_rate,
+            mfsk_fft_size,
+            mfsk_fft_index_map,
+            fft,
+            scratch,
+            default_index
+        }
     }
 
     /// Demodulate a radio signal using MFSK
@@ -52,8 +62,19 @@ impl Demodulation {
 
         let mut counter = 0;
 
+        let mut index = 0;
+
+        let mut index_option = Some(self.default_index);
+
         for x in chunks {
-            let index = x.iter().position(|b| b.re >= (self.samples_per_symbol / 2) as f32).unwrap();
+            index_option = x.iter().position(|b| b.re >= (self.samples_per_symbol / 2) as f32);
+
+            // default to an index upon error
+            index = if let Some(x) = index_option{
+                x
+            }else {
+                self.default_index
+            };
 
             counter += 1;
 
