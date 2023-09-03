@@ -1,7 +1,7 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
 
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError, RwLock, RwLockReadGuard};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
@@ -14,7 +14,7 @@ use crate::streams::{RadioSettings, Rx, Tx};
 
 mod radio;
 mod streams;
-mod dsp;
+pub mod dsp;
 
 static AMBLE: &str = "10101010";
 static IDENT: &str = "1111000011110000";
@@ -86,10 +86,16 @@ fn bin_to_u8(bin: &str) -> Vec<u8> {
 
     // Split at every 8 digits ( to form 1 byte )
     for x in 0..bin.len() {
-        hold.push(chars.next().unwrap());
+
+        if let Some(next_char) = chars.next(){
+            hold.push(next_char)
+        }
 
         if x % 8 == 7 {
-            to_return.push(u8::from_str_radix(hold.as_str(), 2).unwrap());
+
+            if let Ok(radix) = u8::from_str_radix(hold.as_str(), 2){
+                to_return.push(radix);
+            }
 
             hold.clear();
         }
@@ -231,9 +237,10 @@ impl RXLoop {
 
     fn record(rxloop: &mut RXLoop, window: &mut String) -> u8 {
         if window.len() >= rxloop.len {
-            rxloop.buffer.write().unwrap().push(window.clone());
+            if let Ok(mut write_buf) = rxloop.buffer.write(){
 
-            window.clear();
+                write_buf.push(window.clone());
+            }
 
             1
         } else {
@@ -247,7 +254,7 @@ impl RadioStream {
     pub fn new() -> Result<RadioStream> {
 
         // Check if radio is connected
-        let radio = Radio::new().unwrap();
+        let radio = Radio::new()?;
 
         // Ensure radio is connected
         if !radio.is_connected() {
@@ -256,7 +263,7 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-            sample_rate: 40e6,
+            sample_rate: 4e6,
             lo_frequency: 916e6,
             lpf_filter: 1e3,
             channels_in_use: 0,
@@ -281,38 +288,52 @@ impl RadioStream {
         // Spawn rx thread
         spawn(move || {
             // create stream
-            let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
-            let mut rx_stream = Rx::new(set.clone()).expect("Starting RX stream");
-            let instance = Demodulators::new(samples_per_a_symbol as usize, set.sample_rate as f32);
+            if let Ok(mut rx_stream) = Rx::new(set.clone()){
 
-            // create mtu
-            let mut mtu = vec![Complex::new(0.0, 0.0); samples_per_a_symbol as usize];
+                let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
+                let instance = Demodulators::new(samples_per_a_symbol as usize, set.sample_rate as f32);
 
-            // create window
-            let mut window = "000000000000000000000000000000000000".to_string();
+                // create mtu
+                let mut mtu = vec![Complex::new(0.0, 0.0); samples_per_a_symbol as usize];
 
-            let fake_buffer = Arc::new(RwLock::new(Vec::new()));
+                // create window
+                let mut window = "000000000000000000000000000000000000".to_string();
+
+                let fake_buffer = Arc::new(RwLock::new(Vec::new()));
+
+                let mut rxloop = RXLoop::new(fake_buffer.clone());
+
+                // rx loop
+                loop {
+                    rxloop.run(&mut window);
+
+                    let err = rx_stream.fetch(&[mtu.as_mut_slice()]);
+
+                    if err.is_err() {}
+
+                    if let Some(last_char) = u8_to_bin(demodulation(&instance, mtu.clone()).as_slice()).chars().last(){
+                        window.push(last_char);
+                    }
 
 
-            let mut rxloop = RXLoop::new(fake_buffer.clone());
+                    if let Ok(mut lock) = fake_buffer.write() {
 
-            // rx loop
-            loop {
-                rxloop.run(&mut window);
+                        if !lock.is_empty(){
 
-                let err = rx_stream.fetch(&[mtu.as_mut_slice()]);
+                            let m = bin_to_u8(lock[0].as_str());
 
-                if err.is_err() {}
+                            if let Ok(mut buf) = buffer.write() {
+                                buf.push(m)
+                            }
 
-                window.push(u8_to_bin(demodulation(&instance, mtu.clone()).as_slice()).chars().last().unwrap());
+                            lock.clear();
 
-                if !fake_buffer.as_ref().read().unwrap().is_empty() {
-                    let m = bin_to_u8(fake_buffer.read().unwrap()[0].as_str());
+                            window = "000000000000000000000000000000000000".to_string();
 
-                    buffer.write().unwrap().push(m.clone());
-
-                    fake_buffer.write().unwrap().clear();
+                        }
+                    }
                 }
+
             }
         });
 
@@ -330,7 +351,7 @@ impl RadioStream {
         let signal = modulation(&self.modulation, frame.assemble().as_slice());
 
         // Send
-        self.tx_stream.send(signal.as_slice()).unwrap();
+        self.tx_stream.send(signal.as_slice())?;
 
         Ok(())
     }
@@ -340,24 +361,45 @@ impl RadioStream {
     }
 
     /// This process samples read and return any data received
-    pub fn read(&self) -> Vec<u8> {
-        let mut stuff = self.rx_buffer.read().unwrap().clone();
+    pub fn read(&self) -> Result<Vec<u8>>{
+
+        let mut stuff = if let Ok(stuff_to_clone) = self.rx_buffer.read(){
+            stuff_to_clone.clone()
+        }else {
+            Vec::new()
+        };
+
+
 
         while stuff.is_empty() {
-            stuff = self.rx_buffer.read().unwrap().clone();
+
+            if let Ok(buff) = self.rx_buffer.read(){
+                stuff = buff.clone()
+            }
 
             sleep(Duration::from_millis(5))
         }
 
         // Clear buffer
-        self.rx_buffer.write().unwrap().clear();
+        if let Ok(mut writeable) = self.rx_buffer.write(){
 
-        stuff[0].clone()
+            writeable.clear();
+
+            Ok(stuff[0].clone())
+
+        }else {
+            Err(Error::msg("Error trying to lock buffer to clear!"))
+        }
+
+
     }
 
     pub fn receive_frames(&self) -> Result<Vec<Frame>> {
-        let bytes = self.read();
-        Ok(Frame::from(vec![String::from_utf8(bytes)?]))
+        if let Ok(bytes) = self.read(){
+            Ok(Frame::from(vec![String::from_utf8(bytes)?]))
+        }else {
+            Err(Error::msg("Failed to read from stream!"))
+        }
     }
 }
 
@@ -377,126 +419,97 @@ impl Benchy {
         Benchy { modulation: Arc::from(Mutex::from(Modulators::new(0, 0.0))), demodulation: Arc::from(Mutex::from(Demodulators::new(0, 0.0))) }
     }
 
-    pub fn update(&mut self, sample_rate: f32, baud_rate: f32) {
-        self.modulation.lock().unwrap().update((sample_rate / baud_rate) as usize, sample_rate);
-        self.demodulation.lock().unwrap().update((sample_rate / baud_rate) as usize, sample_rate);
+    pub fn update(&mut self, sample_rate: f32, baud_rate: f32)->Result<(), Error> {
+
+
+        if let Ok(mut mod_lock) = self.modulation.lock(){
+            mod_lock.update((sample_rate / baud_rate) as usize, sample_rate);
+
+            if let Ok(mut demod_lock) = self.demodulation.lock(){
+
+                demod_lock.update((sample_rate / baud_rate) as usize, sample_rate);
+
+                Ok(())
+            }else {
+                Err(
+                    Error::msg("Unable to lock demodulator!")
+                )
+            }
+
+        }else {
+            Err(
+                Error::msg("Unable to lock modulator!")
+            )
+        }
     }
 
     // ASK
-    pub fn mod_ask(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
+    pub fn mod_ask(&mut self, bin: &[u8]) -> Result<Vec<Complex<f32>>, PoisonError<MutexGuard<'_, Modulators>>>
     {
-        self.modulation.lock().unwrap().ask(bin)
+        let test = self.modulation.lock()?;
+
+        Ok(test.ask(bin))
     }
-    pub fn demod_ask(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
+    pub fn demod_ask(&mut self, bin: Vec<Complex<f32>>) -> Result<Vec<u8>, PoisonError<MutexGuard<'_, Demodulators>>>
     {
-        self.demodulation.lock().unwrap().ask(arr)
+        let test = self.demodulation.lock()?;
+
+        Ok(test.ask(bin))
     }
 
     // FSK
-    pub fn mod_fsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
+    pub fn mod_fsk(&mut self, bin: &[u8]) -> Result<Vec<Complex<f32>>, PoisonError<MutexGuard<'_, Modulators>>>
     {
-        self.modulation.lock().unwrap().fsk(bin)
-    }
-    pub fn demod_fsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
-    {
-        self.demodulation.lock().unwrap().fsk(arr)
-    }
+        let test = self.modulation.lock()?;
 
-    // MFSK
-    pub fn mod_mfsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
-    {
-        self.modulation.lock().unwrap().mfsk(bin)
+        Ok(test.fsk(bin))
     }
-    pub fn demod_mfsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
+    pub fn demod_fsk(&mut self, bin: Vec<Complex<f32>>) -> Result<Vec<u8>, PoisonError<MutexGuard<'_, Demodulators>>>
     {
-        self.demodulation.lock().unwrap().mfsk(arr)
+        let test = self.demodulation.lock()?;
+
+        Ok(test.fsk(bin))
+    }
+    // MFSK
+    pub fn mod_mfsk(&mut self, bin: &[u8]) -> Result<Vec<Complex<f32>>, PoisonError<MutexGuard<'_, Modulators>>>
+    {
+        let test = self.modulation.lock()?;
+
+        Ok(test.mfsk(bin))
+    }
+    pub fn demod_mfsk(&mut self, bin: Vec<Complex<f32>>) -> Result<Vec<u8>, PoisonError<MutexGuard<'_, Demodulators>>>
+    {
+        let test = self.demodulation.lock()?;
+
+        Ok(test.mfsk(bin))
     }
 
     // BPSK
-    pub fn mod_bpsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
+    pub fn mod_bpsk(&mut self, bin: &[u8]) -> Result<Vec<Complex<f32>>, PoisonError<MutexGuard<'_, Modulators>>>
     {
-        self.modulation.lock().unwrap().bpsk(bin)
+        let test = self.modulation.lock()?;
+
+        Ok(test.bpsk(bin))
     }
-    pub fn demod_bpsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
+    pub fn demod_bpsk(&mut self, bin: Vec<Complex<f32>>) -> Result<Vec<u8>, PoisonError<MutexGuard<'_, Demodulators>>>
     {
-        self.demodulation.lock().unwrap().bpsk(arr)
+        let test = self.demodulation.lock()?;
+
+        Ok(test.bpsk(bin))
     }
 
     // QPSK
-    pub fn mod_qpsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
+    pub fn mod_qpsk(&mut self, bin: &[u8]) -> Result<Vec<Complex<f32>>, PoisonError<MutexGuard<'_, Modulators>>>
     {
-        self.modulation.lock().unwrap().qpsk(bin)
-    }
-    pub fn demod_qpsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
-    {
-        self.demodulation.lock().unwrap().qpsk(arr)
-    }
-}
+        let test = self.modulation.lock()?;
 
-
-/// This exposes functions for testing
-#[derive(Clone)]
-pub struct Testy {
-    modulation: Arc<Mutex<Modulators>>,
-    demodulation: Arc<Mutex<Demodulators>>,
-}
-
-impl Testy {
-    pub fn new() -> Testy {
-        Testy { modulation: Arc::from(Mutex::from(Modulators::new(0, 0.0))), demodulation: Arc::from(Mutex::from(Demodulators::new(0, 0.0))) }
+        Ok(test.qpsk(bin))
     }
 
-    pub fn update(&mut self, sample_rate: f32, baud_rate: f32) {
-        self.modulation.lock().unwrap().update((sample_rate / baud_rate) as usize, sample_rate);
-        self.demodulation.lock().unwrap().update((sample_rate / baud_rate) as usize, sample_rate);
-    }
+    pub fn demod_qpsk(&mut self, bin: Vec<Complex<f32>>) -> Result<Vec<u8>, PoisonError<MutexGuard<'_, Demodulators>>>
+    {
+        let test = self.demodulation.lock()?;
 
-    // ASK
-    pub fn mod_ask(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
-    {
-        self.modulation.lock().unwrap().ask(bin)
-    }
-    pub fn demod_ask(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
-    {
-        self.demodulation.lock().unwrap().ask(arr)
-    }
-
-    // FSK
-    pub fn mod_fsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
-    {
-        self.modulation.lock().unwrap().fsk(bin)
-    }
-    pub fn demod_fsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
-    {
-        self.demodulation.lock().unwrap().fsk(arr)
-    }
-
-    // MFSK
-    pub fn mod_mfsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
-    {
-        self.modulation.lock().unwrap().mfsk(bin)
-    }
-    pub fn demod_mfsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>{
-        self.demodulation.lock().unwrap().mfsk(arr)
-    }
-
-    // BPSK
-    pub fn mod_bpsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
-    {
-        self.modulation.lock().unwrap().bpsk(bin)
-    }
-    pub fn demod_bpsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
-    {
-        self.demodulation.lock().unwrap().bpsk(arr)
-    }
-
-    // QPSK
-    pub fn mod_qpsk(&mut self, bin: &[u8]) -> Vec<Complex<f32>>
-    {
-        self.modulation.lock().unwrap().qpsk(bin)
-    }
-    pub fn demod_qpsk(&mut self, arr: Vec<Complex<f32>>) -> Vec<u8>
-    {
-        self.demodulation.lock().unwrap().qpsk(arr)
+        Ok(test.qpsk(bin))
     }
 }

@@ -1,5 +1,5 @@
-use anyhow::Result;
-use soapysdr::Device;
+use anyhow::{bail, Result};
+use soapysdr::{Device, ErrorCode};
 
 // Radio Values
 #[derive(Clone)]
@@ -25,9 +25,9 @@ impl Radio {
         let err = Device::new(args);
 
         // if we get the radio properly, set the radio data
-        if let Ok(..) = err {
+        if let Ok(x) = err {
             // if we find a radio and connect to it
-            new_radio.device = Some(err.unwrap());
+            new_radio.device = Some(x);
             new_radio.is_connected = true;
         }
 
@@ -39,7 +39,16 @@ impl Radio {
 
     /// Get Radio
     /// This will get an already established radio instance so you don't have to try to reconnect
-    pub fn get_radio(&self) -> &Device {
-        self.device.as_ref().expect("Get Radio Instance")
+    pub fn get_radio(&self) -> Result<&Device, soapysdr::Error> {
+        if let Some(x) = self.device.as_ref(){
+            Ok(x)
+        }else {
+            Err(
+                soapysdr::Error {
+                    code: ErrorCode::Other,
+                    message: "Unable to fetch radio!".to_string(),
+                }
+            )
+        }
     }
 }

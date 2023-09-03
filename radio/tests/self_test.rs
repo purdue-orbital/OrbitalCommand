@@ -31,5 +31,5 @@ fn self_test_128bytes()
     let arr = stream.read();
 
     // Verify
-    assert_eq!(test_arr, arr.as_slice());
+    assert_eq!(test_arr, arr.unwrap().as_slice());
 }
