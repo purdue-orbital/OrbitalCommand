@@ -383,7 +383,7 @@ impl NetworkStream{
         if let Some(x) = self.iface.read().unwrap().as_ref(){
             return Ok(x.recv(arr)?)
         } else if let Some(x) = self.radio.read().unwrap().as_ref(){
-             return Ok(arr.as_mut().write(x.read().as_slice()).unwrap())
+             return Ok(arr.as_mut().write(x.read()?.as_slice()).unwrap())
         }
 
         Err(Error::msg("No device set!"))
