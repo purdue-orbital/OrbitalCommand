@@ -1,8 +1,9 @@
-use std::sync::RwLock;
+use std::io::ErrorKind;
+use std::sync::{Arc, LockResult, RwLock};
 
-use anyhow::Result;
+use anyhow::{Error, Result};
 use num_complex::Complex;
-use soapysdr::{Args, Direction, RxStream, TxStream};
+use soapysdr::{Args, Direction, ErrorCode, RxStream, TxStream};
 
 use crate::radio::Radio;
 
@@ -91,7 +92,7 @@ pub struct Rx {
 impl Rx {
     pub fn new(mut settings: RadioSettings) -> Result<Rx, soapysdr::Error> {
         // Get radio
-        let device = settings.radio.get_radio();
+        let device = settings.radio.get_radio()?;
 
         //device.set_bandwidth(Direction::Rx,settings.channels_in_use,settings.lpf_filter).unwrap();
 
@@ -133,14 +134,15 @@ impl Rx {
 }
 
 /// Tx Stream For Radio
+#[derive(Clone)]
 pub struct Tx {
-    Stream: RwLock<TxStream<Complex<f32>>>,
+    Stream: Arc<RwLock<TxStream<Complex<f32>>>>,
 }
 
 impl Tx {
     pub fn new(mut settings: RadioSettings) -> Result<Tx, soapysdr::Error> {
         // Get radio
-        let device = settings.radio.get_radio();
+        let device = settings.radio.get_radio()?;
 
         // Set radio sample rate
         device.set_sample_rate(Direction::Tx, settings.channels_in_use, settings.sample_rate)?;
@@ -155,25 +157,42 @@ impl Tx {
         // Set hardware low pass filter
         //device.set_bandwidth(Direction::Tx, settings.channels_in_use, settings.lpf_filter)?;
 
+        let stream = Arc::new(RwLock::new(device.tx_stream(&[settings.channels_in_use])?));
+
         // Get rx stream
         let tx = Tx {
-            Stream: RwLock::new(device.tx_stream(&[settings.channels_in_use])?)
+            Stream: stream.clone()
         };
 
-        // Activate RX stream
-        tx.Stream.write().unwrap().activate(Default::default())?;
+        let x = if let Ok(mut x) = stream.write(){
 
-        settings.size = tx.Stream.read().unwrap().mtu()?;
+            x.activate(Default::default())?;
 
-        // Increase counter
-        settings.channels_in_use += 1;
+            settings.size = x.mtu()?;
 
-        Ok(tx)
+            // Increase counter
+            settings.channels_in_use += 1;
+
+            Ok(tx)
+        }else {
+            Err(
+                soapysdr::Error {
+                    code: ErrorCode::StreamError,
+                    message: "Unable to start radio! stream!".to_string(),
+                }
+            )
+        }; x
     }
 
     pub fn send(&self, arr: &[Complex<f32>]) -> Result<()> {
-        self.Stream.write().unwrap().write_all(&[arr], Default::default(), true, 100000000_i64)?;
 
-        Ok(())
+        if let Ok(mut x) = self.Stream.write(){
+
+            x.write_all(&[arr], Default::default(), true, 100000000_i64)?;
+
+            Ok(())
+        }else {
+            Err(Error::msg("Unable to send data!".to_string()))
+        }
     }
 }
