@@ -17,7 +17,7 @@ mod streams;
 pub mod dsp;
 
 static AMBLE: &str = "10101010";
-static IDENT: &str = "1111000011110000";
+static IDENT: &str = "11110000111100001111000011110000";
 static MOD_TYPE: ModulationType = ModulationType::BPSK;
 
 
@@ -104,6 +104,20 @@ fn bin_to_u8(bin: &str) -> Vec<u8> {
     to_return
 }
 
+fn flip_bin(bin: &mut String) -> String{
+    let mut to_return = String::with_capacity(bin.len());
+
+    for x in bin.chars(){
+        if x == '1'{
+            to_return += "0";
+        }else {
+            to_return += "1";
+        }
+    }
+
+    to_return
+}
+
 
 /// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
 /// spacecraft and space bound communication
@@ -164,9 +178,9 @@ impl Frame {
     pub fn assemble(&self) -> Vec<u8> {
         let bin = u8_to_bin(self.data.as_slice());
 
-        let len = self.data.len() as u8;
+        let len = self.data.len() as u16;
 
-        let len_bin = u8_to_bin(&[len]);
+        let len_bin = u8_to_bin(&[(len >> 8) as u8, len as u8]);
 
         bin_to_u8(format!("{AMBLE}{IDENT}{len_bin}{bin}").as_str())
     }
@@ -184,7 +198,8 @@ struct RXLoop {
     buffer: Arc<RwLock<Vec<String>>>,
     counter: usize,
     arr: [fn(rxloop: &mut RXLoop, window: &mut String) -> u8; 4],
-
+    flipped: String,
+    was_flipped: bool,
 }
 
 
@@ -195,10 +210,16 @@ impl RXLoop {
             buffer,
             counter: 0,
             arr: [RXLoop::listen, RXLoop::sync, RXLoop::read_frame, RXLoop::record],
+            flipped: String::new(),
+            was_flipped: false,
         }
     }
 
     pub fn run(&mut self, window: &mut String) {
+
+        self.flipped = flip_bin(window);
+
+
         self.counter = (self.counter + self.arr[self.counter](self, window) as usize) % 4;
     }
 
@@ -215,9 +236,19 @@ impl RXLoop {
     fn sync(rxloop: &mut RXLoop, window: &mut String) -> u8 {
         if window.contains(IDENT)
         {
+            rxloop.was_flipped = false;
+
             window.clear();
 
             1
+        } else if rxloop.flipped.contains(IDENT) {
+
+            rxloop.was_flipped = true;
+
+            window.clear();
+
+            1
+
         } else if window.len() > 1000 {
             window.clear();
 
@@ -226,8 +257,14 @@ impl RXLoop {
     }
 
     fn read_frame(rxloop: &mut RXLoop, window: &mut String) -> u8 {
-        if window.len() >= 8 {
-            rxloop.len = bin_to_u8(window.as_str())[0] as usize * 8usize;
+        if window.len() >= 16 {
+
+            if rxloop.was_flipped{
+                rxloop.len = (((bin_to_u8(rxloop.flipped.as_str())[0] as u16) << 8) + bin_to_u8(rxloop.flipped.as_str())[1] as u16) as usize * 8usize;
+            }else{
+                rxloop.len = (((bin_to_u8(window.as_str())[0] as u16) << 8) + bin_to_u8(window.as_str())[1] as u16) as usize * 8usize;
+            }
+
 
             window.clear();
 
@@ -237,8 +274,11 @@ impl RXLoop {
 
     fn record(rxloop: &mut RXLoop, window: &mut String) -> u8 {
         if window.len() >= rxloop.len {
-            if let Ok(mut write_buf) = rxloop.buffer.write(){
-
+            if rxloop.was_flipped{
+                if let Ok(mut write_buf) = rxloop.buffer.write(){
+                    write_buf.push(rxloop.flipped.clone());
+                }
+            }else if let Ok(mut write_buf) = rxloop.buffer.write(){
                 write_buf.push(window.clone());
             }
 
@@ -263,13 +303,14 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-            sample_rate: 4e6,
+
+            sample_rate: 3e6,
             lo_frequency: 916e6,
             lpf_filter: 1e3,
             channels_in_use: 0,
             gain: 100.0,
             radio,
-            baud_rate: 4e4,
+            baud_rate: 3e4,
             size: 0,
         };
 
@@ -292,12 +333,12 @@ impl RadioStream {
 
                 let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
                 let instance = Demodulators::new(samples_per_a_symbol as usize, set.sample_rate as f32);
-
+              
                 // create mtu
                 let mut mtu = vec![Complex::new(0.0, 0.0); samples_per_a_symbol as usize];
 
                 // create window
-                let mut window = "000000000000000000000000000000000000".to_string();
+                let mut window = "1111000011110000111100000000000".to_string();
 
                 let fake_buffer = Arc::new(RwLock::new(Vec::new()));
 
@@ -311,10 +352,10 @@ impl RadioStream {
 
                     if err.is_err() {}
 
-                    if let Some(last_char) = u8_to_bin(demodulation(&instance, mtu.clone()).as_slice()).chars().last(){
-                        window.push(last_char);
-                    }
+                    let hold = u8_to_bin(demodulation(&instance, mtu.clone()).as_slice());
+                    let chars = &hold.as_str()[(8 - bits_per_symbol()) as usize..];
 
+                    window.push_str(chars);
 
                     if let Ok(mut lock) = fake_buffer.write() {
 
@@ -328,7 +369,7 @@ impl RadioStream {
 
                             lock.clear();
 
-                            window = "000000000000000000000000000000000000".to_string();
+                            window = "1111000011110000111100000000000".to_string();
 
                         }
                     }
@@ -368,8 +409,6 @@ impl RadioStream {
         }else {
             Vec::new()
         };
-
-
 
         while stuff.is_empty() {
 
@@ -420,7 +459,6 @@ impl Benchy {
     }
 
     pub fn update(&mut self, sample_rate: f32, baud_rate: f32)->Result<(), Error> {
-
 
         if let Ok(mut mod_lock) = self.modulation.lock(){
             mod_lock.update((sample_rate / baud_rate) as usize, sample_rate);
