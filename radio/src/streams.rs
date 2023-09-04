@@ -179,7 +179,7 @@ impl Tx {
 
             // Increase counter
             settings.channels_in_use += 1;
-
+          
             Ok(tx)
         }else {
             Err(

@@ -274,7 +274,6 @@ impl RXLoop {
 
     fn record(rxloop: &mut RXLoop, window: &mut String) -> u8 {
         if window.len() >= rxloop.len {
-
             if rxloop.was_flipped{
                 if let Ok(mut write_buf) = rxloop.buffer.write(){
                     write_buf.push(rxloop.flipped.clone());
@@ -282,7 +281,6 @@ impl RXLoop {
             }else if let Ok(mut write_buf) = rxloop.buffer.write(){
                 write_buf.push(window.clone());
             }
-
 
             1
         } else {
@@ -305,6 +303,7 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
+
             sample_rate: 3e6,
             lo_frequency: 916e6,
             lpf_filter: 1e3,
@@ -334,7 +333,7 @@ impl RadioStream {
 
                 let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
                 let instance = Demodulators::new(samples_per_a_symbol as usize, set.sample_rate as f32);
-
+              
                 // create mtu
                 let mut mtu = vec![Complex::new(0.0, 0.0); samples_per_a_symbol as usize];
 
@@ -460,7 +459,6 @@ impl Benchy {
     }
 
     pub fn update(&mut self, sample_rate: f32, baud_rate: f32)->Result<(), Error> {
-
 
         if let Ok(mut mod_lock) = self.modulation.lock(){
             mod_lock.update((sample_rate / baud_rate) as usize, sample_rate);
