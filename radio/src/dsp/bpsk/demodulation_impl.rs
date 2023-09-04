@@ -15,8 +15,6 @@ impl Demodulation {
     {
         let mut to_return = Vec::new();
 
-        let step = self.samples_per_symbol / 2;
-
         let mut bin: u8 = 0;
 
         let mut counter = 0;
@@ -25,7 +23,9 @@ impl Demodulation {
             bin <<= 1;
             counter += 1;
 
-            if arr[x + step].re.is_sign_positive() {
+            let sum:Complex<f32> = arr[x..x+self.samples_per_symbol].iter().sum();
+
+            if (sum.re / self.samples_per_symbol as f32).is_sign_positive() {
                 bin += 1;
             }
 

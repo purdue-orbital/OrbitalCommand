@@ -18,21 +18,22 @@ impl Demodulation {
 
         let mut bin: u8 = 0;
         let mut counter = 0;
-        let step = self.samples_per_symbol / 2;
 
-        for x in (step..arr.len()).step_by(self.samples_per_symbol) {
+        for x in (0..arr.len()).step_by(self.samples_per_symbol) {
             counter += 2;
             bin <<= 2;
 
+            let sum:Complex<f32> = arr[x..x+self.samples_per_symbol].iter().sum();
+
             // evaluate
             bin ^=
-                if arr[x].re.is_sign_positive() {
-                    if arr[x].im.is_sign_positive() {
+                if sum.re.is_sign_positive() {
+                    if sum.im.is_sign_positive() {
                         3
                     } else {
                         2
                     }
-                } else if arr[x].im.is_sign_positive() {
+                } else if sum.im.is_sign_positive() {
                     1
                 } else {
                     0
@@ -43,6 +44,10 @@ impl Demodulation {
                 to_return.push(bin);
                 counter = 0;
             }
+        }
+
+        if counter > 0 {
+            to_return.push(bin);
         }
 
         to_return

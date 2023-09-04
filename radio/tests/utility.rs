@@ -30,7 +30,7 @@ fn frame_test() {
     let frame_1 = radio::Frame::new(test_arr1.clone().as_mut_slice());
 
     // Turn the frame into a string
-    let for_transmission1 = u8_to_bin(&frame_1.assemble().as_slice()[4..]);
+    let for_transmission1 = u8_to_bin(&frame_1.assemble().as_slice()[7..]);
 
     // Reassemble
     let mut frame_3 = radio::Frame::from(vec!(for_transmission1));
