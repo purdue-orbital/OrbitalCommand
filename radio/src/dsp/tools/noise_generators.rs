@@ -19,11 +19,11 @@ pub fn gaussian_noise_generator(signal: &[Complex<f32>], snr_db: f32) -> anyhow:
 
     Ok(
         signal.iter()
-        .map(|&x| {
-            let real = normal.sample(&mut rng);
-            let imag = normal.sample(&mut rng);
-            x + Complex::new(real, imag)
-        })
-        .collect()
+            .map(|&x| {
+                let real = normal.sample(&mut rng);
+                let imag = normal.sample(&mut rng);
+                x + Complex::new(real, imag)
+            })
+            .collect()
     )
 }

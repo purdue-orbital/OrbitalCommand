@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use soapysdr::{Device, ErrorCode};
 
 // Radio Values
@@ -40,9 +40,9 @@ impl Radio {
     /// Get Radio
     /// This will get an already established radio instance so you don't have to try to reconnect
     pub fn get_radio(&self) -> Result<&Device, soapysdr::Error> {
-        if let Some(x) = self.device.as_ref(){
+        if let Some(x) = self.device.as_ref() {
             Ok(x)
-        }else {
+        } else {
             Err(
                 soapysdr::Error {
                     code: ErrorCode::Other,

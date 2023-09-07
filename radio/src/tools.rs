@@ -149,14 +149,12 @@ pub fn bin_to_u8(bin: &str) -> Vec<u8> {
 
     // Split at every 8 digits ( to form 1 byte )
     for x in 0..bin.len() {
-
-        if let Some(next_char) = chars.next(){
+        if let Some(next_char) = chars.next() {
             hold.push(next_char)
         }
 
         if x % 8 == 7 {
-
-            if let Ok(radix) = u8::from_str_radix(hold.as_str(), 2){
+            if let Ok(radix) = u8::from_str_radix(hold.as_str(), 2) {
                 to_return.push(radix);
             }
 
@@ -167,13 +165,13 @@ pub fn bin_to_u8(bin: &str) -> Vec<u8> {
     to_return
 }
 
-pub fn flip_bin(bin: &mut String) -> String{
+pub fn flip_bin(bin: &mut String) -> String {
     let mut to_return = String::with_capacity(bin.len());
 
-    for x in bin.chars(){
-        if x == '1'{
+    for x in bin.chars() {
+        if x == '1' {
             to_return += "0";
-        }else {
+        } else {
             to_return += "1";
         }
     }

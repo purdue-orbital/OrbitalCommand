@@ -23,7 +23,7 @@ impl Demodulation {
             counter += 2;
             bin <<= 2;
 
-            let sum:Complex<f32> = arr[x..x+self.samples_per_symbol].iter().sum();
+            let sum: Complex<f32> = arr[x..x + self.samples_per_symbol].iter().sum();
 
             // evaluate
             bin ^=

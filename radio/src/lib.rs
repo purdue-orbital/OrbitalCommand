@@ -13,7 +13,7 @@ use crate::frame::Frame;
 use crate::radio::Radio;
 use crate::rx_handling::RXLoop;
 use crate::streams::{RadioSettings, Rx, Tx};
-use crate::tools::{bin_to_u8, flip_bin, u8_to_bin};
+use crate::tools::{bin_to_u8, u8_to_bin};
 
 mod radio;
 mod streams;
@@ -87,7 +87,6 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-
             sample_rate: 3e6,
             lo_frequency: 916e6,
             lpf_filter: 1e3,
@@ -113,11 +112,10 @@ impl RadioStream {
         // Spawn rx thread
         spawn(move || {
             // create stream
-            if let Ok(mut rx_stream) = Rx::new(set.clone()){
-
+            if let Ok(mut rx_stream) = Rx::new(set.clone()) {
                 let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
                 let instance = Demodulators::new(samples_per_a_symbol as usize, set.sample_rate as f32);
-              
+
                 // create mtu
                 let mut mtu = vec![Complex::new(0.0, 0.0); samples_per_a_symbol as usize];
 
@@ -142,9 +140,7 @@ impl RadioStream {
                     window.push_str(chars);
 
                     if let Ok(mut lock) = fake_buffer.write() {
-
-                        if !lock.is_empty(){
-
+                        if !lock.is_empty() {
                             let m = bin_to_u8(lock[0].as_str());
 
                             if let Ok(mut buf) = buffer.write() {
@@ -154,11 +150,9 @@ impl RadioStream {
                             lock.clear();
 
                             window = "1111000011110000111100000000000".to_string();
-
                         }
                     }
                 }
-
             }
         });
 
@@ -186,17 +180,15 @@ impl RadioStream {
     }
 
     /// This process samples read and return any data received
-    pub fn read(&self) -> Result<Vec<u8>>{
-
-        let mut stuff = if let Ok(stuff_to_clone) = self.rx_buffer.read(){
+    pub fn read(&self) -> Result<Vec<u8>> {
+        let mut stuff = if let Ok(stuff_to_clone) = self.rx_buffer.read() {
             stuff_to_clone.clone()
-        }else {
+        } else {
             Vec::new()
         };
 
         while stuff.is_empty() {
-
-            if let Ok(buff) = self.rx_buffer.read(){
+            if let Ok(buff) = self.rx_buffer.read() {
                 stuff = buff.clone()
             }
 
@@ -204,23 +196,19 @@ impl RadioStream {
         }
 
         // Clear buffer
-        if let Ok(mut writeable) = self.rx_buffer.write(){
-
+        if let Ok(mut writeable) = self.rx_buffer.write() {
             writeable.clear();
 
             Ok(stuff[0].clone())
-
-        }else {
+        } else {
             Err(Error::msg("Error trying to lock buffer to clear!"))
         }
-
-
     }
 
     pub fn receive_frames(&self) -> Result<Vec<Frame>> {
-        if let Ok(bytes) = self.read(){
+        if let Ok(bytes) = self.read() {
             Ok(Frame::from(vec![String::from_utf8(bytes)?]))
-        }else {
+        } else {
             Err(Error::msg("Failed to read from stream!"))
         }
     }

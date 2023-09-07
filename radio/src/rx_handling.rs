@@ -1,4 +1,5 @@
 use std::sync::{Arc, RwLock};
+
 use crate::IDENT;
 use crate::tools::{bin_to_u8, flip_bin};
 
@@ -25,7 +26,6 @@ impl RXLoop {
     }
 
     pub fn run(&mut self, window: &mut String) {
-
         self.flipped = flip_bin(window);
 
 
@@ -51,13 +51,11 @@ impl RXLoop {
 
             1
         } else if rxloop.flipped.contains(IDENT) {
-
             rxloop.was_flipped = true;
 
             window.clear();
 
             1
-
         } else if window.len() > 1000 {
             window.clear();
 
@@ -67,10 +65,9 @@ impl RXLoop {
 
     fn read_frame(rxloop: &mut RXLoop, window: &mut String) -> u8 {
         if window.len() >= 16 {
-
-            if rxloop.was_flipped{
+            if rxloop.was_flipped {
                 rxloop.len = (((bin_to_u8(rxloop.flipped.as_str())[0] as u16) << 8) + bin_to_u8(rxloop.flipped.as_str())[1] as u16) as usize * 8usize;
-            }else{
+            } else {
                 rxloop.len = (((bin_to_u8(window.as_str())[0] as u16) << 8) + bin_to_u8(window.as_str())[1] as u16) as usize * 8usize;
             }
 
@@ -83,11 +80,11 @@ impl RXLoop {
 
     fn record(rxloop: &mut RXLoop, window: &mut String) -> u8 {
         if window.len() >= rxloop.len {
-            if rxloop.was_flipped{
-                if let Ok(mut write_buf) = rxloop.buffer.write(){
+            if rxloop.was_flipped {
+                if let Ok(mut write_buf) = rxloop.buffer.write() {
                     write_buf.push(rxloop.flipped.clone());
                 }
-            }else if let Ok(mut write_buf) = rxloop.buffer.write(){
+            } else if let Ok(mut write_buf) = rxloop.buffer.write() {
                 write_buf.push(window.clone());
             }
 

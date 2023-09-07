@@ -40,7 +40,6 @@ pub struct Frame {
 }
 
 
-
 impl Frame {
     pub fn new(bytes: &[u8]) -> Frame {
         Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bytes.to_vec() }
@@ -66,6 +65,9 @@ impl Frame {
 
         let len_bin = u8_to_bin(&[(len >> 8) as u8, len as u8]);
 
-        bin_to_u8(format!("{AMBLE}{IDENT}{len_bin}{bin}").as_str())
+        let amble= AMBLE;
+        let ident = IDENT;
+
+        bin_to_u8(format!("{amble}{ident}{len_bin}{bin}").as_str())
     }
 }
