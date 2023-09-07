@@ -48,17 +48,6 @@ Mod 2048 Bytes:  [1.2463 ms, 1.2528 ms, 1.2596 ms]
 Demod 2048 Bytes:  [5.0906 ms 5.1181 ms 5.1592 ms]
 ```
 
-#### MFSK-8
-To Run:
-```shell
-cargo bench --features mfsk --manifest-path=radio/Cargo.toml
-```
-Result:
-```
-Mod 2048 Bytes:  [7.0469 ms, 7.0577 ms, 7.0683 ms]
-Demod 2048 Bytes:  [8.9959 ms, 8.9997 ms, 9.0036 ms]
-```
-
 #### BPSK
 To Run:
 ```shell
