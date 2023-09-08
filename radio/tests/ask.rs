@@ -39,8 +39,8 @@ struct TestData {
 #[cfg(test)]
 impl Default for TestData {
     fn default() -> Self {
-        let mut demods = dsp::Demodulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
-        let mut mods = dsp::Modulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
+        let demods = dsp::Demodulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
+        let mods = dsp::Modulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
 
         TestData {
             signal_1byte: mods.ask(BYTE_1),
@@ -292,6 +292,26 @@ pub fn ask_byte_2048() {
         test,
         expected,
         "Testing ask With 1 Byte of Data.\
+            Expected: {:?}\
+            Got: {:?}",
+        expected,
+        test
+    )
+}
+
+
+#[test]
+pub fn ask_partial_test() {
+
+    let samples_per_symbol = (SAMPLE_RATE / BAUD_RATE) as usize;
+
+    let test = DATA.instance.ask(DATA.signal_2bytes.clone()[samples_per_symbol*9..].to_owned())[0];
+    let expected = BYTES_2[1]-128;
+
+    assert_eq!(
+        test,
+        expected,
+        "Testing ask With Partial Data.\
             Expected: {:?}\
             Got: {:?}",
         expected,

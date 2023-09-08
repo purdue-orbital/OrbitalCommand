@@ -1,8 +1,7 @@
-use std::sync::{MutexGuard, PoisonError};
+
 use lazy_static::lazy_static;
 use num_complex::Complex;
-use radio::dsp;
-use radio::dsp::{Demodulators, Modulators};
+use radio::dsp::{Demodulators,Modulators};
 
 static SAMPLE_RATE: f32 = 1e5;
 static BAUD_RATE: f32 = 1e4;
@@ -10,8 +9,8 @@ static BAUD_RATE: f32 = 1e4;
 static BYTE_1: &[u8] = &[0];
 static BYTES_2: &[u8] = &[0,255];
 static BYTES_4: &[u8] = &[0,255,0,255];
-static BYTES_8: &[u8] = &[0,255,0,255,0,255,0,255];
-static BYTES_16: &[u8] = &[0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255];
+static BYTES_8: &[u8] = &[0,1,2,4,8,16,32,64];
+static BYTES_16: &[u8] = &[0,1,2,4,8,16,32,64,128,255,0,255,0,255,0,255];
 static BYTES_32: &[u8] = &[0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255];
 static BYTES_64: &[u8] = &[0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255];
 static BYTES_128: &[u8] = &[0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255,0,255];
@@ -40,8 +39,8 @@ struct TestData {
 #[cfg(test)]
 impl Default for TestData {
     fn default() -> Self {
-        let mut demods = dsp::Demodulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
-        let mut mods = dsp::Modulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
+        let demods = Demodulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
+        let mods = Modulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
 
         TestData {
             signal_1byte: mods.qpsk(BYTE_1),
@@ -293,6 +292,25 @@ pub fn qpsk_byte_2048() {
         test,
         expected,
         "Testing qpsk With 1 Byte of Data.\
+            Expected: {:?}\
+            Got: {:?}",
+        expected,
+        test
+    )
+}
+
+
+#[test]
+pub fn qpsk_partial_test() {
+    let samples_per_symbol = (SAMPLE_RATE / BAUD_RATE) as usize;
+
+    let test = DATA.instance.qpsk(DATA.signal_2bytes.clone()[samples_per_symbol*5..].to_owned())[0];
+    let expected = BYTES_2[1]-192;
+
+    assert_eq!(
+        test,
+        expected,
+        "Testing qpsk With Partial Data.\
             Expected: {:?}\
             Got: {:?}",
         expected,

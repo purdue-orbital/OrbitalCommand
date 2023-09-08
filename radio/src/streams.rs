@@ -6,6 +6,7 @@ use soapysdr::{Args, Direction, ErrorCode, RxStream, TxStream};
 
 use crate::radio::Radio;
 
+
 /// settings for configuring a stream
 #[derive(Clone)]
 pub struct RadioSettings {
@@ -85,7 +86,7 @@ pub struct RadioSettings {
 
 /// Rx Stream For Radio
 pub struct Rx {
-    Stream: RxStream<Complex<f32>>,
+    stream: RxStream<Complex<f32>>,
 }
 
 impl Rx {
@@ -110,13 +111,13 @@ impl Rx {
 
         // Get rx stream
         let mut rx = Rx {
-            Stream: device.rx_stream(&[settings.channels_in_use])?
+            stream: device.rx_stream(&[settings.channels_in_use])?
         };
 
         // Activate RX stream
-        rx.Stream.activate(Default::default())?;
+        rx.stream.activate(Default::default())?;
 
-        settings.size = rx.Stream.mtu()?;
+        settings.size = rx.stream.mtu()?;
 
         // Increase counter
         settings.channels_in_use += 1;
@@ -126,7 +127,7 @@ impl Rx {
 
     /// This function fetches the sample in place (to improve performance)
     pub fn fetch(&mut self, arr: &[&mut [Complex<f32>]]) -> Result<()> {
-        self.Stream.read(arr, 100000000_i64)?;
+        self.stream.read(arr, 100000000_i64)?;
 
         Ok(())
     }
@@ -135,7 +136,7 @@ impl Rx {
 /// Tx Stream For Radio
 #[derive(Clone)]
 pub struct Tx {
-    Stream: Arc<RwLock<TxStream<Complex<f32>>>>,
+    stream: Arc<RwLock<TxStream<Complex<f32>>>>,
 }
 
 impl Tx {
@@ -161,7 +162,7 @@ impl Tx {
 
         // Get rx stream
         let tx = Tx {
-            Stream: stream.clone()
+            stream: stream.clone()
         };
 
         let x = if let Ok(mut x) = stream.write() {
@@ -185,7 +186,7 @@ impl Tx {
     }
 
     pub fn send(&self, arr: &[Complex<f32>]) -> Result<()> {
-        if let Ok(mut x) = self.Stream.write() {
+        if let Ok(mut x) = self.stream.write() {
             x.write_all(&[arr], Default::default(), true, 100000000_i64)?;
 
             Ok(())

@@ -7,7 +7,6 @@ impl Demodulation {
         Demodulation { samples_per_symbol, sample_rate }
     }
 
-
     /// Demodulate a radio signal using QPSK
     ///
     /// # Arguments

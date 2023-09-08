@@ -1,0 +1,27 @@
+name: Radio Coverage Test
+
+on:
+  push:
+    branches: [ "main", "Radio", "DSP" ]
+  pull_request:
+    branches: [ "main", "Radio", "DSP" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install soapysdr
+        run: sudo apt install -y libsoapysdr-dev
+
+      - name: Add llvm-cov
+        run: cargo install cargo-llvm-cov
+
+      - name: Run coverage test
+        run: ((cargo llvm-cov -p radio --ignore-filename-regex "streams.rs|radio.rs|lib.rs" | grep TOTAL | grep -E -o '100.00%' | wc -l) | grep -q 3) || exit 1

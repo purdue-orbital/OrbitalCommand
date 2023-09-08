@@ -1,8 +1,8 @@
-use std::sync::{MutexGuard, PoisonError};
+
 use lazy_static::lazy_static;
 use num_complex::Complex;
 use radio::dsp;
-use radio::dsp::{Demodulators, Modulators};
+use radio::dsp::{Demodulators};
 
 static SAMPLE_RATE: f32 = 1e5;
 static BAUD_RATE: f32 = 1e4;
@@ -40,8 +40,8 @@ struct TestData {
 #[cfg(test)]
 impl Default for TestData {
     fn default() -> Self {
-        let mut demods = dsp::Demodulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
-        let mut mods = dsp::Modulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
+        let demods = dsp::Demodulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
+        let mods = dsp::Modulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
 
         TestData {
             signal_1byte: mods.fsk(BYTE_1),
@@ -293,6 +293,26 @@ pub fn fsk_byte_2048() {
         test,
         expected,
         "Testing fsk With 1 Byte of Data.\
+            Expected: {:?}\
+            Got: {:?}",
+        expected,
+        test
+    )
+}
+
+
+#[test]
+pub fn fsk_partial_test() {
+
+    let samples_per_symbol = (SAMPLE_RATE / BAUD_RATE) as usize;
+
+    let test = DATA.instance.fsk(DATA.signal_2bytes.clone()[samples_per_symbol*9..].to_owned())[0];
+    let expected = BYTES_2[1]-128;
+
+    assert_eq!(
+        test,
+        expected,
+        "Testing fsk With Partial Data.\
             Expected: {:?}\
             Got: {:?}",
         expected,
