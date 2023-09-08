@@ -24,4 +24,4 @@ jobs:
         run: cargo install cargo-llvm-cov
 
       - name: Run coverage test
-        run: ((cargo llvm-cov -p radio --ignore-filename-regex "streams.rs|radio.rs|lib.rs" | grep TOTAL | grep -E -o '100%' | wc -l) | grep -q 3) || exit 1
+        run: ((cargo llvm-cov -p radio --ignore-filename-regex "streams.rs|radio.rs|lib.rs" | grep TOTAL | grep -E -o '100.00%' | wc -l) | grep -q 3) || exit 1
