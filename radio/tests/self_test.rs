@@ -1,5 +1,6 @@
 extern crate radio;
 
+use std::any::Any;
 use std::thread;
 use std::time::Duration;
 
@@ -22,7 +23,7 @@ fn self_test_128bytes()
     thread::sleep(Duration::from_secs(10));
 
     // Transmit
-    stream.transmit(test_arr.as_mut_slice()).expect("Transmit");
+    stream.transmit(test_arr.as_mut_slice()).unwrap();
 
     // Allow for some more delay
     thread::sleep(Duration::from_secs(2));
@@ -32,4 +33,6 @@ fn self_test_128bytes()
 
     // Verify
     assert_eq!(test_arr, arr.unwrap().as_slice());
+    assert_eq!(stream.settings.radio.clone().get_radio().unwrap().type_id(), stream.settings.radio.get_radio().unwrap().type_id());
+    assert!(stream.settings.radio.is_connected());
 }

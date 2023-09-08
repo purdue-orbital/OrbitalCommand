@@ -39,7 +39,7 @@ impl WindowHandler {
 
         let ident = bin_to_u8(ident_str_bin);
 
-        WindowHandler{
+        let mut out = WindowHandler{
             window:vec![0;window_len],
             window_flipped:vec![0;window_len],
 
@@ -57,7 +57,11 @@ impl WindowHandler {
 
             ident,
             is_flipped:false,
-        }
+        };
+
+        out.reset();
+
+        out
     }
 
     fn shift_and_carry(bin:&mut [u8],bit: u8){
@@ -96,6 +100,16 @@ impl WindowHandler {
             }
 
         }else {
+            self.recording[self.recording_len - 1] <<= 1;
+
+            if self.is_flipped{
+                self.recording[self.recording_len - 1] += !bin[0];
+            }else{
+                self.recording[self.recording_len - 1] += bin[0];
+            }
+
+            self.bit_counter -= 1;
+
 
             if self.bit_counter == 0{
 
@@ -107,23 +121,14 @@ impl WindowHandler {
                 self.recording_len += 1;
             }
 
-            self.recording[self.recording_len - 1] <<= 1;
-
-            if self.is_flipped{
-                self.recording[self.recording_len - 1] += !bin[0];
-            }else{
-                self.recording[self.recording_len - 1] += bin[0];
-            }
-
-            self.bit_counter -= 1
         }
     }
 
     pub fn reset(&mut self){
         self.frame_len = 0;
-        self.bit_counter = 0;
+        self.bit_counter = 8;
         self.currently_recording = false;
-        self.recording_len = 0;
+        self.recording_len = 1;
         self.is_flipped = false;
     }
 }
@@ -143,10 +148,10 @@ impl RXLoop {
     }
 
     pub fn run(&mut self, window: &mut WindowHandler) {
-        if window.frame_len != 0 && window.bit_counter == 0 && (window.recording_len- 2) >= window.frame_len as usize{
+        if window.frame_len != 0 && window.bit_counter == 8 && (window.recording_len - 2) >= window.frame_len as usize{
 
             if let Ok(mut x) = self.buffer.write(){
-                x.push(window.recording.clone()[2..window.recording_len].to_owned());
+                x.push(window.recording.clone()[2..window.recording_len-1].to_owned());
             }
 
             window.reset()
