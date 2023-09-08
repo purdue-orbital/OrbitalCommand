@@ -23,5 +23,5 @@ jobs:
       - name: Add llvm-cov
         run: cargo install cargo-llvm-cov
 
-      - name: Run llvm-cov
-        run: cargo llvm-cov -p radio
+      - name: Run coverage test
+        run: ((cargo llvm-cov -p radio | grep TOTAL | grep -E -o '100%' | wc -l) | grep -q 3) || exit 1
