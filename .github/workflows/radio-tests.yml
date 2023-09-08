@@ -2,9 +2,9 @@ name: Radio Tests
 
 on:
   push:
-    branches: [ "main", "Radio" ]
+    branches: [ "main", "Radio", "DSP"  ]
   pull_request:
-    branches: [ "main", "Radio" ]
+    branches: [ "main", "Radio", "DSP"  ]
 
 env:
   CARGO_TERM_COLOR: always
