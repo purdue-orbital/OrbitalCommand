@@ -13,7 +13,7 @@ impl Demodulation {
     /// * `arr` - Array of radio samples to
     pub fn run(&self, arr: Vec<Complex<f32>>) -> Vec<u8>
     {
-        let mut to_return = Vec::new();
+        let mut to_return = Vec::with_capacity(self.samples_per_symbol);
 
         let mut bin: u8 = 0;
 

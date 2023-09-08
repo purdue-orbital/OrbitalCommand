@@ -11,7 +11,7 @@ use num_complex::Complex;
 use crate::dsp::{Demodulators, Modulators};
 use crate::frame::Frame;
 use crate::radio::Radio;
-use crate::rx_handling::RXLoop;
+use crate::rx_handling::{RXLoop, WindowHandler};
 use crate::streams::{RadioSettings, Rx, Tx};
 use crate::tools::{bin_to_u8, u8_to_bin};
 
@@ -22,7 +22,7 @@ pub mod frame;
 mod tools;
 mod rx_handling;
 
-pub static AMBLE: &str = "10101010";
+pub static AMBLE: &str = "10101010101010101010101010101010";
 pub static IDENT: &str = "11110000111100001111000011110000";
 pub static MOD_TYPE: ModulationType = ModulationType::BPSK;
 
@@ -98,7 +98,7 @@ impl RadioStream {
         };
 
         // Read buffer
-        let buffer = Arc::new(RwLock::new(Vec::new()));
+        let buffer = Arc::new(RwLock::new(Vec::with_capacity(20)));
 
         // Make radio streams
         let me = RadioStream {
@@ -120,11 +120,9 @@ impl RadioStream {
                 let mut mtu = vec![Complex::new(0.0, 0.0); samples_per_a_symbol as usize];
 
                 // create window
-                let mut window = "1111000011110000111100000000000".to_string();
+                let mut window = WindowHandler::new(IDENT);
 
-                let fake_buffer = Arc::new(RwLock::new(Vec::new()));
-
-                let mut rxloop = RXLoop::new(fake_buffer.clone());
+                let mut rxloop = RXLoop::new(buffer);
 
                 // rx loop
                 loop {
@@ -132,26 +130,12 @@ impl RadioStream {
 
                     let err = rx_stream.fetch(&[mtu.as_mut_slice()]);
 
-                    if err.is_err() {}
-
-                    let hold = u8_to_bin(demodulation(&instance, mtu.clone()).as_slice());
-                    let chars = &hold.as_str()[(8 - bits_per_symbol()) as usize..];
-
-                    window.push_str(chars);
-
-                    if let Ok(mut lock) = fake_buffer.write() {
-                        if !lock.is_empty() {
-                            let m = bin_to_u8(lock[0].as_str());
-
-                            if let Ok(mut buf) = buffer.write() {
-                                buf.push(m)
-                            }
-
-                            lock.clear();
-
-                            window = "1111000011110000111100000000000".to_string();
-                        }
+                    if err.is_err() {
+                        println!("Error!")
                     }
+
+                    window.add(demodulation(&instance,mtu.clone()).as_slice());
+
                 }
             }
         });
