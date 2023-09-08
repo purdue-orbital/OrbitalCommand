@@ -56,7 +56,7 @@ impl GoertzelAlgorithm {
     /// Most cases the preferred option. This takes some liberty in final calculation
     pub fn run_optimized(&self, arr: &[Complex<f32>]) -> f32 {
         // Initialize values
-        let mut q_0: f32 = 0.0;
+        let mut q_0: f32;
         let mut q_1: f32 = 0.0;
         let mut q_2: f32 = 0.0;
 

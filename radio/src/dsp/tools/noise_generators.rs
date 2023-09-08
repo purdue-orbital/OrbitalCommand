@@ -15,7 +15,7 @@ pub fn gaussian_noise_generator(signal: &[Complex<f32>], snr_db: f32) -> anyhow:
     let standard_deviation = (noise_power / 2.0).sqrt();
 
     let mut rng = rand::thread_rng();
-    let normal = Normal::new(0.0, standard_deviation)?;
+    let normal = unsafe { Normal::new(0.0, standard_deviation).unwrap_unchecked() };
 
     Ok(
         signal.iter()

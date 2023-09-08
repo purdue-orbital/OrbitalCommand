@@ -1,5 +1,6 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
+#![deny(clippy::testcar)]
 
 use std::sync::{Arc, RwLock};
 use std::thread::{sleep, spawn};
@@ -13,14 +14,14 @@ use crate::frame::Frame;
 use crate::radio::Radio;
 use crate::rx_handling::{RXLoop, WindowHandler};
 use crate::streams::{RadioSettings, Rx, Tx};
-use crate::tools::{bin_to_u8, u8_to_bin};
+
 
 mod radio;
 mod streams;
 pub mod dsp;
 pub mod frame;
-mod tools;
-mod rx_handling;
+pub mod tools;
+pub mod rx_handling;
 
 pub static AMBLE: &str = "10101010101010101010101010101010";
 pub static IDENT: &str = "11110000111100001111000011110000";
@@ -33,7 +34,7 @@ pub enum ModulationType {
     QPSK,
 }
 
-fn bits_per_symbol() -> u8 {
+pub fn bits_per_symbol() -> u8 {
     match MOD_TYPE {
         ModulationType::ASK => { 1 }
         ModulationType::FSK => { 1 }
@@ -42,7 +43,7 @@ fn bits_per_symbol() -> u8 {
     }
 }
 
-fn demodulation(obj: &Demodulators, arr: Vec<Complex<f32>>) -> Vec<u8> {
+pub fn demodulation(obj: &Demodulators, arr: Vec<Complex<f32>>) -> Vec<u8> {
     match MOD_TYPE {
         ModulationType::ASK => { obj.ask(arr) }
         ModulationType::FSK => { obj.fsk(arr) }
@@ -51,7 +52,7 @@ fn demodulation(obj: &Demodulators, arr: Vec<Complex<f32>>) -> Vec<u8> {
     }
 }
 
-fn modulation(obj: &Modulators, arr: &[u8]) -> Vec<Complex<f32>> {
+pub fn modulation(obj: &Modulators, arr: &[u8]) -> Vec<Complex<f32>> {
     match MOD_TYPE {
         ModulationType::ASK => { obj.ask(arr) }
         ModulationType::FSK => { obj.fsk(arr) }
@@ -67,10 +68,10 @@ unsafe impl Sync for RadioStream {}
 
 
 pub struct RadioStream {
-    tx_stream: Tx,
-    modulation: Modulators,
-    rx_buffer: Arc<RwLock<Vec<Vec<u8>>>>,
-    settings: RadioSettings,
+    pub tx_stream: Tx,
+    pub modulation: Modulators,
+    pub rx_buffer: Arc<RwLock<Vec<Vec<u8>>>>,
+    pub settings: RadioSettings,
 }
 
 
