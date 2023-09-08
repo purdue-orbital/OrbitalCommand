@@ -1,4 +1,4 @@
-name: Radio Tests
+name: Radio Coverage Test
 
 on:
   push:
