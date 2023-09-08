@@ -1,8 +1,7 @@
-use std::sync::{MutexGuard, PoisonError};
 use lazy_static::lazy_static;
 use num_complex::Complex;
 use radio::dsp;
-use radio::dsp::{Demodulators, Modulators};
+use radio::dsp::{Demodulators};
 
 static SAMPLE_RATE: f32 = 1e5;
 static BAUD_RATE: f32 = 1e4;

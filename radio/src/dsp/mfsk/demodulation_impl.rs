@@ -22,7 +22,7 @@ impl Demodulation {
             }
         }
 
-        let default_index =  0;
+        let default_index = 0;
 
         let mut planner = FftPlanner::new();
         let fft = planner.plan_fft_forward(samples_per_symbol);
@@ -37,7 +37,7 @@ impl Demodulation {
             mfsk_fft_index_map,
             fft,
             scratch,
-            default_index
+            default_index,
         }
     }
 
@@ -81,13 +81,12 @@ impl Demodulation {
         let mut index_option;
 
         for x in chunks {
-
             index_option = x.iter().position(|b| b.re >= (self.samples_per_symbol / 2) as f32);
 
             // default to an index upon error
-            index = if let Some(x) = index_option{
+            index = if let Some(x) = index_option {
                 x
-            }else {
+            } else {
                 self.default_index
             };
 

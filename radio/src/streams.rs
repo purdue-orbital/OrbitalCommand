@@ -1,4 +1,4 @@
-use std::sync::{Arc, LockResult, RwLock};
+use std::sync::{Arc, RwLock};
 
 use anyhow::{Error, Result};
 use num_complex::Complex;
@@ -102,14 +102,10 @@ impl Rx {
         //device.set_gain(Direction::Rx, settings.channels_in_use, settings.gain)?;
         device.set_gain_mode(Direction::Rx, settings.channels_in_use, true)?;
 
-
-        let mut pll_args = Args::new();
-        pll_args.set("reference", settings.lo_frequency.to_string());
-
         // Set carrier frequency
-        device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, pll_args)?;
+        device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
 
-        device.set_dc_offset_mode(Direction::Rx,settings.channels_in_use,true)?;
+        device.set_dc_offset_mode(Direction::Rx, settings.channels_in_use, true)?;
 
 
         // Get rx stream
@@ -154,11 +150,8 @@ impl Tx {
         //device.set_gain(Direction::Tx, settings.channels_in_use, settings.gain)?;
         device.set_gain_mode(Direction::Tx, settings.channels_in_use, true)?;
 
-        let mut pll_args = Args::new();
-        pll_args.set("reference", settings.lo_frequency.to_string());
-
         // Set carrier frequency
-        device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency, pll_args)?;
+        device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
 
 
         // Set hardware low pass filter
@@ -171,34 +164,32 @@ impl Tx {
             Stream: stream.clone()
         };
 
-        let x = if let Ok(mut x) = stream.write(){
-
+        let x = if let Ok(mut x) = stream.write() {
             x.activate(Default::default())?;
 
             settings.size = x.mtu()?;
 
             // Increase counter
             settings.channels_in_use += 1;
-          
+
             Ok(tx)
-        }else {
+        } else {
             Err(
                 soapysdr::Error {
                     code: ErrorCode::StreamError,
                     message: "Unable to start radio! stream!".to_string(),
                 }
             )
-        }; x
+        };
+        x
     }
 
     pub fn send(&self, arr: &[Complex<f32>]) -> Result<()> {
-
-        if let Ok(mut x) = self.Stream.write(){
-
+        if let Ok(mut x) = self.Stream.write() {
             x.write_all(&[arr], Default::default(), true, 100000000_i64)?;
 
             Ok(())
-        }else {
+        } else {
             Err(Error::msg("Unable to send data!".to_string()))
         }
     }

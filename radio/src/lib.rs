@@ -1,7 +1,7 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
 
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError, RwLock, RwLockReadGuard};
+use std::sync::{Arc, RwLock};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
@@ -9,22 +9,26 @@ use anyhow::{Error, Result};
 use num_complex::Complex;
 
 use crate::dsp::{Demodulators, Modulators};
+use crate::frame::Frame;
 use crate::radio::Radio;
+use crate::rx_handling::{RXLoop, WindowHandler};
 use crate::streams::{RadioSettings, Rx, Tx};
+use crate::tools::{bin_to_u8, u8_to_bin};
 
 mod radio;
 mod streams;
 pub mod dsp;
+pub mod frame;
+mod tools;
+mod rx_handling;
 
-static AMBLE: &str = "10101010";
-static IDENT: &str = "11110000111100001111000011110000";
-static MOD_TYPE: ModulationType = ModulationType::BPSK;
+pub static AMBLE: &str = "10101010101010101010101010101010";
+pub static IDENT: &str = "11110000111100001111000011110000";
+pub static MOD_TYPE: ModulationType = ModulationType::BPSK;
 
-
-enum ModulationType {
+pub enum ModulationType {
     ASK,
     FSK,
-    MFSK,
     BPSK,
     QPSK,
 }
@@ -33,7 +37,6 @@ fn bits_per_symbol() -> u8 {
     match MOD_TYPE {
         ModulationType::ASK => { 1 }
         ModulationType::FSK => { 1 }
-        ModulationType::MFSK => { 8 }
         ModulationType::BPSK => { 1 }
         ModulationType::QPSK => { 2 }
     }
@@ -43,7 +46,6 @@ fn demodulation(obj: &Demodulators, arr: Vec<Complex<f32>>) -> Vec<u8> {
     match MOD_TYPE {
         ModulationType::ASK => { obj.ask(arr) }
         ModulationType::FSK => { obj.fsk(arr) }
-        ModulationType::MFSK => { obj.mfsk(arr) }
         ModulationType::BPSK => { obj.bpsk(arr) }
         ModulationType::QPSK => { obj.qpsk(arr) }
     }
@@ -53,7 +55,6 @@ fn modulation(obj: &Modulators, arr: &[u8]) -> Vec<Complex<f32>> {
     match MOD_TYPE {
         ModulationType::ASK => { obj.ask(arr) }
         ModulationType::FSK => { obj.fsk(arr) }
-        ModulationType::MFSK => { obj.mfsk(arr) }
         ModulationType::BPSK => { obj.bpsk(arr) }
         ModulationType::QPSK => { obj.qpsk(arr) }
     }
@@ -64,229 +65,12 @@ unsafe impl Send for RadioStream {}
 
 unsafe impl Sync for RadioStream {}
 
-/// u8 array to binary string
-fn u8_to_bin(arr: &[u8]) -> String {
-    let mut binary_string = String::new();
-
-    for &byte in arr {
-        let binary_byte = format!("{:08b}", byte);
-        binary_string.push_str(&binary_byte);
-    }
-
-    binary_string
-}
-
-/// binary string to u8 array
-fn bin_to_u8(bin: &str) -> Vec<u8> {
-    let mut to_return = Vec::new();
-
-    let mut hold = String::from("");
-
-    let mut chars = bin.chars();
-
-    // Split at every 8 digits ( to form 1 byte )
-    for x in 0..bin.len() {
-
-        if let Some(next_char) = chars.next(){
-            hold.push(next_char)
-        }
-
-        if x % 8 == 7 {
-
-            if let Ok(radix) = u8::from_str_radix(hold.as_str(), 2){
-                to_return.push(radix);
-            }
-
-            hold.clear();
-        }
-    }
-
-    to_return
-}
-
-fn flip_bin(bin: &mut String) -> String{
-    let mut to_return = String::with_capacity(bin.len());
-
-    for x in bin.chars(){
-        if x == '1'{
-            to_return += "0";
-        }else {
-            to_return += "1";
-        }
-    }
-
-    to_return
-}
-
-
-/// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
-/// spacecraft and space bound communication
-///
-/// Here is the official standard: https://public.ccsds.org/Pubs/132x0b3.pdf
-pub struct Frame {
-    //--------------------------------
-    // Transfer Frame Primary Header
-    //--------------------------------
-
-    // 2 bits
-    version_number: u8,
-
-    // 10 bits
-    spacecraft_id: u16,
-
-    // 3 bits
-    virtual_channel_id: u8,
-
-    // 1 bits
-    ocf: bool,
-
-    // 8 bits
-    master_frame_count: u8,
-
-    // 8 bits
-    virtual_frame_count: u8,
-
-    // 16 bits
-    data_status: u16,
-
-
-    //--------------------------------
-    // Main body
-    //--------------------------------
-
-    pub data: Vec<u8>,
-}
-
-impl Frame {
-    pub fn new(bytes: &[u8]) -> Frame {
-        Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bytes.to_vec() }
-    }
-
-    /// Turn a string into frame segments (if any)
-    pub fn from(data: Vec<String>) -> Vec<Frame>
-    {
-        // Create return vector
-        let mut to_return = Vec::new();
-
-        for x in data {
-            to_return.push(Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bin_to_u8(x.as_str()) });
-        }
-
-        to_return
-    }
-
-    pub fn assemble(&self) -> Vec<u8> {
-        let bin = u8_to_bin(self.data.as_slice());
-
-        let len = self.data.len() as u16;
-
-        let len_bin = u8_to_bin(&[(len >> 8) as u8, len as u8]);
-
-        bin_to_u8(format!("{AMBLE}{IDENT}{len_bin}{bin}").as_str())
-    }
-}
 
 pub struct RadioStream {
     tx_stream: Tx,
     modulation: Modulators,
     rx_buffer: Arc<RwLock<Vec<Vec<u8>>>>,
     settings: RadioSettings,
-}
-
-struct RXLoop {
-    len: usize,
-    buffer: Arc<RwLock<Vec<String>>>,
-    counter: usize,
-    arr: [fn(rxloop: &mut RXLoop, window: &mut String) -> u8; 4],
-    flipped: String,
-    was_flipped: bool,
-}
-
-
-impl RXLoop {
-    pub fn new(buffer: Arc<RwLock<Vec<String>>>) -> RXLoop {
-        RXLoop {
-            len: 0,
-            buffer,
-            counter: 0,
-            arr: [RXLoop::listen, RXLoop::sync, RXLoop::read_frame, RXLoop::record],
-            flipped: String::new(),
-            was_flipped: false,
-        }
-    }
-
-    pub fn run(&mut self, window: &mut String) {
-
-        self.flipped = flip_bin(window);
-
-
-        self.counter = (self.counter + self.arr[self.counter](self, window) as usize) % 4;
-    }
-
-    fn listen(rxloop: &mut RXLoop, window: &mut String) -> u8 {
-        if window.contains('1') {
-            1
-        } else {
-            window.clear();
-
-            0
-        }
-    }
-
-    fn sync(rxloop: &mut RXLoop, window: &mut String) -> u8 {
-        if window.contains(IDENT)
-        {
-            rxloop.was_flipped = false;
-
-            window.clear();
-
-            1
-        } else if rxloop.flipped.contains(IDENT) {
-
-            rxloop.was_flipped = true;
-
-            window.clear();
-
-            1
-
-        } else if window.len() > 1000 {
-            window.clear();
-
-            3
-        } else { 0 }
-    }
-
-    fn read_frame(rxloop: &mut RXLoop, window: &mut String) -> u8 {
-        if window.len() >= 16 {
-
-            if rxloop.was_flipped{
-                rxloop.len = (((bin_to_u8(rxloop.flipped.as_str())[0] as u16) << 8) + bin_to_u8(rxloop.flipped.as_str())[1] as u16) as usize * 8usize;
-            }else{
-                rxloop.len = (((bin_to_u8(window.as_str())[0] as u16) << 8) + bin_to_u8(window.as_str())[1] as u16) as usize * 8usize;
-            }
-
-
-            window.clear();
-
-            1
-        } else { 0 }
-    }
-
-    fn record(rxloop: &mut RXLoop, window: &mut String) -> u8 {
-        if window.len() >= rxloop.len {
-            if rxloop.was_flipped{
-                if let Ok(mut write_buf) = rxloop.buffer.write(){
-                    write_buf.push(rxloop.flipped.clone());
-                }
-            }else if let Ok(mut write_buf) = rxloop.buffer.write(){
-                write_buf.push(window.clone());
-            }
-
-            1
-        } else {
-            0
-        }
-    }
 }
 
 
@@ -303,7 +87,6 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-
             sample_rate: 3e6,
             lo_frequency: 916e6,
             lpf_filter: 1e3,
@@ -315,7 +98,7 @@ impl RadioStream {
         };
 
         // Read buffer
-        let buffer = Arc::new(RwLock::new(Vec::new()));
+        let buffer = Arc::new(RwLock::new(Vec::with_capacity(20)));
 
         // Make radio streams
         let me = RadioStream {
@@ -329,20 +112,17 @@ impl RadioStream {
         // Spawn rx thread
         spawn(move || {
             // create stream
-            if let Ok(mut rx_stream) = Rx::new(set.clone()){
-
+            if let Ok(mut rx_stream) = Rx::new(set.clone()) {
                 let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
                 let instance = Demodulators::new(samples_per_a_symbol as usize, set.sample_rate as f32);
-              
+
                 // create mtu
                 let mut mtu = vec![Complex::new(0.0, 0.0); samples_per_a_symbol as usize];
 
                 // create window
-                let mut window = "1111000011110000111100000000000".to_string();
+                let mut window = WindowHandler::new(IDENT);
 
-                let fake_buffer = Arc::new(RwLock::new(Vec::new()));
-
-                let mut rxloop = RXLoop::new(fake_buffer.clone());
+                let mut rxloop = RXLoop::new(buffer);
 
                 // rx loop
                 loop {
@@ -350,31 +130,13 @@ impl RadioStream {
 
                     let err = rx_stream.fetch(&[mtu.as_mut_slice()]);
 
-                    if err.is_err() {}
-
-                    let hold = u8_to_bin(demodulation(&instance, mtu.clone()).as_slice());
-                    let chars = &hold.as_str()[(8 - bits_per_symbol()) as usize..];
-
-                    window.push_str(chars);
-
-                    if let Ok(mut lock) = fake_buffer.write() {
-
-                        if !lock.is_empty(){
-
-                            let m = bin_to_u8(lock[0].as_str());
-
-                            if let Ok(mut buf) = buffer.write() {
-                                buf.push(m)
-                            }
-
-                            lock.clear();
-
-                            window = "1111000011110000111100000000000".to_string();
-
-                        }
+                    if err.is_err() {
+                        println!("Error!")
                     }
-                }
 
+                    window.add(demodulation(&instance,mtu.clone()).as_slice());
+
+                }
             }
         });
 
@@ -402,17 +164,15 @@ impl RadioStream {
     }
 
     /// This process samples read and return any data received
-    pub fn read(&self) -> Result<Vec<u8>>{
-
-        let mut stuff = if let Ok(stuff_to_clone) = self.rx_buffer.read(){
+    pub fn read(&self) -> Result<Vec<u8>> {
+        let mut stuff = if let Ok(stuff_to_clone) = self.rx_buffer.read() {
             stuff_to_clone.clone()
-        }else {
+        } else {
             Vec::new()
         };
 
         while stuff.is_empty() {
-
-            if let Ok(buff) = self.rx_buffer.read(){
+            if let Ok(buff) = self.rx_buffer.read() {
                 stuff = buff.clone()
             }
 
@@ -420,134 +180,20 @@ impl RadioStream {
         }
 
         // Clear buffer
-        if let Ok(mut writeable) = self.rx_buffer.write(){
-
+        if let Ok(mut writeable) = self.rx_buffer.write() {
             writeable.clear();
 
             Ok(stuff[0].clone())
-
-        }else {
+        } else {
             Err(Error::msg("Error trying to lock buffer to clear!"))
         }
-
-
     }
 
     pub fn receive_frames(&self) -> Result<Vec<Frame>> {
-        if let Ok(bytes) = self.read(){
+        if let Ok(bytes) = self.read() {
             Ok(Frame::from(vec![String::from_utf8(bytes)?]))
-        }else {
+        } else {
             Err(Error::msg("Failed to read from stream!"))
         }
-    }
-}
-
-//--------------------------------------------------------------------------------------------------
-
-
-/// This exposes functions for benchmarking
-#[derive(Clone)]
-pub struct Benchy {
-    modulation: Arc<Mutex<Modulators>>,
-    demodulation: Arc<Mutex<Demodulators>>,
-}
-
-
-impl Benchy {
-    pub fn new() -> Benchy {
-        Benchy { modulation: Arc::from(Mutex::from(Modulators::new(0, 0.0))), demodulation: Arc::from(Mutex::from(Demodulators::new(0, 0.0))) }
-    }
-
-    pub fn update(&mut self, sample_rate: f32, baud_rate: f32)->Result<(), Error> {
-
-        if let Ok(mut mod_lock) = self.modulation.lock(){
-            mod_lock.update((sample_rate / baud_rate) as usize, sample_rate);
-
-            if let Ok(mut demod_lock) = self.demodulation.lock(){
-
-                demod_lock.update((sample_rate / baud_rate) as usize, sample_rate);
-
-                Ok(())
-            }else {
-                Err(
-                    Error::msg("Unable to lock demodulator!")
-                )
-            }
-
-        }else {
-            Err(
-                Error::msg("Unable to lock modulator!")
-            )
-        }
-    }
-
-    // ASK
-    pub fn mod_ask(&mut self, bin: &[u8]) -> Result<Vec<Complex<f32>>, PoisonError<MutexGuard<'_, Modulators>>>
-    {
-        let test = self.modulation.lock()?;
-
-        Ok(test.ask(bin))
-    }
-    pub fn demod_ask(&mut self, bin: Vec<Complex<f32>>) -> Result<Vec<u8>, PoisonError<MutexGuard<'_, Demodulators>>>
-    {
-        let test = self.demodulation.lock()?;
-
-        Ok(test.ask(bin))
-    }
-
-    // FSK
-    pub fn mod_fsk(&mut self, bin: &[u8]) -> Result<Vec<Complex<f32>>, PoisonError<MutexGuard<'_, Modulators>>>
-    {
-        let test = self.modulation.lock()?;
-
-        Ok(test.fsk(bin))
-    }
-    pub fn demod_fsk(&mut self, bin: Vec<Complex<f32>>) -> Result<Vec<u8>, PoisonError<MutexGuard<'_, Demodulators>>>
-    {
-        let test = self.demodulation.lock()?;
-
-        Ok(test.fsk(bin))
-    }
-    // MFSK
-    pub fn mod_mfsk(&mut self, bin: &[u8]) -> Result<Vec<Complex<f32>>, PoisonError<MutexGuard<'_, Modulators>>>
-    {
-        let test = self.modulation.lock()?;
-
-        Ok(test.mfsk(bin))
-    }
-    pub fn demod_mfsk(&mut self, bin: Vec<Complex<f32>>) -> Result<Vec<u8>, PoisonError<MutexGuard<'_, Demodulators>>>
-    {
-        let test = self.demodulation.lock()?;
-
-        Ok(test.mfsk(bin))
-    }
-
-    // BPSK
-    pub fn mod_bpsk(&mut self, bin: &[u8]) -> Result<Vec<Complex<f32>>, PoisonError<MutexGuard<'_, Modulators>>>
-    {
-        let test = self.modulation.lock()?;
-
-        Ok(test.bpsk(bin))
-    }
-    pub fn demod_bpsk(&mut self, bin: Vec<Complex<f32>>) -> Result<Vec<u8>, PoisonError<MutexGuard<'_, Demodulators>>>
-    {
-        let test = self.demodulation.lock()?;
-
-        Ok(test.bpsk(bin))
-    }
-
-    // QPSK
-    pub fn mod_qpsk(&mut self, bin: &[u8]) -> Result<Vec<Complex<f32>>, PoisonError<MutexGuard<'_, Modulators>>>
-    {
-        let test = self.modulation.lock()?;
-
-        Ok(test.qpsk(bin))
-    }
-
-    pub fn demod_qpsk(&mut self, bin: Vec<Complex<f32>>) -> Result<Vec<u8>, PoisonError<MutexGuard<'_, Demodulators>>>
-    {
-        let test = self.demodulation.lock()?;
-
-        Ok(test.qpsk(bin))
     }
 }

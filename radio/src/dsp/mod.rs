@@ -1,6 +1,5 @@
 use num_complex::Complex;
 
-
 use ask::structs::demodulation::Demodulation as ask_demod;
 use ask::structs::modulation::Modulation as ask_mod;
 use bpsk::structs::demodulation::Demodulation as bpsk_demod;
@@ -60,7 +59,7 @@ impl Demodulators {
     pub fn fsk(&self, arr: Vec<Complex<f32>>) -> Vec<u8> {
         self.fsk.run(arr)
     }
-    #[deprecated(since="0.1.0", note="please use QPSK")]
+    #[deprecated(since = "0.1.0", note = "please use QPSK")]
     pub fn mfsk(&self, arr: Vec<Complex<f32>>) -> Vec<u8> {
         self.mfsk.run(arr)
     }
@@ -99,7 +98,7 @@ impl Modulators {
         self.fsk.run(arr)
     }
 
-    #[deprecated(since="0.1.0", note="please use QPSK")]
+    #[deprecated(since = "0.1.0", note = "please use QPSK")]
     pub fn mfsk(&self, arr: &[u8]) -> Vec<Complex<f32>> {
         self.mfsk.run(arr)
     }

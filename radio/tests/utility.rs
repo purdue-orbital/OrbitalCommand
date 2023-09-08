@@ -1,3 +1,4 @@
+use radio::{AMBLE, IDENT};
 
 /// u8 array to binary string
 fn u8_to_bin(arr: &[u8]) -> String {
@@ -27,13 +28,13 @@ fn frame_test() {
     let test_arr1 = [4, 252, 112, 128];
 
     // Make a frame
-    let frame_1 = radio::Frame::new(test_arr1.clone().as_mut_slice());
+    let frame_1 = radio::frame::Frame::new(test_arr1.clone().as_mut_slice());
 
     // Turn the frame into a string
-    let for_transmission1 = u8_to_bin(&frame_1.assemble().as_slice()[7..]);
+    let for_transmission1 = u8_to_bin(&frame_1.assemble().as_slice()[(IDENT.len() / 8) + (AMBLE.len() / 8) + 2..]);
 
     // Reassemble
-    let mut frame_3 = radio::Frame::from(vec!(for_transmission1));
+    let mut frame_3 = radio::frame::Frame::from(vec!(for_transmission1));
 
     // Ensure frames match
     assert_eq!(frame_1.assemble(), frame_3.pop().unwrap().assemble());
