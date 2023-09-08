@@ -21,7 +21,7 @@ jobs:
         run: sudo apt install -y libsoapysdr-dev
 
       - name: Add llvm-cov
-        run: cargo binstall cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
 
       - name: Run llvm-cov
         run: cargo llvm-cov -p radio
