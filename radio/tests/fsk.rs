@@ -1,8 +1,8 @@
-use std::sync::{MutexGuard, PoisonError};
+
 use lazy_static::lazy_static;
 use num_complex::Complex;
 use radio::dsp;
-use radio::dsp::{Demodulators, Modulators};
+use radio::dsp::{Demodulators};
 
 static SAMPLE_RATE: f32 = 1e5;
 static BAUD_RATE: f32 = 1e4;
@@ -40,8 +40,8 @@ struct TestData {
 #[cfg(test)]
 impl Default for TestData {
     fn default() -> Self {
-        let mut demods = dsp::Demodulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
-        let mut mods = dsp::Modulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
+        let demods = dsp::Demodulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
+        let mods = dsp::Modulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
 
         TestData {
             signal_1byte: mods.fsk(BYTE_1),

@@ -1,5 +1,6 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
+#![deny(clippy::testcar)]
 
 use std::sync::{Arc, RwLock};
 use std::thread::{sleep, spawn};
@@ -13,7 +14,7 @@ use crate::frame::Frame;
 use crate::radio::Radio;
 use crate::rx_handling::{RXLoop, WindowHandler};
 use crate::streams::{RadioSettings, Rx, Tx};
-use crate::tools::{bin_to_u8, u8_to_bin};
+
 
 mod radio;
 mod streams;

@@ -33,5 +33,9 @@ pub fn bi_signal_demodulation(arr: &mut [Complex<f32>], algo: &GoertzelAlgorithm
         }
     }
 
+    if counter > 0{
+        out.push(bin);
+    }
+
     out
 }

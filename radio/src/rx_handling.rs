@@ -1,7 +1,7 @@
 use std::sync::{Arc, RwLock};
 
-use crate::IDENT;
-use crate::tools::{bin_to_u8, u8_to_bin};
+
+use crate::tools::{bin_to_u8};
 
 /*
 Radio starts in "listen" mode where it starts looking for the signal identifier of IDENT
