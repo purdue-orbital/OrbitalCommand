@@ -298,3 +298,23 @@ pub fn ask_byte_2048() {
         test
     )
 }
+
+
+#[test]
+pub fn ask_partial_test() {
+
+    let samples_per_symbol = (SAMPLE_RATE / BAUD_RATE) as usize;
+
+    let test = DATA.instance.ask(DATA.signal_2bytes.clone()[samples_per_symbol*9..].to_owned())[0];
+    let expected = BYTES_2[1]-128;
+
+    assert_eq!(
+        test,
+        expected,
+        "Testing ask With Partial Data.\
+            Expected: {:?}\
+            Got: {:?}",
+        expected,
+        test
+    )
+}

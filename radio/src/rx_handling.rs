@@ -1,6 +1,4 @@
 use std::sync::{Arc, RwLock};
-
-
 use crate::tools::{bin_to_u8};
 
 /*
@@ -67,7 +65,7 @@ impl WindowHandler {
     fn shift_and_carry(bin:&mut [u8],bit: u8){
 
         // set carry bit
-        let mut carry = bit;
+        let mut carry = bit & 1;
 
         // shift then add carry
         for x in bin.iter_mut().rev(){
@@ -94,7 +92,6 @@ impl WindowHandler {
 
             // sometimes data comes in flipped, check for that case by having two data one flipped, the other not
             if self.window_flipped == self.ident{
-
                 self.currently_recording = true;
                 self.is_flipped = true;
             }
@@ -103,9 +100,9 @@ impl WindowHandler {
             self.recording[self.recording_len - 1] <<= 1;
 
             if self.is_flipped{
-                self.recording[self.recording_len - 1] += !bin[0];
+                self.recording[self.recording_len - 1] ^= !bin[0] & 1;
             }else{
-                self.recording[self.recording_len - 1] += bin[0];
+                self.recording[self.recording_len - 1] ^= bin[0] & 1;
             }
 
             self.bit_counter -= 1;
@@ -134,7 +131,6 @@ impl WindowHandler {
 }
 
 pub struct RXLoop {
-    len: u16,
     buffer: Arc<RwLock<Vec<Vec<u8>>>>,
 }
 
@@ -142,7 +138,6 @@ pub struct RXLoop {
 impl RXLoop {
     pub fn new(buffer: Arc<RwLock<Vec<Vec<u8>>>>) -> RXLoop {
         RXLoop {
-            len: 0,
             buffer,
         }
     }
@@ -150,12 +145,16 @@ impl RXLoop {
     pub fn run(&mut self, window: &mut WindowHandler) {
         if window.frame_len != 0 && window.bit_counter == 8 && (window.recording_len - 2) >= window.frame_len as usize{
 
-            if let Ok(mut x) = self.buffer.write(){
-                x.push(window.recording.clone()[2..window.recording_len-1].to_owned());
+            unsafe {
+                self.buffer.write().unwrap_unchecked()
+                    .push(
+                        window.recording.clone()
+                            [2..window.recording_len - 1]
+                            .to_owned()
+                    );
             }
 
             window.reset()
-
         }
     }
 

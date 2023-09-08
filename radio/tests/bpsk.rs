@@ -299,3 +299,22 @@ pub fn bpsk_byte_2048() {
         test
     )
 }
+
+#[test]
+pub fn bpsk_partial_test() {
+
+    let samples_per_symbol = (SAMPLE_RATE / BAUD_RATE) as usize;
+
+    let test = DATA.instance.bpsk(DATA.signal_2bytes.clone()[samples_per_symbol*9..].to_owned())[0];
+    let expected = BYTES_2[1]-128;
+
+    assert_eq!(
+        test,
+        expected,
+        "Testing bpsk With Partial Data.\
+            Expected: {:?}\
+            Got: {:?}",
+        expected,
+        test
+    )
+}

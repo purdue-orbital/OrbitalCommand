@@ -16,7 +16,6 @@ impl Demodulation {
         let mut to_return = Vec::with_capacity(self.samples_per_symbol);
 
         let mut bin: u8 = 0;
-
         let mut counter = 0;
 
         for x in (0..arr.len()).step_by(self.samples_per_symbol) {

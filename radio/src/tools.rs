@@ -20,16 +20,17 @@ pub fn bin_to_u8(bin: &str) -> Vec<u8> {
 
     // Split at every 8 digits ( to form 1 byte )
     for x in 0..bin.len() {
-        if let Some(next_char) = chars.next() {
-            hold.push(next_char)
-        }
+        unsafe {
+            let next_char = chars.next().unwrap_unchecked();
+            hold.push(next_char);
 
-        if x % 8 == 7 {
-            if let Ok(radix) = u8::from_str_radix(hold.as_str(), 2) {
+
+            if x % 8 == 7 {
+                let radix = u8::from_str_radix(hold.as_str(), 2).unwrap_unchecked();
                 to_return.push(radix);
-            }
 
-            hold.clear();
+                hold.clear();
+            }
         }
     }
 

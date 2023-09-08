@@ -299,3 +299,23 @@ pub fn fsk_byte_2048() {
         test
     )
 }
+
+
+#[test]
+pub fn fsk_partial_test() {
+
+    let samples_per_symbol = (SAMPLE_RATE / BAUD_RATE) as usize;
+
+    let test = DATA.instance.fsk(DATA.signal_2bytes.clone()[samples_per_symbol*9..].to_owned())[0];
+    let expected = BYTES_2[1]-128;
+
+    assert_eq!(
+        test,
+        expected,
+        "Testing fsk With Partial Data.\
+            Expected: {:?}\
+            Got: {:?}",
+        expected,
+        test
+    )
+}
