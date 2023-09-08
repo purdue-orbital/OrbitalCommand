@@ -2,10 +2,10 @@ use num_complex::Complex;
 
 use ask::structs::demodulation::Demodulation as ask_demod;
 use ask::structs::modulation::Modulation as ask_mod;
-use bpsk::structs::demodulation::Demodulation as bpsk_demod;
-use bpsk::structs::demodulation::Demodulation as qpsk_demod;
 use bpsk::structs::modulation::Modulation as bpsk_mod;
-use bpsk::structs::modulation::Modulation as qpsk_mod;
+use bpsk::structs::demodulation::Demodulation as bpsk_demod;
+use qpsk::structs::modulation::Modulation as qpsk_mod;
+use qpsk::structs::demodulation::Demodulation as qpsk_demod;
 use fsk::structs::demodulation::Demodulation as fsk_demod;
 use fsk::structs::modulation::Modulation as fsk_mod;
 
@@ -84,11 +84,9 @@ impl Modulators {
     pub fn fsk(&self, arr: &[u8]) -> Vec<Complex<f32>> {
         self.fsk.run(arr)
     }
-
     pub fn bpsk(&self, arr: &[u8]) -> Vec<Complex<f32>> {
         self.bpsk.run(arr)
     }
-
     pub fn qpsk(&self, arr: &[u8]) -> Vec<Complex<f32>> {
         self.qpsk.run(arr)
     }

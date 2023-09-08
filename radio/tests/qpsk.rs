@@ -1,8 +1,7 @@
 
 use lazy_static::lazy_static;
 use num_complex::Complex;
-use radio::dsp;
-use radio::dsp::{Demodulators};
+use radio::dsp::{Demodulators,Modulators};
 
 static SAMPLE_RATE: f32 = 1e5;
 static BAUD_RATE: f32 = 1e4;
@@ -40,8 +39,8 @@ struct TestData {
 #[cfg(test)]
 impl Default for TestData {
     fn default() -> Self {
-        let demods = dsp::Demodulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
-        let mods = dsp::Modulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
+        let demods = Demodulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
+        let mods = Modulators::new((SAMPLE_RATE / BAUD_RATE) as usize,SAMPLE_RATE);
 
         TestData {
             signal_1byte: mods.qpsk(BYTE_1),

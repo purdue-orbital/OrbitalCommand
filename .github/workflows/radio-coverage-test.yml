@@ -1,0 +1,27 @@
+name: Radio Tests
+
+on:
+  push:
+    branches: [ "main", "Radio" ]
+  pull_request:
+    branches: [ "main", "Radio" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install soapysdr
+        run: sudo apt install -y libsoapysdr-dev
+
+      - name: Add llvm-cov
+        run: cargo binstall cargo-llvm-cov
+
+      - name: Run llvm-cov
+        run: cargo llvm-cov -p radio
