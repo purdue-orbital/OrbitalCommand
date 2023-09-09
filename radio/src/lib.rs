@@ -1,5 +1,6 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
+#![doc(html_logo_url = "../../../images/Logo2.png", html_favicon_url = "../../../images/Logo2.png")]
 //#![deny(missing_docs)]
 
 use std::sync::{Arc, RwLock};
