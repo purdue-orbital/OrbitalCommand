@@ -199,10 +199,105 @@
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
 </pre></div><pre class="rust"><code><span class="attr">#![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
 #![doc(html_logo_url = <span class="string">&quot;https://images.squarespace-cdn.com/content/v1/56ce2044d210b8716143af3a/1521674398338-46K9U3FDEZYYAYFJU6SG/Logo2.png&quot;</span>, html_favicon_url = <span class="string">&quot;https://images.squarespace-cdn.com/content/v1/56ce2044d210b8716143af3a/1521674398338-46K9U3FDEZYYAYFJU6SG/Logo2.png&quot;</span>)]
 </span><span class="comment">//#![deny(missing_docs)]
+
+</span><span class="doccomment">//! This crate utilizes SDRs for long range communications indented for space bound communications.
+//! This crate is intended to hel build more code on top of and make it easier for networking based
+//! protocols to be developed and implemented with use of an SDR.
+//!
+//! It should be noted that any library that uses this crate will need to run with root privileges
+//! or else the system won&#39;t be able to connect to the radio
+
+
 
 </span><span class="kw">use </span>std::sync::{Arc, RwLock};
 <span class="kw">use </span>std::thread::{sleep, spawn};
@@ -217,7 +312,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::rx_handling::{RXLoop, WindowHandler};
 <span class="kw">use </span><span class="kw">crate</span>::streams::{RadioSettings, Rx, Tx};
 
-
 <span class="kw">mod </span>radio;
 <span class="kw">mod </span>streams;
 <span class="kw">pub mod </span>dsp;
@@ -225,18 +319,77 @@
 <span class="kw">pub mod </span>tools;
 <span class="kw">pub mod </span>rx_handling;
 
-<span class="kw">pub static </span>AMBLE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;10101010101010101010101010101010&quot;</span>;
-<span class="kw">pub static </span>IDENT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;11110000111100001111000011110000&quot;</span>;
-<span class="kw">pub static </span>MOD_TYPE: ModulationType = ModulationType::BPSK;
+<span class="doccomment">/// This set of bits is sent ahead of the real transmission frame to allow time for the SDR to sync
+/// and better be able to read the frame that follows.
+</span><span class="kw">pub static </span>AMBLE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;10101010101010101010101010101010&quot;</span>;
 
-<span class="kw">pub enum </span>ModulationType {
-    ASK,
-    FSK,
-    BPSK,
-    QPSK,
+<span class="doccomment">/// IDENT (AKA identifier) is a set of bits that allows the radio to know that it has reached the
+/// end of the preamble and is about to read the frame data.
+</span><span class="kw">pub static </span>IDENT: <span class="kw-2">&amp;</span>str = <span class="string">&quot;11110000111100001111000011110000&quot;</span>;
+
+<span class="doccomment">/// This is the current Modulation scheme that the radio is configured to accept
+</span><span class="kw">pub static </span>MOD_TYPE: ModulationType = ModulationType::BPSK;
+
+<span class="doccomment">/// This is a list of different signal modulation types  currently accepted by the radio
+</span><span class="kw">pub enum </span>ModulationType {
+    <span class="doccomment">/// Amplitude Shift Keying (ASK) is a very basic modulation type that only allows for 1 bit to
+    /// be transmitted at a time. This utilizes the shift in a radio signal&#39;s amplitude to encode
+    /// binary.
+    ///
+    /// Advantage:
+    /// * Easily can be boosted by use of an amplifier (as amplifiers makes the amplitude bigger)
+    ///
+    /// Disadvantage:
+    /// * Amplitude degrades over distance amplitude sent at TX might be the same height by RX
+    </span>ASK,
+
+    <span class="doccomment">/// Frequency Shift Keying (FSK) is a basic modulation type that only allows for 1 bit to
+    /// be transmitted at a time. This utilizes the shift in a radio signal&#39;s frequency to encode
+    /// binary.
+    ///
+    /// Advantage:
+    /// * Very resilient to degrading of a signal over a large distance. If the signal can be
+    /// received even if very weak, it will be read.
+    ///
+    /// Disadvantage:
+    /// * If the frequency is occupied by other signals, it becomes very hard to clean and relies on
+    /// intensive DSP filtering techniques. Also FSK is believed to put undo strain on a radio
+    /// significantly reducing the life span of a radio system,
+    </span>FSK,
+
+    <span class="doccomment">/// Binary Phase Shift Keying (BPSK) is a modulation type that only allows for 1 bit to
+    /// be transmitted at a time. This utilizes the shift in a radio signal&#39;s phase of I component
+    /// to encode binary data.
+    ///
+    /// Advantage:
+    /// * This modulation scheme takes 0 bandwidth and is excellent in operating in very noising
+    /// environments as it can sit in a sliver of a frequency where no or little transmission takes
+    /// place.
+    ///
+    /// Disadvantage:
+    /// * BPSK is very reliant on Phase Locked Loops (PLLs) that ensure the phases are in sync. What
+    /// this means if a TX source isn&#39;t louder than some other TX device, the an RX device won&#39;t be
+    /// able to make heads and tails of it.
+    </span>BPSK,
+
+    <span class="doccomment">/// Quadrature Phase Shift Keying (QPSK) is a modulation type that only allows for 2 bits to
+    /// be transmitted at a time. This utilizes the shift in a radio signal&#39;s phase of I and Q 
+    /// components to encode binary data.
+    ///
+    /// Advantage:
+    /// * This modulation scheme takes 0 bandwidth and is excellent in operating in very noising
+    /// environments as it can sit in a sliver of a frequency where no or little transmission takes
+    /// place. It also is able to send 2 bits at once without compromising on reliability.
+    ///
+    /// Disadvantage:
+    /// * QPSK is also very reliant on Phase Locked Loops (PLLs) that ensure the phases are in sync.
+    /// What this means if a TX source isn&#39;t louder than some other TX device, then an RX device 
+    /// won&#39;t be able to make heads and tails of it.
+    </span>QPSK,
 }
 
-<span class="kw">pub fn </span>bits_per_symbol() -&gt; u8 {
+<span class="doccomment">/// This will return the number of bits being currently transmitted per a symbol
+</span><span class="kw">pub fn </span>bits_per_symbol() -&gt; u8 {
     <span class="kw">match </span>MOD_TYPE {
         ModulationType::ASK =&gt; { <span class="number">1 </span>}
         ModulationType::FSK =&gt; { <span class="number">1 </span>}
@@ -245,7 +398,8 @@
     }
 }
 
-<span class="kw">pub fn </span>demodulation(obj: <span class="kw-2">&amp;</span>Demodulators, arr: Vec&lt;Complex&lt;f32&gt;&gt;) -&gt; Vec&lt;u8&gt; {
+<span class="doccomment">/// This is a helper function that makes it easy to change mod and demod functions on the fly.
+</span><span class="kw">pub fn </span>demodulation(obj: <span class="kw-2">&amp;</span>Demodulators, arr: Vec&lt;Complex&lt;f32&gt;&gt;) -&gt; Vec&lt;u8&gt; {
     <span class="kw">match </span>MOD_TYPE {
         ModulationType::ASK =&gt; { obj.ask(arr) }
         ModulationType::FSK =&gt; { obj.fsk(arr) }
@@ -254,7 +408,8 @@
     }
 }
 
-<span class="kw">pub fn </span>modulation(obj: <span class="kw-2">&amp;</span>Modulators, arr: <span class="kw-2">&amp;</span>[u8]) -&gt; Vec&lt;Complex&lt;f32&gt;&gt; {
+<span class="doccomment">/// This is a helper function that makes it easy to change mod and demod functions on the fly.
+</span><span class="kw">pub fn </span>modulation(obj: <span class="kw-2">&amp;</span>Modulators, arr: <span class="kw-2">&amp;</span>[u8]) -&gt; Vec&lt;Complex&lt;f32&gt;&gt; {
     <span class="kw">match </span>MOD_TYPE {
         ModulationType::ASK =&gt; { obj.ask(arr) }
         ModulationType::FSK =&gt; { obj.fsk(arr) }
@@ -269,16 +424,31 @@
 <span class="kw">unsafe impl </span>Sync <span class="kw">for </span>RadioStream {}
 
 
-<span class="kw">pub struct </span>RadioStream {
-    <span class="kw">pub </span>tx_stream: Tx,
-    <span class="kw">pub </span>modulation: Modulators,
-    <span class="kw">pub </span>rx_buffer: Arc&lt;RwLock&lt;Vec&lt;Vec&lt;u8&gt;&gt;&gt;&gt;,
-    <span class="kw">pub </span>settings: RadioSettings,
+<span class="doccomment">/// Radio stream is the main class of the Radio crate. This makes it easy for anyone to RX or 
+/// TX with an SDR from Rust. This is done by providing RX and TX methods through this object
+</span><span class="kw">pub struct </span>RadioStream {
+    <span class="doccomment">/// The tx stream that data is passed to to have transmitted out of the radio
+    </span><span class="kw">pub </span>tx_stream: Tx,
+    
+    <span class="doccomment">/// This is a pre-built modulation object that allows for quick modulation of out going data
+    </span><span class="kw">pub </span>modulation: Modulators,
+
+    <span class="doccomment">/// This is a thread safe buffer that the RX thread will fill with received transmissions that
+    /// can be read from the read method
+    </span><span class="kw">pub </span>rx_buffer: Arc&lt;RwLock&lt;Vec&lt;Vec&lt;u8&gt;&gt;&gt;&gt;,
+
+    <span class="doccomment">/// This is a saved copy of the radio settings that can be altered later depending the needs and
+    /// wants of the user.
+    </span><span class="kw">pub </span>settings: RadioSettings,
 }
 
 
 <span class="kw">impl </span>RadioStream {
-    <span class="kw">pub fn </span>new() -&gt; <span class="prelude-ty">Result</span>&lt;RadioStream&gt; {
+
+    <span class="doccomment">/// This will create a new radio stream object.
+    ///
+    /// This will return an error if no radio is detected or can be connected to.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="prelude-ty">Result</span>&lt;RadioStream&gt; {
 
         <span class="comment">// Check if radio is connected
         </span><span class="kw">let </span>radio = Radio::new()<span class="question-mark">?</span>;
@@ -362,7 +532,8 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub fn </span>transmit_frame(<span class="kw-2">&amp;</span><span class="self">self</span>, frame: <span class="kw-2">&amp;</span>Frame) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="doccomment">/// This a wrapper function that allows for direct transmission of frames
+    </span><span class="kw">pub fn </span>transmit_frame(<span class="kw-2">&amp;</span><span class="self">self</span>, frame: <span class="kw-2">&amp;</span>Frame) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.transmit(<span class="kw-2">&amp;</span>frame.assemble())
     }
 
@@ -392,7 +563,8 @@
         }
     }
 
-    <span class="kw">pub fn </span>receive_frames(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Frame&gt;&gt; {
+    <span class="doccomment">/// This is a wrapper class that allows for the reading and receiving of frames directly
+    </span><span class="kw">pub fn </span>receive_frames(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Frame&gt;&gt; {
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(bytes) = <span class="self">self</span>.read() {
             <span class="prelude-val">Ok</span>(Frame::from(<span class="macro">vec!</span>[String::from_utf8(bytes)<span class="question-mark">?</span>]))
         } <span class="kw">else </span>{
