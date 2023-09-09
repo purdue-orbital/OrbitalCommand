@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"common":[["impl&lt;'de&gt; <a class=\"trait\" href=\"https://docs.rs/serde/1.0.188/serde/de/trait.Deserialize.html\" title=\"trait serde::de::Deserialize\">Deserialize</a>&lt;'de&gt; for <a class=\"struct\" href=\"common/struct.Vec3.html\" title=\"struct common::Vec3\">Vec3</a>"],["impl&lt;'de&gt; <a class=\"trait\" href=\"https://docs.rs/serde/1.0.188/serde/de/trait.Deserialize.html\" title=\"trait serde::de::Deserialize\">Deserialize</a>&lt;'de&gt; for <a class=\"enum\" href=\"common/enum.Message.html\" title=\"enum common::Message\">Message</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
