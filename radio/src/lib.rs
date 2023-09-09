@@ -1,6 +1,6 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
-#![doc(html_logo_url = "../../../images/Logo2.png", html_favicon_url = "../../../images/Logo2.png")]
+#![doc(html_logo_url = "https://images.squarespace-cdn.com/content/v1/56ce2044d210b8716143af3a/1521674398338-46K9U3FDEZYYAYFJU6SG/Logo2.png", html_favicon_url = "https://images.squarespace-cdn.com/content/v1/56ce2044d210b8716143af3a/1521674398338-46K9U3FDEZYYAYFJU6SG/Logo2.png")]
 //#![deny(missing_docs)]
 
 use std::sync::{Arc, RwLock};
