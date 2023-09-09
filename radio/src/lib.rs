@@ -1,6 +1,6 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
-#![deny(clippy::testcar)]
+//#![deny(missing_docs)]
 
 use std::sync::{Arc, RwLock};
 use std::thread::{sleep, spawn};
@@ -88,13 +88,13 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-            sample_rate: 3e6,
+            sample_rate: 2e7,
             lo_frequency: 916e6,
             lpf_filter: 1e3,
             channels_in_use: 0,
             gain: 100.0,
             radio,
-            baud_rate: 3e4,
+            baud_rate: 2e5,
             size: 0,
         };
 

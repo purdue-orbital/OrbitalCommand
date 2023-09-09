@@ -41,7 +41,7 @@ impl WindowHandler {
             window:vec![0;window_len],
             window_flipped:vec![0;window_len],
 
-            recording:vec![0;65536],
+            recording:vec![0;65537],
 
             window_len,
 
@@ -104,6 +104,7 @@ impl WindowHandler {
             }else{
                 self.recording[self.recording_len - 1] ^= bin[0] & 1;
             }
+
 
             self.bit_counter -= 1;
 
