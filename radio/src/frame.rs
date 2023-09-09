@@ -31,16 +31,13 @@ pub struct Frame {
     // 16 bits
     data_status: u16,
 
-
-    //--------------------------------
-    // Main body
-    //--------------------------------
-
+    /// this is the data that follows the frame header (the actual data being sent/received)
     pub data: Vec<u8>,
 }
 
 
 impl Frame {
+    /// Create a new frame object given data the will be encapsulated by the frame
     pub fn new(bytes: &[u8]) -> Frame {
         Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bytes.to_vec() }
     }
@@ -58,6 +55,7 @@ impl Frame {
         to_return
     }
 
+    /// This will assemble the frame header and make it ready to be transmitted
     pub fn assemble(&self) -> Vec<u8> {
         let bin = u8_to_bin(self.data.as_slice());
 

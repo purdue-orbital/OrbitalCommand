@@ -3,12 +3,12 @@
 #![doc(html_logo_url = "https://images.squarespace-cdn.com/content/v1/56ce2044d210b8716143af3a/1521674398338-46K9U3FDEZYYAYFJU6SG/Logo2.png", html_favicon_url = "https://images.squarespace-cdn.com/content/v1/56ce2044d210b8716143af3a/1521674398338-46K9U3FDEZYYAYFJU6SG/Logo2.png")]
 //#![deny(missing_docs)]
 
-//! This crate utilizes SDRs for long range communications indented for space bound communications.
-//! This crate is intended to hel build more code on top of and make it easier for networking based
+//! This crate utilizes SDRs for long range communications intended for space bound communications.
+//! This crate will allow for building more code on top of and make it easier for networking based
 //! protocols to be developed and implemented with use of an SDR.
 //!
 //! It should be noted that any library that uses this crate will need to run with root privileges
-//! or else the system won't be able to connect to the radio
+//! or else the system won't be able to connect to the radio.
 
 
 
