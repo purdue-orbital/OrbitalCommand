@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["radio"];
+window.ALL_CRATES = ["common","ground","launch","net","radio"];
