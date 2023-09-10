@@ -4,7 +4,7 @@ use crate::{AMBLE,IDENT};
 /// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
 /// spacecraft and space bound communication
 ///
-/// Here is the official standard: https://public.ccsds.org/Pubs/132x0b3.pdf
+/// Here is the official standard: <https://public.ccsds.org/Pubs/132x0b3.pdf>
 pub struct Frame {
     //--------------------------------
     // Transfer Frame Primary Header

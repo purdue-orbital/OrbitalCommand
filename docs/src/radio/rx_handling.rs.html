@@ -160,6 +160,34 @@
 <a href="#160" id="160">160</a>
 <a href="#161" id="161">161</a>
 <a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::{Arc, RwLock};
 <span class="kw">use </span><span class="kw">crate</span>::tools::{bin_to_u8};
 
@@ -172,28 +200,49 @@ tells us the length of the frame
 We then record the the given length and write it into the buffer for reading by the main thread
  */
 
+</span><span class="doccomment">/// This is a helper object that handles new bit(s) being passed to it and dynamically deciding to
+/// record the incoming data or to throw it out
 </span><span class="kw">pub struct </span>WindowHandler {
-    <span class="kw">pub </span>window:Vec&lt;u8&gt;,
-    <span class="kw">pub </span>window_flipped:Vec&lt;u8&gt;,
-    <span class="kw">pub </span>recording:Vec&lt;u8&gt;,
+    <span class="doccomment">/// This is the &quot;view&quot; that the radio has to find the IDENT. Once found, we then start recording
+    </span><span class="kw">pub </span>window:Vec&lt;u8&gt;,
 
-    <span class="kw">pub </span>window_len: usize,
+    <span class="doccomment">/// This like window but all bits are flipped. This lets us check if IDENT is flipped
+    </span><span class="kw">pub </span>window_flipped:Vec&lt;u8&gt;,
 
-    <span class="kw">pub </span>currently_recording: bool,
+    <span class="doccomment">/// This is the array that holds the recording of the transmission. At the end of transmission,
+    /// we then write this buffer to the read buffer to be read by the main thread.
+    </span><span class="kw">pub </span>recording:Vec&lt;u8&gt;,
 
-    <span class="kw">pub </span>bit_counter: usize,
+    <span class="doccomment">/// This is a bool that returns true if the IDENT was found and we&#39;re sending bits into
+    /// recording
+    </span><span class="kw">pub </span>currently_recording: bool,
 
-    <span class="kw">pub </span>ident: Vec&lt;u8&gt;,
+    <span class="doccomment">/// This is a counter that tells us what bit we&#39;re on in the last u8 value in the recording.
+    /// When this reaches 0, we se the value back to 8 and add a new u8 value into the recording
+    </span><span class="kw">pub </span>bit_counter: usize,
 
-    <span class="kw">pub </span>frame_len: u16,
+    <span class="doccomment">/// This is a bin array version of IDENT which is a binary string. IDENT is a string for ease of
+    /// visualization and this array then makes that visualization into something more practical.
+    </span><span class="kw">pub </span>ident: Vec&lt;u8&gt;,
 
-    <span class="kw">pub </span>recording_len: usize,
+    <span class="doccomment">/// This is the length of the frame extracted from the frame header. This is what tells us how
+    /// long the radio should listen in the recording
+    </span><span class="kw">pub </span>frame_len: u16,
 
-    <span class="kw">pub </span>is_flipped: bool,
+    <span class="doccomment">/// This is copy of the current index. Since the recording array is a fixed length of u16::MAX,
+    /// we  use this to tell it where to add the data in the array
+    </span><span class="kw">pub </span>recording_len: usize,
+
+    <span class="doccomment">/// This bool value returns true if the IDENT we recorded was in the flipped array, This means
+    /// the transmission appears to have been flipped and we&#39;ll correct this by flipping all
+    /// incoming bits in the recording.
+    </span><span class="kw">pub </span>is_flipped: bool,
 }
 
 <span class="kw">impl </span>WindowHandler {
-    <span class="kw">pub fn </span>new(ident_str_bin:<span class="kw-2">&amp;</span>str) -&gt; WindowHandler{
+    <span class="doccomment">/// This creates a new Window handler object that helps and streamlines the RX Loop and
+    /// processing inbound data
+    </span><span class="kw">pub fn </span>new(ident_str_bin:<span class="kw-2">&amp;</span>str) -&gt; WindowHandler{
 
         <span class="kw">let </span>window_len = ident_str_bin.len() / <span class="number">8</span>;
 
@@ -204,8 +253,6 @@ We then record the the given length and write it into the buffer for reading by 
             window_flipped:<span class="macro">vec!</span>[<span class="number">0</span>;window_len],
 
             recording:<span class="macro">vec!</span>[<span class="number">0</span>;<span class="number">65537</span>],
-
-            window_len,
 
             currently_recording: <span class="bool-val">false</span>,
 
@@ -242,7 +289,9 @@ We then record the the given length and write it into the buffer for reading by 
         }
     }
 
-    <span class="kw">pub fn </span>add(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bin:<span class="kw-2">&amp;</span>[u8]){
+    <span class="doccomment">/// This will add and process byte that is passed to it decide to record it or pass it to the
+    /// window
+    </span><span class="kw">pub fn </span>add(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bin:<span class="kw-2">&amp;</span>[u8]){
         
         <span class="kw">if </span>!<span class="self">self</span>.currently_recording{
             WindowHandler::shift_and_carry(<span class="self">self</span>.window.as_mut_slice(),bin[<span class="number">0</span>]);
@@ -284,7 +333,9 @@ We then record the the given length and write it into the buffer for reading by 
         }
     }
 
-    <span class="kw">pub fn </span>reset(<span class="kw-2">&amp;mut </span><span class="self">self</span>){
+    <span class="doccomment">/// This will reset the the values to starting values and is used after we have recorded a
+    /// inbound signal
+    </span><span class="kw">pub fn </span>reset(<span class="kw-2">&amp;mut </span><span class="self">self</span>){
         <span class="self">self</span>.frame_len = <span class="number">0</span>;
         <span class="self">self</span>.bit_counter = <span class="number">8</span>;
         <span class="self">self</span>.currently_recording = <span class="bool-val">false</span>;
@@ -293,19 +344,24 @@ We then record the the given length and write it into the buffer for reading by 
     }
 }
 
-<span class="kw">pub struct </span>RXLoop {
+<span class="doccomment">/// This object handles the logic of inbound signals in the RX loop. THis makes the code look
+/// cleaner and less cluttered
+</span><span class="kw">pub struct </span>RXLoop {
     buffer: Arc&lt;RwLock&lt;Vec&lt;Vec&lt;u8&gt;&gt;&gt;&gt;,
 }
 
 
 <span class="kw">impl </span>RXLoop {
-    <span class="kw">pub fn </span>new(buffer: Arc&lt;RwLock&lt;Vec&lt;Vec&lt;u8&gt;&gt;&gt;&gt;) -&gt; RXLoop {
+    <span class="doccomment">/// This will create new RX loop by passing it the buffer that the main thread will listen on
+    /// for new signals
+    </span><span class="kw">pub fn </span>new(buffer: Arc&lt;RwLock&lt;Vec&lt;Vec&lt;u8&gt;&gt;&gt;&gt;) -&gt; RXLoop {
         RXLoop {
             buffer,
         }
     }
 
-    <span class="kw">pub fn </span>run(<span class="kw-2">&amp;mut </span><span class="self">self</span>, window: <span class="kw-2">&amp;mut </span>WindowHandler) {
+    <span class="doccomment">/// This runs the logic for on loop and is called once per a loop
+    </span><span class="kw">pub fn </span>run(<span class="kw-2">&amp;mut </span><span class="self">self</span>, window: <span class="kw-2">&amp;mut </span>WindowHandler) {
         <span class="kw">if </span>window.frame_len != <span class="number">0 </span>&amp;&amp; window.bit_counter == <span class="number">8 </span>&amp;&amp; (window.recording_len - <span class="number">2</span>) &gt;= window.frame_len <span class="kw">as </span>usize{
 
             <span class="kw">unsafe </span>{
