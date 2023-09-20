@@ -34,6 +34,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.KEY }}
         run: |
+          git init
+          git branch -M docs
           git config --global user.name "Nicholas Ball"
           git config --global user.email "Nicholas-Ball@users.noreply.github.com"
           git add .
