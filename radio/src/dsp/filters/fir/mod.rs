@@ -7,7 +7,7 @@
 use num_complex::Complex;
 use crate::dsp::filters::fir::shapes::WindowShapes;
 
-mod shapes;
+pub mod shapes;
 
 /// This filtering method uses "window functions" to remove data or frequencies we don't want.
 pub struct Windowing{
@@ -16,7 +16,7 @@ pub struct Windowing{
 
 impl Windowing {
     /// Generate a new windowing object
-    fn new(window_shape: WindowShapes, fft_size:usize,alpha:i16) -> Windowing{
+    pub fn new(window_shape: WindowShapes, fft_size:usize,alpha:i16) -> Windowing{
         // generate window
         let window = shapes::generate_shape(window_shape,fft_size,alpha);
 
@@ -24,7 +24,7 @@ impl Windowing {
     }
 
     /// run/apply the filter onto a given set of data in place
-    fn run(&self, arr:&mut [Complex<f32>]){
+    pub fn run(&self, arr:&mut [Complex<f32>]){
         for (index,x) in self.window.iter().enumerate(){
             arr[index] *= x;
         }

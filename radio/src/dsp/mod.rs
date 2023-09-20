@@ -17,7 +17,7 @@ pub mod qpsk;
 pub mod bpsk;
 pub mod ask;
 pub mod fsk;
-mod filters;
+pub mod filters;
 pub mod viterbi;
 
 

@@ -1,2 +1,2 @@
-mod fir;
+pub mod fir;
 
