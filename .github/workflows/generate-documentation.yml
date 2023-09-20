@@ -27,11 +27,8 @@ jobs:
       - name: Move docs
         run: mv target/doc docs
 
-      - name: Clean up
-        run: shopt -s extglob | rm -rf !(docs)
-
       - name: Prepare
-        run: git stash | git checkout docs | git stash pop |
+        run: git stash | git checkout docs | git stash pop
 
       - name: Push to Branch
         env:
