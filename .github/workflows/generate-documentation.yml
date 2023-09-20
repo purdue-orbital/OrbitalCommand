@@ -31,7 +31,7 @@ jobs:
         run: |
           git clone https://github.com/purdue-orbital/OrbitalCommand.git
           cd OrbitalCommand
-          git pull origin docs
+          git fetch origin docs
 
       - name: Move docs
         run: mv target/doc OrbitalCommand/docs
