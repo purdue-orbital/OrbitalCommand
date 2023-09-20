@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
-use crate::common::*;
-use crate::encode::EncoderState;
+use crate::dsp::viterbi::common::*;
+use crate::dsp::viterbi::encode::EncoderState;
 
 use std::rc::Rc;
 

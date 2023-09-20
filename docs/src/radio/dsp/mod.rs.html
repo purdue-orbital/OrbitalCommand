@@ -93,7 +93,14 @@
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>num_complex::Complex;
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! Digital Signal Processing (DSP) is the hallmark and a widely studied field in radio
+//! communications and is 
+
+</span><span class="kw">use </span>num_complex::Complex;
 
 <span class="kw">use </span>ask::structs::demodulation::Demodulation <span class="kw">as </span>ask_demod;
 <span class="kw">use </span>ask::structs::modulation::Modulation <span class="kw">as </span>ask_mod;
@@ -109,7 +116,8 @@
 <span class="kw">pub mod </span>bpsk;
 <span class="kw">pub mod </span>ask;
 <span class="kw">pub mod </span>fsk;
-
+<span class="kw">mod </span>filters;
+<span class="kw">pub mod </span>viterbi;
 
 
 <span class="kw">pub struct </span>Demodulators {

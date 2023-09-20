@@ -1,5 +1,11 @@
+//! This file contains the Frame object struct and implementation. Frame is the lowest OSI level
+//! building block which is best handed and managed by the system itself. This particular frame
+//! header implements CCSDS SDLP standard which is the standard frame header for space communication
+
 use crate::tools::{bin_to_u8, u8_to_bin};
 use crate::{AMBLE,IDENT};
+
+
 
 /// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
 /// spacecraft and space bound communication

@@ -1,5 +1,10 @@
+//! This file holds RX operations and it's various helper functions. This improves the QoL and
+//! readability of the code which is essential for understanding the complex operations that take
+//! place during the read thread's loop.
+
 use std::sync::{Arc, RwLock};
 use crate::tools::{bin_to_u8};
+
 
 /*
 Radio starts in "listen" mode where it starts looking for the signal identifier of IDENT
@@ -9,6 +14,7 @@ tells us the length of the frame
 
 We then record the the given length and write it into the buffer for reading by the main thread
  */
+
 
 /// This is a helper object that handles new bit(s) being passed to it and dynamically deciding to
 /// record the incoming data or to throw it out

@@ -1,3 +1,6 @@
+//! Digital Signal Processing (DSP) is the hallmark and a widely studied field in radio
+//! communications and is 
+
 use num_complex::Complex;
 
 use ask::structs::demodulation::Demodulation as ask_demod;
@@ -14,7 +17,8 @@ pub mod qpsk;
 pub mod bpsk;
 pub mod ask;
 pub mod fsk;
-
+mod filters;
+pub mod viterbi;
 
 
 pub struct Demodulators {

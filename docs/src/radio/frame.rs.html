@@ -69,8 +69,20 @@
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::tools::{bin_to_u8, u8_to_bin};
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! This file contains the Frame object struct and implementation. Frame is the lowest OSI level
+//! building block which is best handed and managed by the system itself. This particular frame
+//! header implements CCSDS SDLP standard which is the standard frame header for space communication
+
+</span><span class="kw">use </span><span class="kw">crate</span>::tools::{bin_to_u8, u8_to_bin};
 <span class="kw">use crate</span>::{AMBLE,IDENT};
+
+
 
 <span class="doccomment">/// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
 /// spacecraft and space bound communication

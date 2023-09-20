@@ -188,8 +188,19 @@
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::{Arc, RwLock};
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! This file holds RX operations and it&#39;s various helper functions. This improves the QoL and
+//! readability of the code which is essential for understanding the complex operations that take
+//! place during the read thread&#39;s loop.
+
+</span><span class="kw">use </span>std::sync::{Arc, RwLock};
 <span class="kw">use </span><span class="kw">crate</span>::tools::{bin_to_u8};
+
 
 <span class="comment">/*
 Radio starts in &quot;listen&quot; mode where it starts looking for the signal identifier of IDENT
@@ -199,6 +210,7 @@ tells us the length of the frame
 
 We then record the the given length and write it into the buffer for reading by the main thread
  */
+
 
 </span><span class="doccomment">/// This is a helper object that handles new bit(s) being passed to it and dynamically deciding to
 /// record the incoming data or to throw it out

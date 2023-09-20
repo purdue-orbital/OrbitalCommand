@@ -2,7 +2,7 @@ mod single_bit_decode;
 mod single_bit_rc_decode;
 
 use single_bit_decode::BitDecoderState;
-use crate::common::*;
+use crate::dsp::viterbi::common::*;
 
 use rayon::prelude::*;
 

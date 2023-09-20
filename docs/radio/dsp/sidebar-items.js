@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["ask","bpsk","fsk","qpsk","tools"],"struct":["Demodulators","Modulators"]};
+window.SIDEBAR_ITEMS = {"mod":["ask","bpsk","fsk","qpsk","tools","viterbi"],"struct":["Demodulators","Modulators"]};
