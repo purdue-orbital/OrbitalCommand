@@ -25,7 +25,10 @@ jobs:
         run: cargo doc --no-deps
 
       - name: Clone
-        run: git clone https://github.com/purdue-orbital/OrbitalCommand.git
+        run: |
+          git clone https://github.com/purdue-orbital/OrbitalCommand.git
+          cd OrbitalCommand
+          git fetch origin docs
 
       - name: Move docs
         run: mv target/doc OrbitalCommand/docs
@@ -35,13 +38,9 @@ jobs:
           GH_TOKEN: ${{ secrets.KEY }}
         run: |
           cd OrbitalCommand
-          git stash
-          git fetch origin docs
-          git stash pop
           git remote set-url origin "https://${GH_TOKEN_ORG}@github.com/purdue-orbital/OrbitalCommand.git"
           git config --global user.name "Nicholas Ball"
           git config --global user.email "Nicholas-Ball@users.noreply.github.com"
           git add .
           git commit -m "Updating Doc"
-        
           git push
