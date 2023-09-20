@@ -36,5 +36,6 @@ jobs:
         run: |
           git config --global user.name "Nicholas Ball"
           git config --global user.email "Nicholas-Ball@users.noreply.github.com"
-          git commit -am "Updating Doc" || echo "There is nothing to commit"
+          git add .
+          git commit -m "Updating Doc" 
           git push origin docs
