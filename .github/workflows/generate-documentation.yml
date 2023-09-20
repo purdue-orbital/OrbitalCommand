@@ -39,8 +39,6 @@ jobs:
           git config --global user.name "Nicholas Ball"
           git config --global user.email "Nicholas-Ball@users.noreply.github.com"
           git add .
-          git stash
-          git pull --rebase origin docs
-          git stash pop
           git commit -m "Updating Doc" 
+          git checkout docs
           git push origin docs
