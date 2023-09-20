@@ -31,10 +31,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.KEY }}
         run: |
-          git remote set-url origin "https://${GH_TOKEN_ORG}@github.com/purdue-orbital/OrbitalCommand.git"
           git stash
           git fetch origin docs
           git stash pop
+          git remote set-url origin "https://${GH_TOKEN_ORG}@github.com/purdue-orbital/OrbitalCommand.git"
           git config --global user.name "Nicholas Ball"
           git config --global user.email "Nicholas-Ball@users.noreply.github.com"
           git add .
