@@ -41,5 +41,4 @@ jobs:
           git add .
           git commit -m "Updating Doc" 
           git fetch
-          git pull
-          git push origin HEAD:docs
+          git push -f origin HEAD:docs
