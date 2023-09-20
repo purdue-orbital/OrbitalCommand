@@ -24,13 +24,17 @@ jobs:
       - name: Build docs
         run: cargo doc --no-deps
 
+      - name: Clone
+        run: git clone https://github.com/purdue-orbital/OrbitalCommand.git
+
       - name: Move docs
-        run: mv target/doc docs
+        run: mv target/doc OrbitalCommand/docs
 
       - name: Push to Branch
         env:
           GH_TOKEN: ${{ secrets.KEY }}
         run: |
+          cd OrbitalCommand
           git stash
           git fetch origin docs
           git stash pop
