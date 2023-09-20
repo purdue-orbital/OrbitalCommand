@@ -27,22 +27,15 @@ jobs:
       - name: Build docs
         run: cargo doc --no-deps
 
-      - name: Clone
-        run: |
-          git clone https://github.com/purdue-orbital/OrbitalCommand.git
-          cd OrbitalCommand
-          git fetch origin docs
-
       - name: Move docs
-        run: mv target/doc OrbitalCommand/docs
+        run: mv target/doc docs
 
       - name: Push to Branch
         env:
           GH_TOKEN: ${{ secrets.KEY }}
         run: |
-          cd OrbitalCommand
           git config --global user.name "Nicholas Ball"
           git config --global user.email "Nicholas-Ball@users.noreply.github.com"
           git add .
           git commit -am "Updating Doc" || echo "There is nothing to commit"
-          git push
+          git push origin docs
