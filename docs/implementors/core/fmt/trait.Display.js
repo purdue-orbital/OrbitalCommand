@@ -1,3 +1,0 @@
-(function() {var implementors = {
-"net":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.71.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"struct\" href=\"net/layer_3/ipv4/struct.Address.html\" title=\"struct net::layer_3::ipv4::Address\">Address</a>"]]
-};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

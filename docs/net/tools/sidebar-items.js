@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["bin_char_arr_to_usize_unchecked","moving_average","normalize","run_commands","subtract_left_adjacent","sum_with_carries","u32_to_char_bin","u8_arr_to_u16_arr","u8s_to_u16"]};

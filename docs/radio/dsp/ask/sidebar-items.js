@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["demodulation_impl","modulation_impl","structs"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["main"],"struct":["MapToken","State","Telemetry","abort","cut","launch","map_token","telemetry","update"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["bi_signal_demodulation","bi_signal_generation","generate_wave","goertzel_algorithm","noise_generators"]};

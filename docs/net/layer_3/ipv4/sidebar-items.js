@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["AssuredForwarding","IPPrecedence"],"struct":["Address","DifferentiatedServices","ECN","Flags","IPV4"]};

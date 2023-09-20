@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["bin_to_u8","u8_to_bin"]};

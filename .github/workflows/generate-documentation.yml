@@ -1,0 +1,45 @@
+name: Generate Documentation
+
+on:
+  push:
+    branches: [ "main", "Radio", "DSP"  ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Update
+        run: sudo apt update
+
+      - name: Install soapysdr
+        run: sudo apt install -y libsoapysdr-dev
+
+      - name: Build docs
+        run: cargo doc --no-deps
+
+      - name: Move docs
+        run: mv target/doc docs
+
+      - name: Clean up
+        run: shopt -s extglob | rm -rf !(docs)
+
+      - name: Prepare
+        run: git stash | git checkout docs | git stash pop |
+
+      - name: Push to Branch
+        env:
+          GH_TOKEN: ${{ secrets.KEY }}
+        run: |
+          git config --global user.name "Bot"
+          git config --global user.email "Nicholas-Ball@users.noreply.github.com"
+          git add .
+          git commit -m "Updating Doc"
+          git remote set-url origin "https://${GH_TOKEN_ORG}@github.com/purdue-orbital/OrbitalCommand.git"
+          git push
