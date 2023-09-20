@@ -84,8 +84,12 @@ To test all radio components work properly, run the code seen below.
 cargo test --manifest-path=radio/Cargo.toml
 ```
 
-## Developer Introduction
-![](./images/TCPModel.png) (Credit: https://stackoverflow.com/questions/31446777/difference-between-packets-and-frames)
+## For Developers
+All files need to pass all GitHub actions to be accepted on a pull requests. This includes:
+
+- Not having any use of unwraps and excepts
+- 100% test coverage (if some condition is unable to be tested for, wrap in unsafe)
+- All tests pass
 
 
 
