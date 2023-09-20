@@ -43,6 +43,7 @@ jobs:
           cd OrbitalCommand
           git config --global user.name "Nicholas Ball"
           git config --global user.email "Nicholas-Ball@users.noreply.github.com"
+          git config --global remote.origin.url 'https://${GH_TOKEN_ORG}@github.com/purdue-orbital/OrbitalCommand.git' 
           git add .
           git commit -am "Updating Doc"
           git push
