@@ -24,11 +24,11 @@ jobs:
       - name: Build docs
         run: cargo doc --no-deps
 
-      - name: Move docs
-        run: mv target/doc docs
+      - name: Clone Repo
+        run: git clone https://github.com/purdue-orbital/OrbitalCommand.git
 
-      - name: Prepare
-        run: git stash | git checkout docs | git stash pop
+      - name: Move docs
+        run: mv target/doc OrbitalCommand/docs | cd OrbitalCommand
 
       - name: Push to Branch
         env:
