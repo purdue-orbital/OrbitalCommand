@@ -33,7 +33,7 @@ jobs:
         run: |
           git remote set-url origin "https://${GH_TOKEN_ORG}@github.com/purdue-orbital/OrbitalCommand.git"
           git stash
-          git checkout docs
+          git pull origin docs
           git stash pop
           git config --global user.name "Nicholas Ball"
           git config --global user.email "Nicholas-Ball@users.noreply.github.com"
