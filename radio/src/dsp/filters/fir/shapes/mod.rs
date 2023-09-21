@@ -18,8 +18,8 @@ pub enum WindowShapes{
 pub fn generate_shape(window_shape:WindowShapes, fft_size:usize, alpha:i16)-> Vec<Complex<f32>>{
     match window_shape {
         WindowShapes::Rectangle => rectangle::Rectangle::generate_shape(fft_size, alpha),
-        WindowShapes::Triangle => rectangle::Rectangle::generate_shape(fft_size, alpha),
-        WindowShapes::Welch => rectangle::Rectangle::generate_shape(fft_size, alpha),
+        WindowShapes::Triangle => triangular::Triangular::generate_shape(fft_size, alpha),
+        WindowShapes::Welch => welch::Welch::generate_shape(fft_size, alpha),
     }
 }
 

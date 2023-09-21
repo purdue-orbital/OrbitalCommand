@@ -18,7 +18,6 @@ impl Shape for Triangular{
             to_return.push(Complex::new(value,value));
         }
 
-
         to_return
     }
 }
