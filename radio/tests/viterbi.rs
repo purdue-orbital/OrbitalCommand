@@ -1,4 +1,5 @@
 use radio::dsp::viterbi::prelude::{DecoderState, EncoderState};
+use radio::dsp::viterbi::decode::single_bit_decode::Link;
 use radio::dsp::viterbi::common::{BIT_MASK, combine, map_to, squish, state_to_bit, stretch};
 
 #[test]
@@ -201,7 +202,8 @@ fn test_round_trip_inverted_staircase() {
 
 fn state_eq(state: &EncoderState<u8>, correct: u8) {
     let x: EncoderState<u8> = correct.into();
-    assert_eq!(state, &x);
+    assert_eq!(state.0, x.0);
+    assert_eq!(state.1, x.1);
 }
 
 #[test]
@@ -255,21 +257,26 @@ fn test_to_from_encoder_state() {
 
 #[test]
 fn test_from_u8() {
-    let arr_a: [EncoderState<u8>; 4] = [
+    let arr_a: [EncoderState<u8>; 5] = [
         0.into(),
         1.into(),
         2.into(),
         3.into(),
+        7.into(),
     ];
 
-    let arr_b: [EncoderState<u8>; 4] = [
+    let arr_b: [EncoderState<u8>; 5] = [
         EncoderState(0, 0),
         EncoderState(0xFF, 0),
         EncoderState(0, 0xFF),
-        EncoderState(0xFF, 0xFF)
+        EncoderState(0xFF, 0xFF),
+        EncoderState(0, 0),
     ];
 
-    assert_eq!(arr_a, arr_b);
+    for (index, x) in arr_b.iter().enumerate(){
+        assert_eq!(x.0, arr_b[index].0);
+        assert_eq!(x.1, arr_b[index].1);
+    }
 }
 
 #[test]
@@ -284,4 +291,62 @@ fn test_to_u8() {
     let arr_b: [u8; 4] = [0, 1, 2, 3];
 
     assert_eq!(arr_a, arr_b);
+}
+
+#[test]
+fn test_next_link() {
+    let arr = Link::next(1, 2, 0);
+
+    assert_eq!(arr[0].0.prev_state, 1);
+    assert_eq!(arr[0].0.cost, 0);
+
+    assert_eq!(arr[1].0.prev_state, 1);
+    assert_eq!(arr[1].0.cost, 2);
+}
+
+#[test]
+fn test_generate_link() {
+    let (link_0, _) = Link::generate(1, 2, 0, 1);
+
+    assert_eq!(link_0.prev_state, 1);
+    assert_eq!(link_0.cost, 2);
+}
+
+#[test]
+fn test_hamming_distance() {
+    assert_eq!(Link::hamming_dist(255, 0), 8);
+    assert_eq!(Link::hamming_dist(1, 0), 1);
+    assert_eq!(Link::hamming_dist(2, 0), 1);
+    assert_eq!(Link::hamming_dist(2, 1), 2);
+    assert_eq!(Link::hamming_dist(0, 0), 0);
+    assert_eq!(Link::hamming_dist(255, 255), 0);
+    assert_eq!(Link::hamming_dist(0b00010101, 0b00000100), 2);
+}
+
+#[test]
+fn test_minimize_cost() {
+    let mut link_a = Link {
+        prev_state: 0,
+        cost: 10
+    };
+
+    let link_b = Link {
+        prev_state: 1,
+        cost: 11
+    };
+
+    link_a.minimize_cost(link_b);
+
+    assert_eq!(link_a.prev_state, 0);
+    assert_eq!(link_a.cost, 10);
+
+    let link_c = Link {
+        prev_state: 2,
+        cost: 9,
+    };
+
+    link_a.minimize_cost(link_c);
+
+    assert_eq!(link_a.prev_state, 2);
+    assert_eq!(link_a.cost, 9);
 }

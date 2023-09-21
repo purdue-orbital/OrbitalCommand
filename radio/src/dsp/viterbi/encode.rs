@@ -2,7 +2,7 @@ use std::ops::BitXor;
 use crate::dsp::viterbi::common::combine;
 
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Default)]
 /// represents the internal state of multiple encoders. (each bit is its own encoder)
 /// 
 /// for more detail on how this works see [this video](https://youtu.be/kRIfpmiMCpU)
@@ -36,7 +36,7 @@ impl From<u8> for EncoderState<u8> {
 			1 => Self(0xFF, 0x00),
 			2 => Self(0x00, 0xFF),
 			3 => Self(0xFF, 0xFF),
-			_ => unreachable!()
+			_ => Self(0x00, 0x00),
 		}
 	}
 }
@@ -52,7 +52,7 @@ impl EncoderState<u8> {
 	/// 
 	/// NOTE: this won't work in a usefull manner if you are using the EncoderState to encode multiple bits side by side
 	/// its only purpose really is for testing
-	pub fn push_return_bitpair(&mut self, byte: u8) -> u8 { // todo kill???
+	pub fn push_return_bitpair(&mut self, byte: u8) -> u8 {
 		let (s0, s1) = self.push(byte);
 		combine(s0, s1)
 	}

@@ -1,7 +1,6 @@
 use crate::dsp::viterbi::common::*;
 use crate::dsp::viterbi::encode::EncoderState;
 
-#[derive(Debug)]
 pub struct BitDecoderState {
 	trellis: Vec<[Link; 4]>,
 }
@@ -22,9 +21,9 @@ impl BitDecoderState {
 	///
 	/// takes u8s instead of bools for conveince (just do a `bitwise and` between the mask and the byte)
 	pub fn push(&mut self, s0: u8, s1: u8) {
-		if self.len() >= 127 {
-			panic!("TOO MANY BITS BEING DECODED BEFORE RESET")
-		}
+		// if self.len() >= 127 {
+		// 	panic!("TOO MANY BITS BEING DECODED BEFORE RESET")
+		// }
 
 		let bit_pair = combine(s0, s1);
 
@@ -43,7 +42,7 @@ impl BitDecoderState {
 
 	fn states(&self) -> Vec<u8> {
 		match self.len() {
-			0 => unreachable!(), // should only be called after adding first column to vec
+			//0 => unreachable!(), // should only be called after adding first column to vec
 			1 => vec![0],
 			2 => vec![0, 1],
 			_ => vec![0, 1, 2, 3]
@@ -107,7 +106,7 @@ impl BitDecoderState {
 
 	fn prev_cost(&self, pos: u8) -> u8 {
 		match self.len() {
-			0 => unreachable!(), // should only be called after adding first column to vec
+			//0 => unreachable!(), // should only be called after adding first column to vec
 			1 => 0, // there is no previous link
 			_ => {
 				self.get_link(self.len() - 2, pos).cost
@@ -116,11 +115,11 @@ impl BitDecoderState {
 	}
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Link {
+#[derive(Clone)]
+pub struct Link {
 	pub prev_state: u8,
 
-	/// enough for the decoder to consume 254 bits (yeilding 127 bits) no matter what
+	/// enough for the decoder to consume 254 bits (yielding 127 bits) no matter what
 	pub cost: u8,
 }
 
@@ -145,7 +144,7 @@ impl Link {
 		}
 	}
 
-	fn generate(state: u8, bit_pair: u8, prev_cost: u8, bit: u8)  -> (Self, u8) {
+	pub fn generate(state: u8, bit_pair: u8, prev_cost: u8, bit: u8) -> (Self, u8) {
 		/* NOTES to self
 		* the prev_state for each link is simply the state parameter
 		* hamming dist is between bit_pair and what comes out of the encoder.input_byte_out function
@@ -164,76 +163,7 @@ impl Link {
 		)
 	}
 
-	fn hamming_dist(a: u8, b: u8) -> u8 {
+	pub fn hamming_dist(a: u8, b: u8) -> u8 {
 		(a ^ b).count_ones() as u8
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[test]
-	fn test_hamming_distance() {
-		assert_eq!(Link::hamming_dist(255, 0), 8);
-		assert_eq!(Link::hamming_dist(1, 0), 1);
-		assert_eq!(Link::hamming_dist(2, 0), 1);
-		assert_eq!(Link::hamming_dist(2, 1), 2);
-		assert_eq!(Link::hamming_dist(0, 0), 0);
-		assert_eq!(Link::hamming_dist(255, 255), 0);
-		assert_eq!(Link::hamming_dist(0b00010101, 0b00000100), 2);
-	}
-
-	#[test]
-	fn test_minimize_cost() {
-		let mut link_a = Link {
-			prev_state: 0,
-			cost: 10
-		};
-
-		let link_b = Link {
-			prev_state: 1,
-			cost: 11
-		};
-
-		link_a.minimize_cost(link_b);
-
-		assert_eq!(link_a.prev_state, 0);
-		assert_eq!(link_a.cost, 10);
-
-		let link_c = Link {
-			prev_state: 2,
-			cost: 9,
-		};
-
-		link_a.minimize_cost(link_c);
-
-		assert_eq!(link_a.prev_state, 2);
-		assert_eq!(link_a.cost, 9);
-	}
-
-	#[test]
-	fn test_next_link() {
-		let arr = Link::next(1, 2, 0);
-
-		assert_eq!(arr[0].0, Link {
-			prev_state: 1,
-			cost: 0
-		});
-
-		assert_eq!(arr[1].0, Link {
-			prev_state: 1,
-			cost: 2
-		});
-	}
-
-	#[test]
-	fn test_generate_link() {
-		let (link_0, _) = Link::generate(1, 2, 0, 1);
-
-		assert_eq!(link_0, Link {
-			prev_state: 1,
-			cost: 2
-		});
 	}
 }

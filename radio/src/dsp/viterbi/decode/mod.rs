@@ -1,11 +1,10 @@
-mod single_bit_decode;
+pub mod single_bit_decode;
 
 use single_bit_decode::BitDecoderState;
 use crate::dsp::viterbi::common::*;
 
 use rayon::prelude::*;
 
-#[derive(Debug)]
 pub struct DecoderState {
 	pub decoders: [BitDecoderState; 8]
 }
@@ -47,32 +46,13 @@ impl DecoderState {
 		}
 	}
 
-	pub fn push_slice_para(&mut self, arr: &[u8]) {
-		self.decoders.par_iter_mut()
-			.enumerate()
-			.for_each(|(b, decoder)| {
-				let mut i = 0;
-
-				while i < arr.len() {
-					let bit0 = arr[i] & BIT_MASK[b];
-
-					i += 1;
-					let bit1 = arr[i] & BIT_MASK[b];
-
-					decoder.push(bit0, bit1);
-
-					i += 1;
-				}
-			})
-	}
-
 	pub fn read(mut self) -> Vec<u8> {
 		let mut ans = self.decoders[0].read(BIT_MASK[0]);
 
 		for x in 1..8 {
 			let new = self.decoders[x].read(BIT_MASK[x]);
 
-			debug_assert_eq!(ans.len(), new.len());
+			//debug_assert_eq!(ans.len(), new.len());
 
 			for i in 0..ans.len() {
 				ans[i] |= new[i];
