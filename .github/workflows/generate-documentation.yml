@@ -1,0 +1,47 @@
+name: Generate Documentation
+
+on:
+  push:
+    branches: [ "main", "Radio", "DSP"  ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Update
+        run: sudo apt update
+
+      - name: Install soapysdr
+        run: sudo apt install -y libsoapysdr-dev
+
+      - name: Build docs
+        run: cargo doc --no-deps
+
+      - name: Move docs
+        run: mv target/doc docs
+
+      - name: Create Index.html
+        run: echo '<meta http-equiv="refresh" content="0; url=radio">' > docs/index.html
+
+      - name: Push to Branch
+        env:
+          GH_TOKEN: ${{ secrets.KEY }}
+        run: |
+          git init
+          git branch -M docs
+          git config --global user.name "Nicholas Ball"
+          git config --global user.email "Nicholas-Ball@users.noreply.github.com"
+          git add .
+          git commit -m "Updating Doc" 
+          git fetch
+          git push -f origin HEAD:docs

@@ -1,3 +1,6 @@
+//! This file holds various functions and helper methods that improve the over all QOL of working in
+//! this crate
+
 /// u8 array to binary string
 pub fn u8_to_bin(arr: &[u8]) -> String {
     let mut binary_string = String::new();
