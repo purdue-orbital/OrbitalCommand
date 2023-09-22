@@ -3,8 +3,6 @@ pub mod single_bit_decode;
 use single_bit_decode::BitDecoderState;
 use crate::dsp::viterbi::common::*;
 
-use rayon::prelude::*;
-
 pub struct DecoderState {
 	pub decoders: [BitDecoderState; 8]
 }

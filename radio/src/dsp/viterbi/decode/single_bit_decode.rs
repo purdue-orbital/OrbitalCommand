@@ -69,7 +69,7 @@ impl BitDecoderState {
 			pos = self.get_last_link(pos).prev_state;
 
 			// ditch the current column, thus moving onto next column
-			self.trellis.pop().unwrap();
+			self.trellis.pop();
 		}
 
 		ans.reverse(); // TODO: fill array backwards instead of reversing
@@ -81,28 +81,25 @@ impl BitDecoderState {
 		self.trellis.len()
 	}
 
+	fn get_last_trellis(&self)->&[Link;4]{
+		unsafe{self.trellis.last().unwrap_unchecked()}
+	}
+
 	fn get_link(&self, index: usize, pos: u8) -> Link {
 		self.trellis[index][pos as usize].clone()
 	}
 
 	fn get_last_link(&self, pos: u8) -> Link {
-		self.trellis.last().unwrap()[pos as usize].clone()
+		self.get_last_trellis()[pos as usize].clone()
 	}
 
 	fn add_link(&mut self, new_link: Link, pos: u8) {
-		self.trellis
-			.last_mut()
-			.unwrap()[pos as usize]
-			.minimize_cost(new_link);
+		 unsafe{self.trellis.last_mut().unwrap_unchecked()[pos as usize].minimize_cost(new_link)}
 	}
 
 	fn find_start_pos(&self) -> u8 {
-		self.trellis
-			.last().unwrap()
-			.iter().enumerate().min_by_key(|(_, link)| link.cost)
-			.unwrap().0 as u8
+		unsafe {self.get_last_trellis().iter().enumerate().min_by_key(|(_, link)| link.cost).unwrap_unchecked().0 as u8}
 	}
-
 
 	fn prev_cost(&self, pos: u8) -> u8 {
 		match self.len() {
