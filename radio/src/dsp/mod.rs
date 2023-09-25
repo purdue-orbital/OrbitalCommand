@@ -53,7 +53,7 @@ impl Demodulators {
         let message_signal = samples_per_symbol as f32;
 
         self.ask = ask_demod::new(samples_per_symbol, sample_rate, message_signal);
-        self.fsk = fsk_demod::new(samples_per_symbol, sample_rate, 2.0 * message_signal);
+        self.fsk = fsk_demod::new(samples_per_symbol, sample_rate, sample_rate / 2.0);
         self.bpsk = bpsk_demod::new(samples_per_symbol, sample_rate);
         self.qpsk = qpsk_demod::new(samples_per_symbol, sample_rate);
     }
@@ -91,7 +91,7 @@ impl Modulators {
         let message_signal = samples_per_symbol as f32;
 
         self.ask = ask_mod::new(samples_per_symbol, sample_rate, message_signal);
-        self.fsk = fsk_mod::new(samples_per_symbol, sample_rate, message_signal, 2.0 * message_signal);
+        self.fsk = fsk_mod::new(samples_per_symbol, sample_rate, message_signal, sample_rate / 2.0);
         self.bpsk = bpsk_mod::new(samples_per_symbol, sample_rate, message_signal);
         self.qpsk = qpsk_mod::new(samples_per_symbol, sample_rate, message_signal);
     }
