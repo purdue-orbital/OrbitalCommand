@@ -1,26 +1,25 @@
-use once_cell::sync::Lazy;
 use num_complex::Complex;
+use once_cell::sync::Lazy;
+
 use radio::dsp::filters::fir;
 use radio::dsp::filters::fir::shapes::WindowShapes;
 use radio::dsp::tools::generate_wave::generate_wave;
 
-
 // set wave settings
-static FFT_SIZE:usize = 1024;
-static SAMPLE_RATE:f32 = 1e6;
-static FREQUENCY:f32 = SAMPLE_RATE / 2.0;
+static FFT_SIZE: usize = 1024;
+static SAMPLE_RATE: f32 = 1e6;
+static FREQUENCY: f32 = SAMPLE_RATE / 2.0;
 
-static SIGNAL:Lazy<Vec<Complex<f32>>> = Lazy::new(|| {
+static SIGNAL: Lazy<Vec<Complex<f32>>> = Lazy::new(|| {
     generate_wave(FREQUENCY, SAMPLE_RATE, FFT_SIZE as i32, 0, 1.0, 0.0, 0.0)
 });
 
-fn vector_equal(arr1: Vec<Complex<f32>>,arr2: Vec<Complex<f32>>) -> bool{
+fn vector_equal(arr1: Vec<Complex<f32>>, arr2: Vec<Complex<f32>>) -> bool {
+    if arr1.len() != arr2.len() { return false; }
 
-    if arr1.len() != arr2.len() {return false}
-
-    for (index, x) in arr1.iter().enumerate(){
-        if (arr1[index].norm() - arr2[index].norm()).abs() > 0.001{
-            return false
+    for (index, x) in arr1.iter().enumerate() {
+        if (arr1[index].norm() - arr2[index].norm()).abs() > 0.001 {
+            return false;
         }
     }
 
@@ -35,7 +34,7 @@ fn test_rectangle() {
 
     window.run(wave.as_mut_slice());
 
-    assert!(vector_equal(SIGNAL.clone(),wave));
+    assert!(vector_equal(SIGNAL.clone(), wave));
 }
 
 #[test]
@@ -46,7 +45,7 @@ fn test_triangle() {
 
     window.run(wave.as_mut_slice());
 
-    assert!(vector_equal(SIGNAL.clone(),wave));
+    assert!(vector_equal(SIGNAL.clone(), wave));
 }
 
 #[test]
@@ -57,5 +56,5 @@ fn test_welch() {
 
     window.run(wave.as_mut_slice());
 
-    assert!(vector_equal(SIGNAL.clone(),wave));
+    assert!(vector_equal(SIGNAL.clone(), wave));
 }

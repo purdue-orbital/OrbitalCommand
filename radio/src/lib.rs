@@ -11,7 +11,6 @@
 //! or else the system won't be able to connect to the radio.
 
 
-
 use std::sync::{Arc, RwLock};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
@@ -22,7 +21,6 @@ use num_complex::Complex;
 use crate::dsp::{Demodulators, Modulators};
 use crate::frame::Frame;
 use crate::radio::Radio;
-use crate::rx_handling::{RXLoop, WindowHandler};
 use crate::streams::{RadioSettings, Rx, Tx};
 
 mod radio;
@@ -30,7 +28,7 @@ mod streams;
 pub mod dsp;
 pub mod frame;
 pub mod tools;
-pub mod rx_handling;
+pub mod runtime;
 
 /// This set of bits is sent ahead of the real transmission frame to allow time for the SDR to sync
 /// and better be able to read the frame that follows.
@@ -142,7 +140,7 @@ unsafe impl Sync for RadioStream {}
 pub struct RadioStream {
     /// The tx stream that data is passed to to have transmitted out of the radio
     pub tx_stream: Tx,
-    
+
     /// This is a pre-built modulation object that allows for quick modulation of out going data
     pub modulation: Modulators,
 
@@ -157,7 +155,6 @@ pub struct RadioStream {
 
 
 impl RadioStream {
-
     /// This will create a new radio stream object.
     ///
     /// This will return an error if no radio is detected or can be connected to.
@@ -173,13 +170,13 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-            sample_rate: 2e7,
+            sample_rate: 1e7,
             lo_frequency: 916e6,
-            lpf_filter: 1e3,
+            lpf_filter: 0.0,
             channels_in_use: 0,
             gain: 100.0,
             radio,
-            baud_rate: 2e5,
+            baud_rate: 1e4,
             size: 0,
         };
 
@@ -200,28 +197,21 @@ impl RadioStream {
             // create stream
             if let Ok(mut rx_stream) = Rx::new(set.clone()) {
                 let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
-                let instance = Demodulators::new(samples_per_a_symbol as usize, set.sample_rate as f32);
+
+                let mut run = runtime::Runtime::new(samples_per_a_symbol as usize, set.sample_rate as f32, IDENT, buffer);
 
                 // create mtu
                 let mut mtu = vec![Complex::new(0.0, 0.0); samples_per_a_symbol as usize];
 
-                // create window
-                let mut window = WindowHandler::new(IDENT);
-
-                let mut rxloop = RXLoop::new(buffer);
-
                 // rx loop
                 loop {
-                    rxloop.run(&mut window);
-
                     let err = rx_stream.fetch(&[mtu.as_mut_slice()]);
 
                     if err.is_err() {
                         println!("Error!")
                     }
 
-                    window.add(demodulation(&instance,mtu.clone()).as_slice());
-
+                    run.run(mtu.clone());
                 }
             }
         });
@@ -277,9 +267,9 @@ impl RadioStream {
     }
 
     /// This is a wrapper class that allows for the reading and receiving of frames directly
-    pub fn receive_frames(&self) -> Result<Vec<Frame>> {
+    pub fn receive_frames(&self) -> Result<Frame> {
         if let Ok(bytes) = self.read() {
-            Ok(Frame::from(vec![String::from_utf8(bytes)?]))
+            Ok(Frame::from(bytes.as_slice()))
         } else {
             Err(Error::msg("Failed to read from stream!"))
         }

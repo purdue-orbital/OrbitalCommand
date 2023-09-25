@@ -2,10 +2,18 @@
 //! building block which is best handed and managed by the system itself. This particular frame
 //! header implements CCSDS SDLP standard which is the standard frame header for space communication
 
-use crate::tools::{bin_to_u8, u8_to_bin};
-use crate::{AMBLE,IDENT};
 
+use lazy_static::lazy_static;
 
+use crate::{AMBLE, IDENT};
+use crate::dsp::viterbi::decode::DecoderState;
+use crate::dsp::viterbi::encode::EncoderState;
+use crate::tools::bin_to_u8;
+
+lazy_static! {
+    pub static ref IDENT_VEC: Vec<u8> = bin_to_u8(IDENT);
+    pub static ref AMBLE_VEC: Vec<u8> = bin_to_u8(AMBLE);
+}
 
 /// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
 /// spacecraft and space bound communication
@@ -39,39 +47,93 @@ pub struct Frame {
 
     /// this is the data that follows the frame header (the actual data being sent/received)
     pub data: Vec<u8>,
-}
 
+    amble: Vec<u8>,
+    ident: Vec<u8>,
+
+    pub has_ident: bool,
+    pub is_complete: bool,
+
+    len: u16,
+}
 
 impl Frame {
     /// Create a new frame object given data the will be encapsulated by the frame
     pub fn new(bytes: &[u8]) -> Frame {
-        Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bytes.to_vec() }
+        Frame {
+            version_number: 0,
+            spacecraft_id: 0,
+            virtual_channel_id: 0,
+            ocf: false,
+            master_frame_count: 0,
+            virtual_frame_count: 0,
+            data_status: 0,
+            data: bytes.to_vec(),
+            amble: AMBLE_VEC.clone(),
+            ident: IDENT_VEC.clone(),
+            has_ident: true,
+            is_complete: true,
+            len: bytes.len() as u16,
+        }
+    }
+
+    fn encode(bin: &[u8]) -> Vec<u8> {
+        let mut encoder: EncoderState<u8> = EncoderState::default();
+        encoder.push_slice(bin)
+    }
+
+    fn decode(bin: &[u8], expected_len: usize) -> Vec<u8> {
+        let mut decode = DecoderState::new(expected_len);
+        decode.push_slice(bin);
+        decode.read()
     }
 
     /// Turn a string into frame segments (if any)
-    pub fn from(data: Vec<String>) -> Vec<Frame>
+    pub fn from(data: &[u8]) -> Frame
     {
-        // Create return vector
-        let mut to_return = Vec::new();
+        let mut new_frame = Frame::new(&[]);
 
-        for x in data {
-            to_return.push(Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bin_to_u8(x.as_str()) });
+        new_frame.has_ident = false;
+        new_frame.is_complete = false;
+
+        let ident_length_bytes = new_frame.ident.len();
+
+        // safety check
+        if data.len() % 2 == 1 { return new_frame; };
+
+        let decoded = Frame::decode(data, data.len() / 2);
+
+        if decoded.len() >= ident_length_bytes && &decoded[..ident_length_bytes] == IDENT_VEC.as_slice() {
+            new_frame.has_ident = true;
+
+            if decoded.len() >= ident_length_bytes + 2 {
+                new_frame.len = (decoded[ident_length_bytes] as u16) << 8 | decoded[ident_length_bytes + 1] as u16;
+
+                if decoded.len() == ident_length_bytes + 2 + new_frame.len as usize {
+                    new_frame.is_complete = true;
+
+                    new_frame.data = decoded[ident_length_bytes + 2..].to_vec();
+                }
+            }
         }
 
-        to_return
+
+        new_frame
     }
 
     /// This will assemble the frame header and make it ready to be transmitted
     pub fn assemble(&self) -> Vec<u8> {
-        let bin = u8_to_bin(self.data.as_slice());
+        let len_bin = &[(self.len >> 8) as u8, self.len as u8];
+        let mut hold = Vec::new();
 
-        let len = self.data.len() as u16;
+        hold.extend_from_slice(self.ident.as_slice());
+        hold.extend_from_slice(len_bin.as_slice());
+        hold.extend_from_slice(self.data.as_slice());
 
-        let len_bin = u8_to_bin(&[(len >> 8) as u8, len as u8]);
+        let mut to_return = self.amble.clone();
 
-        let amble= AMBLE;
-        let ident = IDENT;
+        to_return.extend_from_slice(Frame::encode(hold.as_slice()).as_slice());
 
-        bin_to_u8(format!("{amble}{ident}{len_bin}{bin}").as_str())
+        to_return
     }
 }
