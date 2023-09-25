@@ -77,10 +77,10 @@ impl Runtime {
         }
     }
 
-    /// What to run on filter state
-    pub fn filter(&mut self) {
-        self.filter_instance.run(&mut self.current_samples);
-    }
+    // /// What to run on filter state
+    // pub fn filter(&mut self) {
+    //     self.filter_instance.run(&mut self.current_samples);
+    // }
 
     /// What to run on demod state
     pub fn demod(&mut self) {
@@ -89,43 +89,37 @@ impl Runtime {
 
     /// What to run on evaluate state
     pub fn evaluate(&mut self) {
-        match self.state_counter {
-            // listen state
-            0 => {
-                shift_and_carry(self.ident_window.as_mut_slice(), self.demoded_value);
+        // listen state
+        if self.state_counter == 0 {
+            shift_and_carry(self.ident_window.as_mut_slice(), self.demoded_value);
 
-                let test_frame = Frame::from(self.ident_window.as_slice());
+            let test_frame = Frame::from(self.ident_window.as_slice());
 
-                if test_frame.has_ident {
-                    self.state_counter = 1;
+            if test_frame.has_ident {
+                self.state_counter = 1;
 
-                    self.record_window = self.ident_window.clone();
+                self.record_window = self.ident_window.clone();
+            }
+        }else {
+            self.bin = (self.bin << 1) ^ self.demoded_value;
+            self.bin_counter += 1;
+
+            // if we fill the bin up, add to record window and then re-evaluate if at end of transmission
+            if self.bin_counter == 8 {
+                self.record_window.push(self.bin);
+
+                self.bin_counter = 0;
+                self.bin = 0;
+
+                let test_frame = Frame::from(self.record_window.as_slice());
+
+                if test_frame.is_complete {
+                    self.state_counter = 0;
+                    unsafe { self.buffer.write().unwrap_unchecked().push(test_frame.data) }
                 }
             }
-
-            // record state
-            1 => {
-                self.bin = (self.bin << 1) ^ self.demoded_value;
-                self.bin_counter += 1;
-
-                // if we fill the bin up, add to record window and then re-evaluate if at end of transmission
-                if self.bin_counter == 8 {
-                    self.record_window.push(self.bin);
-
-                    self.bin_counter = 0;
-                    self.bin = 0;
-
-                    let test_frame = Frame::from(self.record_window.as_slice());
-
-                    if test_frame.is_complete {
-                        self.state_counter = 0;
-                        unsafe { self.buffer.write().unwrap_unchecked().push(test_frame.data) }
-                    }
-                }
-            }
-
-            _ => {}
         }
+
     }
 
     /// Run runtime
