@@ -5,11 +5,17 @@ use num_complex::Complex;
 use crate::dsp::qpsk::structs::modulation::Modulation;
 use crate::dsp::tools::generate_wave::generate_wave;
 
-static QPSK_FREQUENCY: f32 = 100.0;
-
 impl Modulation {
-    pub fn new(samples_per_symbol: usize, sample_rate: f32) -> Modulation {
-        Modulation { samples_per_symbol, sample_rate }
+    pub fn new(samples_per_symbol: usize, sample_rate: f32, message_signal: f32) -> Modulation {
+        Modulation {
+            samples_per_symbol,
+            sample_rate,
+
+            signal_0: generate_wave(message_signal, sample_rate, samples_per_symbol as i32, 0, 1.0, PI, PI),
+            signal_1: generate_wave(message_signal, sample_rate, samples_per_symbol as i32, 0, 1.0, PI, 0.0),
+            signal_2: generate_wave(message_signal, sample_rate, samples_per_symbol as i32, 0, 1.0, 0.0, PI),
+            signal_3: generate_wave(message_signal, sample_rate, samples_per_symbol as i32, 0, 1.0, 0.0, 0.0),
+        }
     }
 
     /// Modulate a radio signal using qpsk
@@ -26,12 +32,12 @@ impl Modulation {
 
                 to_return.extend(
                     match val {
-                        1 => { generate_wave(QPSK_FREQUENCY, self.sample_rate, self.samples_per_symbol as i32, 0, 1.0, PI, 0.0) }
-                        2 => { generate_wave(QPSK_FREQUENCY, self.sample_rate, self.samples_per_symbol as i32, 0, 1.0, 0.0, PI) }
-                        3 => { generate_wave(QPSK_FREQUENCY, self.sample_rate, self.samples_per_symbol as i32, 0, 1.0, 0.0, 0.0) }
+                        1 => { self.signal_1.as_slice() }
+                        2 => { self.signal_2.as_slice() }
+                        3 => { self.signal_3.as_slice() }
 
                         // defualt as 0
-                        _ => { generate_wave(QPSK_FREQUENCY, self.sample_rate, self.samples_per_symbol as i32, 0, 1.0, PI, PI) }
+                        _ => { self.signal_0.as_slice() }
                     }
                 )
             }

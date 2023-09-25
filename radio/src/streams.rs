@@ -6,7 +6,6 @@ use soapysdr::{Args, Direction, ErrorCode, RxStream, TxStream};
 
 use crate::radio::Radio;
 
-
 /// settings for configuring a stream
 #[derive(Clone)]
 pub struct RadioSettings {
@@ -91,10 +90,12 @@ pub struct Rx {
 
 impl Rx {
     pub fn new(mut settings: RadioSettings) -> Result<Rx, soapysdr::Error> {
+        let message_frequency = (0.0);
+
         // Get radio
         let device = settings.radio.get_radio()?;
 
-        //device.set_bandwidth(Direction::Rx,settings.channels_in_use,settings.lpf_filter).unwrap();
+        //device.set_bandwidth(Direction::Rx,settings.channels_in_use,40e6).unwrap();
 
         // Set radio sample rate
         device.set_sample_rate(Direction::Rx, settings.channels_in_use, settings.sample_rate)?;
@@ -104,7 +105,7 @@ impl Rx {
         device.set_gain_mode(Direction::Rx, settings.channels_in_use, true)?;
 
         // Set carrier frequency
-        device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
+        device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency - message_frequency, Args::new())?;
 
         device.set_dc_offset_mode(Direction::Rx, settings.channels_in_use, true)?;
 
@@ -141,6 +142,8 @@ pub struct Tx {
 
 impl Tx {
     pub fn new(mut settings: RadioSettings) -> Result<Tx, soapysdr::Error> {
+        let message_frequency = (0.0);
+
         // Get radio
         let device = settings.radio.get_radio()?;
 
@@ -152,8 +155,7 @@ impl Tx {
         device.set_gain_mode(Direction::Tx, settings.channels_in_use, true)?;
 
         // Set carrier frequency
-        device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
-
+        device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency - message_frequency, Args::new())?;
 
         // Set hardware low pass filter
         //device.set_bandwidth(Direction::Tx, settings.channels_in_use, settings.lpf_filter)?;

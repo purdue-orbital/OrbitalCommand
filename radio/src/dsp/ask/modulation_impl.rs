@@ -4,12 +4,10 @@ use crate::dsp::ask::structs::modulation::Modulation;
 use crate::dsp::tools::bi_signal_generation::bi_signal_modulation;
 use crate::dsp::tools::generate_wave::generate_wave;
 
-pub static ASK_FREQUENCY: f32 = 10.0;
-
 impl Modulation {
-    pub fn new(samples_per_symbol: usize, sample_rate: f32) -> Modulation {
-        let ask_off_signal = generate_wave(ASK_FREQUENCY, sample_rate, samples_per_symbol as i32, 0, 0.0, 0.0, 0.0);
-        let ask_on_signal = generate_wave(ASK_FREQUENCY, sample_rate, samples_per_symbol as i32, 0, 1.0, 0.0, 0.0);
+    pub fn new(samples_per_symbol: usize, sample_rate: f32, message_signal: f32) -> Modulation {
+        let ask_off_signal = generate_wave(message_signal, sample_rate, samples_per_symbol as i32, 0, 0.0, 0.0, 0.0);
+        let ask_on_signal = generate_wave(message_signal, sample_rate, samples_per_symbol as i32, 0, 1.0, 0.0, 0.0);
 
         Modulation { samples_per_symbol, sample_rate, ask_on_signal, ask_off_signal }
     }

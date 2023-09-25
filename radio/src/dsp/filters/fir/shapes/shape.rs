@@ -7,5 +7,5 @@ pub trait Shape {
     /// allow for a "alpha" variable which determines how drastic the filter will be applied. In
     /// those cases, the lower the alpha value, faster the processing but lower quality filtering
     /// and high the number, slower the filter will run but higher the quality wil be
-    fn generate_shape(fft_size: usize, alpha:i16)-> Vec<Complex<f32>>;
+    fn generate_shape(fft_size: usize, alpha: i16) -> Vec<Complex<f32>>;
 }

@@ -1,6 +1,6 @@
-use radio::dsp::viterbi::prelude::{DecoderState, EncoderState};
-use radio::dsp::viterbi::decode::single_bit_decode::Link;
 use radio::dsp::viterbi::common::{BIT_MASK, combine, map_to, squish, state_to_bit, stretch};
+use radio::dsp::viterbi::decode::single_bit_decode::Link;
+use radio::dsp::viterbi::prelude::{DecoderState, EncoderState};
 
 #[test]
 fn test_squish() {
@@ -273,7 +273,7 @@ fn test_from_u8() {
         EncoderState(0, 0),
     ];
 
-    for (index, x) in arr_b.iter().enumerate(){
+    for (index, x) in arr_b.iter().enumerate() {
         assert_eq!(x.0, arr_b[index].0);
         assert_eq!(x.1, arr_b[index].1);
     }
@@ -327,12 +327,12 @@ fn test_hamming_distance() {
 fn test_minimize_cost() {
     let mut link_a = Link {
         prev_state: 0,
-        cost: 10
+        cost: 10,
     };
 
     let link_b = Link {
         prev_state: 1,
-        cost: 11
+        cost: 11,
     };
 
     link_a.minimize_cost(link_b);

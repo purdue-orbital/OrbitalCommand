@@ -1,11 +1,11 @@
 use radio::dsp;
-use radio::dsp::{Modulators};
+use radio::dsp::Modulators;
 
 static SAMPLE_RATE: f32 = 1e5;
 static BAUD_RATE: f32 = 1e4;
 
 #[test]
-pub fn gaussian(){
+pub fn gaussian() {
     let samples_per_symbol = (SAMPLE_RATE / BAUD_RATE) as usize;
     let mods = Modulators::new(samples_per_symbol, SAMPLE_RATE);
 

@@ -1,17 +1,17 @@
 //! This file holds various functions and helper methods that improve the over all QOL of working in
 //! this crate
 
-/// u8 array to binary string
-pub fn u8_to_bin(arr: &[u8]) -> String {
-    let mut binary_string = String::new();
-
-    for &byte in arr {
-        let binary_byte = format!("{:08b}", byte);
-        binary_string.push_str(&binary_byte);
-    }
-
-    binary_string
-}
+// /// u8 array to binary string
+// pub fn u8_to_bin(arr: &[u8]) -> String {
+//     let mut binary_string = String::new();
+//
+//     for &byte in arr {
+//         let binary_byte = format!("{:08b}", byte);
+//         binary_string.push_str(&binary_byte);
+//     }
+//
+//     binary_string
+// }
 
 /// binary string to u8 array
 pub fn bin_to_u8(bin: &str) -> Vec<u8> {
