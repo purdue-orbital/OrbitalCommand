@@ -4,8 +4,8 @@ use num_complex::Complex;
 use radio::dsp;
 use radio::dsp::Demodulators;
 
-static SAMPLE_RATE: f32 = 1e5;
-static BAUD_RATE: f32 = 1e4;
+static SAMPLE_RATE: f32 = 2e7;
+static BAUD_RATE: f32 = 2e5;
 
 static BYTE_1: &[u8] = &[0];
 static BYTES_2: &[u8] = &[0, 255];

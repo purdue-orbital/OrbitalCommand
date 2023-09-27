@@ -80,6 +80,7 @@ impl Frame {
     fn encode(bin: &[u8]) -> Vec<u8> {
         let mut encoder: EncoderState<u8> = EncoderState::default();
         encoder.push_slice(bin)
+
     }
 
     fn decode(bin: &[u8], expected_len: usize) -> Vec<u8> {

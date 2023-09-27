@@ -18,19 +18,14 @@ impl Demodulation {
         let mut bin: u8 = 0;
         let mut counter = 0;
 
-
         for x in (0..arr.len()).step_by(self.samples_per_symbol) {
             bin <<= 1;
             counter += 1;
 
-            let mut to_sum = 0.0;
+            let sum: Complex<f32> = arr[x..x + self.samples_per_symbol].iter().sum();
 
-            for y in 0..self.samples_per_symbol - 1 {
-                to_sum += arr[x + y].re;
-            }
-
-            if to_sum.is_sign_negative() {
-                bin ^= 1;
+            if sum.re.is_sign_negative() {
+                bin += 1;
             }
 
             if counter == 8 {

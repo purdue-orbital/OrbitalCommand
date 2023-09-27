@@ -1,7 +1,10 @@
 use std::sync::{Arc, RwLock};
+use std::thread;
+use std::time::Duration;
 
 use radio::{AMBLE, IDENT, runtime};
 use radio::dsp::Modulators;
+use radio::dsp::tools::noise_generators::gaussian_noise_generator;
 use radio::frame::Frame;
 
 /// u8 array to binary string
@@ -37,12 +40,8 @@ fn frame_test() {
     // Turn the frame into a string
     let for_transmission1 = frame_1.assemble();
 
-    println!("{:?}", &for_transmission1[(AMBLE.len() / 8)..]);
-
     // Reassemble
     let frame_3 = radio::frame::Frame::from(&for_transmission1[(AMBLE.len() / 8)..]);
-
-    println!("{}", frame_3.has_ident);
 
     // Ensure frames match
     assert_eq!(frame_1.assemble(), frame_3.assemble());
@@ -63,13 +62,15 @@ fn simulated_live_test() {
     let test_data = vec![56, 203, 1, 0, 69];
     let m = Modulators::new(samples_per_symbol as usize, sample_rate);
     let test_frame = Frame::new(test_data.as_slice());
-    let test_data_moded = m.bpsk(test_frame.assemble().as_slice());
+    let test_data_modded = m.bpsk(test_frame.assemble().as_slice());
 
-    for x in (0..test_data_moded.len()).step_by(samples_per_symbol as usize) {
-        r.run(test_data_moded[x..x + samples_per_symbol as usize].to_vec());
+    // simulate noise
+    let test_data_modded_noisy = gaussian_noise_generator(test_data_modded.as_slice(),10.0).unwrap();
+
+    for x in (0..test_data_modded_noisy.len()).step_by(samples_per_symbol as usize) {
+        r.run(test_data_modded_noisy[x..x + samples_per_symbol as usize].to_vec());
+        thread::sleep(Duration::from_micros(100));
     }
-
-    println!("{}", (test_data_moded.len() / samples_per_symbol as usize) / 16);
 
     assert!(!fake_buffer.read().unwrap().is_empty());
     assert_eq!(fake_buffer.read().unwrap()[0], test_data);

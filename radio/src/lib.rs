@@ -172,7 +172,7 @@ impl RadioStream {
         let set = RadioSettings {
             sample_rate: 1e7,
             lo_frequency: 916e6,
-            lpf_filter: 0.0,
+            lpf_filter: 1e5,
             channels_in_use: 0,
             gain: 100.0,
             radio,
@@ -188,7 +188,7 @@ impl RadioStream {
             tx_stream: Tx::new(set.clone())?,
             rx_buffer: buffer.clone(),
             settings: set.clone(),
-            modulation: Modulators::new((set.sample_rate / set.baud_rate as f64) as usize, set.sample_rate as f32),
+            modulation: Modulators::new((set.sample_rate as f32 / set.baud_rate) as usize, set.sample_rate as f32),
         };
 
 
@@ -210,8 +210,7 @@ impl RadioStream {
                     if err.is_err() {
                         println!("Error!")
                     }
-
-                    run.run(mtu.clone());
+                    run.run(mtu.clone())
                 }
             }
         });
@@ -227,7 +226,7 @@ impl RadioStream {
         let frame = Frame::new(data);
 
         // Modulate
-        let signal = modulation(&self.modulation, frame.assemble().as_slice());
+        let signal = self.modulation.bpsk(frame.assemble().as_slice());
 
         // Send
         self.tx_stream.send(signal.as_slice())?;
