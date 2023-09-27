@@ -58,3 +58,69 @@ fn test_welch() {
 
     assert!(vector_equal(SIGNAL.clone(), wave));
 }
+
+#[test]
+fn test_hann() {
+    // make window
+    let mut window = fir::Windowing::new(WindowShapes::Hann, FFT_SIZE, 0);
+    let mut wave = SIGNAL.clone();
+
+    window.run(wave.as_mut_slice());
+
+    assert!(vector_equal(SIGNAL.clone(), wave));
+}
+
+#[test]
+fn test_hann() {
+    // make window
+    let mut window = fir::Windowing::new(WindowShapes::Nuttall, FFT_SIZE, 0);
+    let mut wave = SIGNAL.clone();
+
+    window.run(wave.as_mut_slice());
+
+    assert!(vector_equal(SIGNAL.clone(), wave));
+}
+
+#[test]
+fn test_blackman() {
+    // make window
+    let mut window = fir::Windowing::new(WindowShapes::Blackman, FFT_SIZE, 0);
+    let mut wave = SIGNAL.clone();
+
+    window.run(wave.as_mut_slice());
+
+    assert!(vector_equal(SIGNAL.clone(), wave));
+}
+
+#[test]
+fn test_blackman_nuttall() {
+    // make window
+    let mut window = fir::Windowing::new(WindowShapes::BlackmanNuttall, FFT_SIZE, 0);
+    let mut wave = SIGNAL.clone();
+
+    window.run(wave.as_mut_slice());
+
+    assert!(vector_equal(SIGNAL.clone(), wave));
+}
+
+#[test]
+fn test_blackman_harris() {
+    // make window
+    let mut window = fir::Windowing::new(WindowShapes::BlackmanHarris, FFT_SIZE, 0);
+    let mut wave = SIGNAL.clone();
+
+    window.run(wave.as_mut_slice());
+
+    assert!(vector_equal(SIGNAL.clone(), wave));
+}
+
+#[test]
+fn test_flat_top() {
+    // make window
+    let mut window = fir::Windowing::new(WindowShapes::FlatTop, FFT_SIZE, 0);
+    let mut wave = SIGNAL.clone();
+
+    window.run(wave.as_mut_slice());
+
+    assert!(vector_equal(SIGNAL.clone(), wave));
+}
