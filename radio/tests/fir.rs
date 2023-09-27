@@ -71,7 +71,7 @@ fn test_hann() {
 }
 
 #[test]
-fn test_hann() {
+fn test_nuttall() {
     // make window
     let mut window = fir::Windowing::new(WindowShapes::Nuttall, FFT_SIZE, 0);
     let mut wave = SIGNAL.clone();
