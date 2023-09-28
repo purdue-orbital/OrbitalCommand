@@ -19,6 +19,7 @@ pub mod ask;
 pub mod fsk;
 pub mod filters;
 pub mod viterbi;
+pub mod wtf_ecc;
 
 
 pub struct Demodulators {
