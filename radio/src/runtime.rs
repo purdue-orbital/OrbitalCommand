@@ -4,6 +4,8 @@ use std::sync::{Arc, RwLock};
 
 use num_complex::Complex;
 
+use bitvec::prelude::*;
+
 use dsp::filters::fir;
 
 use crate::dsp;
@@ -12,21 +14,10 @@ use crate::dsp::filters::fir::shapes::WindowShapes::Rectangle;
 use crate::frame::{Frame, IDENT_VEC};
 
 fn shift_and_carry(bin: &mut [u8], bit: u8) {
+    let view = bin.view_bits_mut::<Msb0>();
+    view.shift_left(1);
 
-    // set carry bit
-    let mut carry = bit & 1;
-
-    // shift then add carry
-    for x in bin.iter_mut().rev() {
-        // save new carry bit
-        let new_carry_bit = (*x >> 7) & 1;
-
-        // shift and add carry bit
-        *x = (*x << 1) + carry;
-
-        // add new carry bit
-        carry = new_carry_bit;
-    }
+    bin[bin.len() - 1] |= bit;
 }
 
 pub struct Runtime {
@@ -63,7 +54,7 @@ impl Runtime {
 
             demoded_value: 0,
 
-            ident_window: vec![0; (IDENT_VEC.len())],
+            ident_window: vec![0; 3*(IDENT_VEC.len())],
 
             record_window: vec![],
 
@@ -100,7 +91,7 @@ impl Runtime {
 
                 self.record_window = self.ident_window.clone();
             }
-        }else {
+        } else {
             self.bin = (self.bin << 1) ^ self.demoded_value;
             self.bin_counter += 1;
 

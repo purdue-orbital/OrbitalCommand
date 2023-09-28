@@ -3,11 +3,11 @@
 //! header implements CCSDS SDLP standard which is the standard frame header for space communication
 
 
+use bytes::{Buf, Bytes};
 use lazy_static::lazy_static;
 
 use crate::{AMBLE, IDENT};
-use crate::dsp::viterbi::decode::DecoderState;
-use crate::dsp::viterbi::encode::EncoderState;
+use crate::dsp::wtf_ecc::WtfECC;
 use crate::tools::bin_to_u8;
 
 lazy_static! {
@@ -78,18 +78,21 @@ impl Frame {
     }
 
     fn encode(bin: &[u8]) -> Vec<u8> {
-        // let mut encoder: EncoderState<u8> = EncoderState::default();
-        // encoder.push_slice(bin)
+        let mut encoder = WtfECC::default();
+        let mut output = encoder.encode(Bytes::copy_from_slice(bin));
+        let len = output.remaining();
 
-        bin.to_vec()
+        output.copy_to_bytes(len).to_vec()
     }
 
-    fn decode(bin: &[u8], expected_len: usize) -> Vec<u8> {
-        // let mut decode = DecoderState::new(expected_len);
-        // decode.push_slice(bin);
-        // decode.read()
+    fn decode(bin: &[u8]) -> Vec<u8> {
+        let mut decoder = WtfECC::default();
 
-        bin.to_vec()
+        let mut bytes = Bytes::copy_from_slice(bin);
+
+        decoder.decode(&mut bytes)
+            .copy_to_bytes(bin.len() / 3)
+            .to_vec()
     }
 
     /// Turn a string into frame segments (if any)
@@ -102,21 +105,22 @@ impl Frame {
 
         let ident_length_bytes = new_frame.ident.len();
 
-        // safety check
-        //if data.len() % 2 == 1 { return new_frame; };
+        let ident_decoded = Frame::decode(&data[..12]);
 
-        let decoded = Frame::decode(data, data.len() / 2);
-
-        if decoded.len() >= ident_length_bytes && &decoded[..ident_length_bytes] == IDENT_VEC.as_slice() {
+        if ident_decoded.len() >= ident_length_bytes && ident_decoded == IDENT_VEC.as_slice() {
             new_frame.has_ident = true;
 
-            if decoded.len() >= ident_length_bytes + 2 {
-                new_frame.len = (decoded[ident_length_bytes] as u16) << 8 | decoded[ident_length_bytes + 1] as u16;
+            if data.len() / 3 >= ident_length_bytes + 3 {
+                let len_bin = Frame::decode(&data[12..18]);
 
-                if decoded.len() == ident_length_bytes + 2 + new_frame.len as usize {
+                new_frame.len = (len_bin[0] as u16) << 8 | len_bin[1] as u16;
+
+                if data.len() / 3 == ident_length_bytes + 2 + new_frame.len as usize {
                     new_frame.is_complete = true;
 
-                    new_frame.data = decoded[ident_length_bytes + 2..].to_vec();
+                    let data_bin = Frame::decode(&data[18..]);
+
+                    new_frame.data = data_bin.to_vec();
                 }
             }
         }
@@ -128,15 +132,12 @@ impl Frame {
     /// This will assemble the frame header and make it ready to be transmitted
     pub fn assemble(&self) -> Vec<u8> {
         let len_bin = &[(self.len >> 8) as u8, self.len as u8];
-        let mut hold = Vec::new();
-
-        hold.extend_from_slice(self.ident.as_slice());
-        hold.extend_from_slice(len_bin.as_slice());
-        hold.extend_from_slice(self.data.as_slice());
 
         let mut to_return = self.amble.clone();
 
-        to_return.extend_from_slice(Frame::encode(hold.as_slice()).as_slice());
+        to_return.extend_from_slice(Frame::encode(self.ident.as_slice()).as_slice());
+        to_return.extend_from_slice(Frame::encode(len_bin.as_slice()).as_slice());
+        to_return.extend_from_slice(Frame::encode(self.data.as_slice()).as_slice());
 
         to_return
     }
