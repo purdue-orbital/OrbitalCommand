@@ -63,7 +63,7 @@ impl Runtime {
 
             demoded_value: 0,
 
-            ident_window: vec![0; 2 * (IDENT_VEC.len())],
+            ident_window: vec![0; (IDENT_VEC.len())],
 
             record_window: vec![],
 

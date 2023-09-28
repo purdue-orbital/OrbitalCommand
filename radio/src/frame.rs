@@ -78,15 +78,18 @@ impl Frame {
     }
 
     fn encode(bin: &[u8]) -> Vec<u8> {
-        let mut encoder: EncoderState<u8> = EncoderState::default();
-        encoder.push_slice(bin)
+        // let mut encoder: EncoderState<u8> = EncoderState::default();
+        // encoder.push_slice(bin)
 
+        bin.to_vec()
     }
 
     fn decode(bin: &[u8], expected_len: usize) -> Vec<u8> {
-        let mut decode = DecoderState::new(expected_len);
-        decode.push_slice(bin);
-        decode.read()
+        // let mut decode = DecoderState::new(expected_len);
+        // decode.push_slice(bin);
+        // decode.read()
+
+        bin.to_vec()
     }
 
     /// Turn a string into frame segments (if any)
@@ -100,7 +103,7 @@ impl Frame {
         let ident_length_bytes = new_frame.ident.len();
 
         // safety check
-        if data.len() % 2 == 1 { return new_frame; };
+        //if data.len() % 2 == 1 { return new_frame; };
 
         let decoded = Frame::decode(data, data.len() / 2);
 
