@@ -25,6 +25,7 @@ impl SearchArr {
 
 	pub fn push(&mut self, x: u8) -> Option<ShiftInfo> {
 		let mut bit;
+
 		self.head = x;
 		self.offset = 8;
 
@@ -186,7 +187,7 @@ mod tests {
 		byte_stream.append(&mut enc_ident);
 		byte_stream.append(&mut post.to_vec());
 
-		let mut bit_thingy = byte_stream.view_bits_mut::<Msb0>();
+		let bit_thingy = byte_stream.view_bits_mut::<Msb0>();
 		bit_thingy.shift_left(shift_left_by);
 
 		let mut i = 0;
