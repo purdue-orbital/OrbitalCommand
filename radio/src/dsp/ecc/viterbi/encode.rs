@@ -1,6 +1,6 @@
 use std::ops::BitXor;
 
-use crate::dsp::viterbi::common::combine;
+use crate::dsp::ecc::viterbi::common::combine;
 
 #[derive(Default)]
 /// represents the internal state of multiple encoders. (each bit is its own encoder)

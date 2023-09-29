@@ -7,7 +7,7 @@ use bytes::{Buf, Bytes};
 use lazy_static::lazy_static;
 
 use crate::{AMBLE, IDENT};
-use crate::dsp::wtf_ecc::WtfECC;
+use crate::dsp::ecc::wtf_ecc::WtfECC;
 use crate::tools::bin_to_u8;
 
 lazy_static! {

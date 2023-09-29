@@ -1,6 +1,6 @@
 use bytes::{Bytes, Buf};
 
-use crate::dsp::wtf_ecc;
+use crate::dsp::ecc::wtf_ecc;
 use wtf_ecc::WtfECC;
 
 pub mod encode_task;

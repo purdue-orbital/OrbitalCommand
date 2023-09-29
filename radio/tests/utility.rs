@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use radio::{AMBLE, IDENT, runtime};
 use radio::dsp::Modulators;
-use radio::dsp::tools::noise_generators::gaussian_noise_generator;
+use radio::dsp::common::noise_generators::gaussian_noise_generator;
 use radio::frame::Frame;
 
 /// u8 array to binary string

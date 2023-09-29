@@ -1,4 +1,4 @@
-use crate::dsp::tools::goertzel_algorithm::GoertzelAlgorithm;
+use crate::dsp::common::goertzel_algorithm::GoertzelAlgorithm;
 
 pub struct Demodulation {
     // Calculate the number of samples per a symbol

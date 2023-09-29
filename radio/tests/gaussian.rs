@@ -12,8 +12,8 @@ pub fn gaussian() {
     let ones = mods.fsk(&[255]);
     let zeros = mods.fsk(&[0]);
 
-    let noisy_ones = dsp::tools::noise_generators::gaussian_noise_generator(&*ones, 25.0).unwrap();
-    let noisy_zeros = dsp::tools::noise_generators::gaussian_noise_generator(&*ones, 25.0).unwrap();
+    let noisy_ones = dsp::common::noise_generators::gaussian_noise_generator(&*ones, 25.0).unwrap();
+    let noisy_zeros = dsp::common::noise_generators::gaussian_noise_generator(&*ones, 25.0).unwrap();
 
     assert_ne!(ones, noisy_ones);
     assert_ne!(zeros, noisy_zeros);

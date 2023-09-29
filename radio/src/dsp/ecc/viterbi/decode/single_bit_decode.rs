@@ -1,5 +1,5 @@
-use crate::dsp::viterbi::common::*;
-use crate::dsp::viterbi::encode::EncoderState;
+use crate::dsp::ecc::viterbi::common::*;
+use crate::dsp::ecc::viterbi::encode::EncoderState;
 
 pub struct BitDecoderState {
     trellis: Vec<[Link; 4]>,

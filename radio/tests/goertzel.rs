@@ -1,5 +1,5 @@
 use radio::dsp::Modulators;
-use radio::dsp::tools::goertzel_algorithm::GoertzelAlgorithm;
+use radio::dsp::common::goertzel_algorithm::GoertzelAlgorithm;
 
 static SAMPLE_RATE: f32 = 1e5;
 static BAUD_RATE: f32 = 1e4;

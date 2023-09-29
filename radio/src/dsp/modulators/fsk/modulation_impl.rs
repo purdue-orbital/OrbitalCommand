@@ -1,8 +1,8 @@
 use num_complex::Complex;
 
-use crate::dsp::fsk::structs::modulation::Modulation;
-use crate::dsp::tools::bi_signal_generation::bi_signal_modulation;
-use crate::dsp::tools::generate_wave::generate_wave;
+use crate::dsp::modulators::fsk::structs::modulation::Modulation;
+use crate::dsp::common::bi_signal_generation::bi_signal_modulation;
+use crate::dsp::common::generate_wave::generate_wave;
 
 impl Modulation {
     pub fn new(samples_per_symbol: usize, sample_rate: f32, message_signal_1: f32, message_signal_2: f32) -> Modulation {

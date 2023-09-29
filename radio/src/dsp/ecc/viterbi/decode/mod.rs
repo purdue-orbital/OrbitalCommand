@@ -1,6 +1,6 @@
 use single_bit_decode::BitDecoderState;
 
-use crate::dsp::viterbi::common::*;
+use crate::dsp::ecc::viterbi::common::*;
 
 pub mod single_bit_decode;
 

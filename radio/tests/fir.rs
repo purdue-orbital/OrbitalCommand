@@ -3,7 +3,7 @@ use once_cell::sync::Lazy;
 
 use radio::dsp::filters::fir;
 use radio::dsp::filters::fir::shapes::WindowShapes;
-use radio::dsp::tools::generate_wave::generate_wave;
+use radio::dsp::common::generate_wave::generate_wave;
 
 // set wave settings
 static FFT_SIZE: usize = 1024;

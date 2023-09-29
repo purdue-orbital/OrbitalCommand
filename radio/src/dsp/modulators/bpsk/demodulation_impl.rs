@@ -1,6 +1,6 @@
 use num_complex::Complex;
 
-use crate::dsp::bpsk::structs::demodulation::Demodulation;
+use crate::dsp::modulators::bpsk::structs::demodulation::Demodulation;
 
 impl Demodulation {
     pub fn new(samples_per_symbol: usize, sample_rate: f32) -> Demodulation {

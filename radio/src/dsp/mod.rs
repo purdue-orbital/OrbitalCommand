@@ -3,22 +3,20 @@
 
 use num_complex::Complex;
 
-use ask::structs::demodulation::Demodulation as ask_demod;
-use ask::structs::modulation::Modulation as ask_mod;
-use bpsk::structs::demodulation::Demodulation as bpsk_demod;
-use bpsk::structs::modulation::Modulation as bpsk_mod;
-use fsk::structs::demodulation::Demodulation as fsk_demod;
-use fsk::structs::modulation::Modulation as fsk_mod;
-use qpsk::structs::demodulation::Demodulation as qpsk_demod;
-use qpsk::structs::modulation::Modulation as qpsk_mod;
-
-pub mod tools;
-pub mod qpsk;
-pub mod bpsk;
-pub mod ask;
-pub mod fsk;
+pub mod common;
 pub mod filters;
 pub mod ecc;
+pub mod modulators;
+
+use modulators::ask::structs::demodulation::Demodulation as ask_demod;
+use modulators::ask::structs::modulation::Modulation as ask_mod;
+use modulators::bpsk::structs::demodulation::Demodulation as bpsk_demod;
+use modulators::bpsk::structs::modulation::Modulation as bpsk_mod;
+use modulators::fsk::structs::demodulation::Demodulation as fsk_demod;
+use modulators::fsk::structs::modulation::Modulation as fsk_mod;
+use modulators::qpsk::structs::demodulation::Demodulation as qpsk_demod;
+use modulators::qpsk::structs::modulation::Modulation as qpsk_mod;
+
 
 
 pub struct Demodulators {

@@ -1,6 +1,6 @@
 use num_complex::Complex;
 
-use crate::dsp::tools::goertzel_algorithm::GoertzelAlgorithm;
+use crate::dsp::common::goertzel_algorithm::GoertzelAlgorithm;
 
 /// Demodulate a signal when when two signals are present
 ///

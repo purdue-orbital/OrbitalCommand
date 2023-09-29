@@ -1,6 +1,6 @@
-use radio::dsp::viterbi::common::{BIT_MASK, combine, map_to, squish, state_to_bit, stretch};
-use radio::dsp::viterbi::decode::single_bit_decode::Link;
-use radio::dsp::viterbi::prelude::{DecoderState, EncoderState};
+use radio::dsp::ecc::viterbi::common::{BIT_MASK, combine, map_to, squish, state_to_bit, stretch};
+use radio::dsp::ecc::viterbi::decode::single_bit_decode::Link;
+use radio::dsp::ecc::viterbi::prelude::{DecoderState, EncoderState};
 
 #[test]
 fn test_squish() {
