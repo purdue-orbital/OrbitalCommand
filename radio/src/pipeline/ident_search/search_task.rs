@@ -77,8 +77,9 @@ impl Task {
 
 						let len = output.get_u16_le() as usize;
 
-						self.data = BytesMut::with_capacity(len * WtfECC::EXPANSION_RATIO);
 						self.state = State::Data;
+						self.data = BytesMut::with_capacity(len * WtfECC::EXPANSION_RATIO);
+						self.push(input);
 					}
 				},
 
@@ -90,7 +91,6 @@ impl Task {
 					if self.data.len() == self.data.capacity() {
 						self.send_and_reset();
 					}
-
 				}
 			}
 		}
@@ -104,9 +104,8 @@ impl Task {
 		let captured_bytes = self.take_data(Self::LEN_LEN).freeze();
 		self.tx.send(captured_bytes).expect(SEND_EXPECT_MSG);
 
-		self.searcher = SearchArr::new();
-
 		self.shifter = Shifter::default();
+		self.searcher = SearchArr::new();
 		self.state = State::Ident;
 	}
 
@@ -125,7 +124,7 @@ enum State {
 	Data
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq)]
 struct Shifter {
 	carry: u16,
 	offset: u32,
@@ -149,7 +148,26 @@ impl Shifter {
 
 		dst.put_u8(self.carry as u8);
 
+		self.carry = self.carry.swap_bytes();
 		self.carry &= 0x00FF;
 		self.carry <<= self.offset;
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn from_shift_info() {
+		let si = ShiftInfo {
+			offset: 0,
+			head: 0,
+		};
+
+		assert_eq!(Shifter::from(si), Shifter {
+			carry: 0,
+			offset: 0
+		});
 	}
 }

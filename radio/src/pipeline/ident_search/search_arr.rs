@@ -24,8 +24,7 @@ impl SearchArr {
 	}
 
 	pub fn push(&mut self, x: u8) -> Option<ShiftInfo> {
-		let mut bit = 0;
-
+		let mut bit;
 		self.head = x;
 		self.offset = 8;
 
@@ -37,7 +36,7 @@ impl SearchArr {
 			self.offset -= 1;
 
 			// move all the bits and insert the new first bit at the end
-			let mut view = self.arr.view_bits_mut::<Msb0>();
+			let view = self.arr.view_bits_mut::<Msb0>();
 			view.shift_left(1);
 			self.arr[Self::LAST] |= bit;
 
@@ -143,7 +142,7 @@ mod tests {
 		byte_stream.insert(0, 0xA3);
 		byte_stream.push(0b10101010);
 
-		let mut bit_thingy = byte_stream.view_bits_mut::<Msb0>();
+		let bit_thingy = byte_stream.view_bits_mut::<Msb0>();
 		bit_thingy.shift_left(1);
 
 		for b in byte_stream {
@@ -172,7 +171,7 @@ mod tests {
 	}
 
 	fn test_recover_data(pre: &[u8], post: &[u8], shift_left_by: usize) {
-		let mut desired_data = post.to_vec();
+		let desired_data = post.to_vec();
 		let mut enc_ident = encoded_ident().to_vec();
 		let mut searcher = SearchArr::new();
 		let mut ans = None;
