@@ -1,6 +1,7 @@
 use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
+use num_complex::Complex;
 use rustdsp::common::noise_generators::gaussian_noise_generator;
 use rustdsp::Modulators;
 
@@ -71,6 +72,8 @@ fn simulated_live_test() {
         r.run(test_data_modded_noisy[x..x + samples_per_symbol as usize].to_vec());
         thread::sleep(Duration::from_micros(100));
     }
+
+    r.run(vec![Complex::new(0.0,0.0); samples_per_symbol as usize]);
 
     assert!(!fake_buffer.read().unwrap().is_empty());
     assert_eq!(fake_buffer.read().unwrap()[0], test_data);

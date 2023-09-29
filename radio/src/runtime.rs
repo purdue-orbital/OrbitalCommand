@@ -5,11 +5,16 @@ use std::sync::{Arc, RwLock};
 use num_complex::Complex;
 
 use bitvec::prelude::*;
+use bytes::Bytes;
+use flume::{Receiver, Sender};
 use rustdsp::Demodulators;
 use rustdsp::filters::fir;
 use rustdsp::filters::fir::shapes::WindowShapes::Rectangle;
 
 use crate::frame::{Frame, IDENT_VEC};
+use crate::pipeline::{create_bytes_channel, middle_man};
+use crate::pipeline::frame::{decode_task, encode_task};
+use crate::pipeline::ident_search::search_task;
 
 fn shift_and_carry(bin: &mut [u8], bit: u8) {
     let view = bin.view_bits_mut::<Msb0>();
@@ -38,11 +43,23 @@ pub struct Runtime {
     state_counter: u8,
 
     buffer: Arc<RwLock<Vec<Vec<u8>>>>,
+
+    start: Sender<u8>,
+
+    end: Receiver<Bytes>,
 }
 
 impl Runtime {
     /// Generate a new runtime instance
     pub fn new(samples_per_symbol: usize, sample_rate: f32, ident: &str, buffer: Arc<RwLock<Vec<Vec<u8>>>>) -> Runtime {
+
+        let (tx_start, rx_start) = flume::unbounded();
+        let (searcher, rx_search) = search_task::Task::new(rx_start);
+        let (decoder, rx_decode) = decode_task::Task::new(rx_search);
+
+        decoder.start();
+        searcher.start();
+
         Runtime {
             current_samples: vec![],
 
@@ -63,52 +80,28 @@ impl Runtime {
             state_counter: 0,
 
             buffer,
+
+            start: tx_start,
+
+            end: rx_decode,
         }
     }
-
-    // /// What to run on filter state
-    // pub fn filter(&mut self) {
-    //     self.filter_instance.run(&mut self.current_samples);
-    // }
 
     /// What to run on demod state
     pub fn demod(&mut self) {
-        self.demoded_value = self.demod_instance.bpsk(self.current_samples.clone())[0];
+        unsafe {self.demoded_value = self.demod_instance.bpsk(self.current_samples.clone())[0]};
     }
 
-    /// What to run on evaluate state
-    pub fn evaluate(&mut self) {
-        // listen state
-        if self.state_counter == 0 {
-            shift_and_carry(self.ident_window.as_mut_slice(), self.demoded_value);
+    pub fn eval(&mut self){
+        self.bin <<= 1;
+        self.bin |= self.demoded_value;
+        self.bin_counter += 1;
 
-            let test_frame = Frame::from(self.ident_window.as_slice());
-
-            if test_frame.has_ident {
-                self.state_counter = 1;
-
-                self.record_window = self.ident_window.clone();
-            }
-        } else {
-            self.bin = (self.bin << 1) ^ self.demoded_value;
-            self.bin_counter += 1;
-
-            // if we fill the bin up, add to record window and then re-evaluate if at end of transmission
-            if self.bin_counter == 8 {
-                self.record_window.push(self.bin);
-
-                self.bin_counter = 0;
-                self.bin = 0;
-
-                let test_frame = Frame::from(self.record_window.as_slice());
-
-                if test_frame.is_complete {
-                    self.state_counter = 0;
-                    unsafe { self.buffer.write().unwrap_unchecked().push(test_frame.data) }
-                }
-            }
+        if self.bin_counter == 8{
+            unsafe {self.start.send(self.bin).unwrap_unchecked()};
+            self.bin_counter = 0;
+            self.bin = 0;
         }
-
     }
 
     /// Run runtime
@@ -122,7 +115,10 @@ impl Runtime {
         // demod
         self.demod();
 
-        // evaluate
-        self.evaluate();
+        self.eval();
+
+       if let Ok(x) = self.end.try_recv(){
+           unsafe {self.buffer.write().unwrap_unchecked().push(x.to_vec())}
+       }
     }
 }

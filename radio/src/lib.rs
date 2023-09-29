@@ -16,10 +16,15 @@ use std::thread::{sleep, spawn};
 use std::time::Duration;
 
 use anyhow::{Error, Result};
+use bytes::Bytes;
+use flume::{Receiver, Sender};
 use num_complex::Complex;
 use rustdsp::{Demodulators, Modulators};
 
 use crate::frame::Frame;
+use crate::pipeline::create_bytes_channel;
+use crate::pipeline::frame::encode_task;
+use crate::pipeline::frame::encode_task::Task;
 use crate::radio::Radio;
 use crate::streams::{RadioSettings, Rx, Tx};
 
@@ -151,6 +156,10 @@ pub struct RadioStream {
     /// This is a saved copy of the radio settings that can be altered later depending the needs and
     /// wants of the user.
     pub settings: RadioSettings,
+
+    pub encode_start: Sender<Bytes>,
+
+    pub encode_end: Receiver<Bytes>,
 }
 
 
@@ -183,12 +192,19 @@ impl RadioStream {
         // Read buffer
         let buffer = Arc::new(RwLock::new(Vec::with_capacity(20)));
 
+        // Start encoder thread
+        let (encode_start,to_encode) = create_bytes_channel();
+        let (encoder, encode_end) = Task::new(to_encode);
+        encoder.start();
+
         // Make radio streams
         let me = RadioStream {
             tx_stream: Tx::new(set.clone())?,
             rx_buffer: buffer.clone(),
             settings: set.clone(),
+            encode_start,
             modulation: Modulators::new((set.sample_rate as f32 / set.baud_rate) as usize, set.sample_rate as f32),
+            encode_end,
         };
 
 
@@ -208,7 +224,11 @@ impl RadioStream {
                     let err = rx_stream.fetch(&[mtu.as_mut_slice()]);
 
                     if err.is_err() {
-                        println!("Error!")
+                        println!("\
+                        Jack, there may have been an error most likely with the radio. \
+                        Don't worry, this is a very descriptive explanation of what happened \
+                        Hope all is well! :)  \
+                        ")
                     }
                     run.run(mtu.clone())
                 }
@@ -222,16 +242,22 @@ impl RadioStream {
     /// This will transmit binary data to the radio
     pub fn transmit(&self, data: &[u8]) -> Result<()> {
 
-        // add layer 2 data (frame header and trailer)
-        let frame = Frame::new(data);
+        let to_bytes = Bytes::copy_from_slice(data);
 
-        // Modulate
-        let signal = self.modulation.bpsk(frame.assemble().as_slice());
+        unsafe {self.encode_start.send(to_bytes).unwrap_unchecked()};
 
-        // Send
-        self.tx_stream.send(signal.as_slice())?;
+        if let Ok(x) =  self.encode_end.recv(){
+            // Modulate
+            let signal = self.modulation.bpsk(x.to_vec().as_slice());
 
-        Ok(())
+            // Send
+            self.tx_stream.send(signal.as_slice())?;
+
+            Ok(())
+        }else{
+            Err(Error::msg("Failed to encode data for transmission"))
+        }
+
     }
 
     /// This a wrapper function that allows for direct transmission of frames
