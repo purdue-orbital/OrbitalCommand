@@ -1,8 +1,8 @@
 use bitvec::prelude::*;
 use bytes::{Buf, Bytes};
+use crate::dsp::wtf_ecc::WtfECC;
 
 use super::super::frame::Frame;
-use super::super::wtf_ecc::WtfECC;
 
 #[derive(Debug)]
 pub struct SearchArr {

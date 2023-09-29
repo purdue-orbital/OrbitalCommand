@@ -20,7 +20,6 @@ pub mod fsk;
 pub mod filters;
 pub mod viterbi;
 pub mod wtf_ecc;
-pub mod digital_pipeline;
 
 
 pub struct Demodulators {

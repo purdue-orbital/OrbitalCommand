@@ -29,6 +29,7 @@ pub mod dsp;
 pub mod frame;
 pub mod tools;
 pub mod runtime;
+mod pipeline;
 
 /// This set of bits is sent ahead of the real transmission frame to allow time for the SDR to sync
 /// and better be able to read the frame that follows.

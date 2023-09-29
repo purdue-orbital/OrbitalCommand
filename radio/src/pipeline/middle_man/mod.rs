@@ -2,8 +2,7 @@ use std::thread;
 
 use bytes::Bytes;
 use flume::{Receiver, Sender};
-
-use crate::SEND_EXPECT_MSG;
+use crate::pipeline::SEND_EXPECT_MSG;
 
 /// acts as a middle man for testing purposes
 #[derive(Debug)]

@@ -2,9 +2,9 @@ use std::thread;
 
 use bytes::{Bytes, Buf};
 use flume::{Receiver, Sender};
+use crate::pipeline::SEND_EXPECT_MSG;
 
 use super::Frame;
-use crate::SEND_EXPECT_MSG;
 
 /// uses each `Bytes` struct that it receives as a payload for a `Frame`
 /// the `Frame` is then encoded using ECC and then sent on the channel that it returns upon creation

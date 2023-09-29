@@ -1,4 +1,3 @@
-mod wtf_ecc;
 pub mod middle_man;
 pub mod frame;
 pub mod ident_search;

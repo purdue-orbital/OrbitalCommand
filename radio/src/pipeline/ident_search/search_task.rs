@@ -3,10 +3,10 @@ use std::mem;
 
 use bytes::{Bytes, Buf, BytesMut, BufMut};
 use flume::{Receiver, Sender};
+use crate::dsp::wtf_ecc::WtfECC;
+use crate::pipeline::SEND_EXPECT_MSG;
 
 use super::search_arr::*;
-use crate::wtf_ecc::WtfECC;
-use crate::SEND_EXPECT_MSG;
 
 
 /// receives 8 bits at a time (in the form of a `u8`) and looks for `Frame::IDENT`
