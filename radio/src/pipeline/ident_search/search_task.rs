@@ -3,7 +3,7 @@ use std::mem;
 
 use bytes::{Bytes, Buf, BytesMut, BufMut};
 use flume::{Receiver, Sender};
-use crate::dsp::ecc::wtf_ecc::WtfECC;
+use rustdsp::ecc::wtf_ecc::WtfECC;
 use crate::pipeline::SEND_EXPECT_MSG;
 
 use super::search_arr::*;

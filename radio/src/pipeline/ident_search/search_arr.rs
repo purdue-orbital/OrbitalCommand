@@ -1,6 +1,6 @@
 use bitvec::prelude::*;
 use bytes::{Buf, Bytes};
-use crate::dsp::ecc::wtf_ecc::WtfECC;
+use rustdsp::ecc::wtf_ecc::WtfECC;
 
 use super::super::frame::Frame;
 

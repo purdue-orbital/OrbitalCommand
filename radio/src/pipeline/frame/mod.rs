@@ -1,7 +1,5 @@
 use bytes::{Bytes, Buf};
-
-use crate::dsp::ecc::wtf_ecc;
-use wtf_ecc::WtfECC;
+use rustdsp::ecc::wtf_ecc::WtfECC;
 
 pub mod encode_task;
 pub mod decode_task;

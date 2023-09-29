@@ -1,10 +1,10 @@
 use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
+use rustdsp::common::noise_generators::gaussian_noise_generator;
+use rustdsp::Modulators;
 
 use radio::{AMBLE, IDENT, runtime};
-use radio::dsp::Modulators;
-use radio::dsp::common::noise_generators::gaussian_noise_generator;
 use radio::frame::Frame;
 
 /// u8 array to binary string

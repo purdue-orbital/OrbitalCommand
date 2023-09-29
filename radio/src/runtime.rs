@@ -5,12 +5,10 @@ use std::sync::{Arc, RwLock};
 use num_complex::Complex;
 
 use bitvec::prelude::*;
+use rustdsp::Demodulators;
+use rustdsp::filters::fir;
+use rustdsp::filters::fir::shapes::WindowShapes::Rectangle;
 
-use dsp::filters::fir;
-
-use crate::dsp;
-use crate::dsp::Demodulators;
-use crate::dsp::filters::fir::shapes::WindowShapes::Rectangle;
 use crate::frame::{Frame, IDENT_VEC};
 
 fn shift_and_carry(bin: &mut [u8], bit: u8) {

@@ -2,7 +2,7 @@ use std::thread;
 
 use bytes::Bytes;
 use flume::{Receiver, Sender};
-use crate::dsp::ecc::wtf_ecc::WtfECC;
+use rustdsp::ecc::wtf_ecc::WtfECC;
 use crate::pipeline::SEND_EXPECT_MSG;
 
 

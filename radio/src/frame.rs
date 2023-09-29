@@ -5,9 +5,9 @@
 
 use bytes::{Buf, Bytes};
 use lazy_static::lazy_static;
+use rustdsp::ecc::wtf_ecc::WtfECC;
 
 use crate::{AMBLE, IDENT};
-use crate::dsp::ecc::wtf_ecc::WtfECC;
 use crate::tools::bin_to_u8;
 
 lazy_static! {

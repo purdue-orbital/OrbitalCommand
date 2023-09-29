@@ -17,15 +17,14 @@ use std::time::Duration;
 
 use anyhow::{Error, Result};
 use num_complex::Complex;
+use rustdsp::{Demodulators, Modulators};
 
-use crate::dsp::{Demodulators, Modulators};
 use crate::frame::Frame;
 use crate::radio::Radio;
 use crate::streams::{RadioSettings, Rx, Tx};
 
 mod radio;
 mod streams;
-pub mod dsp;
 pub mod frame;
 pub mod tools;
 pub mod runtime;
