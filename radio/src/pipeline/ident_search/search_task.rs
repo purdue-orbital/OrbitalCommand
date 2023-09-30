@@ -77,6 +77,10 @@ impl Task {
 
 						let len = output.get_u16_le() as usize;
 
+						let len = 10;
+
+						dbg!(len);
+
 						self.state = State::Data;
 						self.data = BytesMut::with_capacity(len * WtfECC::EXPANSION_RATIO);
 						self.push(input);

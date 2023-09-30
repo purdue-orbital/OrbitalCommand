@@ -42,20 +42,21 @@ impl SearchArr {
 			self.arr[Self::LAST] |= bit;
 
 			if self.is_match() {
+				dbg!(&self.arr);
+				dbg!(&self.offset);
 				return Some(self.info());
 			}
 		}
 
 		None
 	}
-
 	fn is_match(&self) -> bool {
 		let mut decoder = WtfECC::new();
 		let mut bytes = Bytes::from(self.arr.to_vec());
 		let mut output = decoder.decode(&mut bytes);
-
 		let mut x = [0; 4];
 		output.copy_to_slice(&mut x);
+
 		x == Frame::IDENT
 	}
 

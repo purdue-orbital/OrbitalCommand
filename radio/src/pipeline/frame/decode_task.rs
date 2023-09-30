@@ -20,7 +20,6 @@ impl Task {
 	/// setup the state for this task and build the thread
 	pub fn new(rx: Receiver<Bytes>) -> (Self, Receiver<Bytes>) {
 		let (output_tx, output_rx) = flume::unbounded(); // should this be bounded?
-
 		(
 			Self {
 				rx,
@@ -35,6 +34,9 @@ impl Task {
 	pub fn start(mut self) {
 		thread::Builder::new().name(Self::NAME.to_string()).spawn(move || {
 			while let Ok(mut bin) = self.rx.recv() {
+
+				dbg!(&bin);
+
 				let data = self.decoder.decode(&mut bin);
 				self.tx.send(data).expect(SEND_EXPECT_MSG);
 				self.reset();

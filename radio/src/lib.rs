@@ -179,13 +179,13 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-            sample_rate: 2e7,
+            sample_rate: 4e6,
             lo_frequency: 916e6,
             lpf_filter: 1e5,
             channels_in_use: 0,
             gain: 100.0,
             radio,
-            baud_rate: 2e4,
+            baud_rate: 8e3,
             size: 0,
         };
 
@@ -244,7 +244,7 @@ impl RadioStream {
 
         let to_bytes = Bytes::copy_from_slice(data);
 
-        unsafe {self.encode_start.send(to_bytes).unwrap_unchecked()};
+        self.encode_start.send(to_bytes).unwrap();
 
         if let Ok(x) =  self.encode_end.recv(){
             // Modulate

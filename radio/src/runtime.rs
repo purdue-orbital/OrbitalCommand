@@ -89,7 +89,7 @@ impl Runtime {
 
     /// What to run on demod state
     pub fn demod(&mut self) {
-        unsafe {self.demoded_value = self.demod_instance.bpsk(self.current_samples.clone())[0]};
+        self.demoded_value = self.demod_instance.bpsk(self.current_samples.clone())[0];
     }
 
     pub fn eval(&mut self){
@@ -97,8 +97,8 @@ impl Runtime {
         self.bin |= self.demoded_value;
         self.bin_counter += 1;
 
-        if self.bin_counter == 8{
-            unsafe {self.start.send(self.bin).unwrap_unchecked()};
+        if self.bin_counter == 8 {
+            self.start.send(self.bin).unwrap();
             self.bin_counter = 0;
             self.bin = 0;
         }
@@ -118,7 +118,7 @@ impl Runtime {
         self.eval();
 
        if let Ok(x) = self.end.try_recv(){
-           unsafe {self.buffer.write().unwrap_unchecked().push(x.to_vec())}
+           self.buffer.write().unwrap().push(x.to_vec())
        }
     }
 }

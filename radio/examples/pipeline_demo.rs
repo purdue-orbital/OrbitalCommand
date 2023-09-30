@@ -1,4 +1,4 @@
-const NUM_BYTES: usize = 100_000_000;
+const NUM_BYTES: usize = 10_000_000;
 const SIZE_FRAME: usize = 50_000;
 const NUM_FRAMES: usize = NUM_BYTES / SIZE_FRAME;
 const ACTUAL_BYTES: usize = NUM_FRAMES * SIZE_FRAME;

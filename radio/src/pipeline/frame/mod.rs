@@ -12,7 +12,7 @@ pub struct Frame {
 
 impl Frame {
 	// NOTE: using big endian because it matches how its written
-	pub const IDENT: [u8; 4] = 0b11110000111100001111000011110000_u32.to_be_bytes();
+	pub const IDENT: [u8; 4] = 0b11110000111100001111000011110001_u32.to_be_bytes();
 	pub const ENCODED_IDENT_LENGTH: usize = Self::IDENT.len() * WtfECC::EXPANSION_RATIO;
 
 	/// creates a new `Frame`, returning `Err(bin.copy_to_bytes())` if `bin` is too big.
