@@ -1,9 +1,11 @@
 mod bindings;
 
 use std::{mem, ptr};
+use std::ffi::{c_int, c_void};
 use std::marker::PhantomData;
+use std::ops::{Add, Div, Mul, Sub};
 use anyhow::{Error, Result};
-use std::os::raw::c_char;
+use std::os::raw::{c_char, c_uint};
 use num_complex::Complex;
 use crate::radios::bladerf::bindings::*;
 
@@ -29,8 +31,6 @@ pub struct StreamFormat{
 
 pub trait GenericStream{
     fn return_format_type() -> StreamFormat;
-
-    fn _blank() -> bool;
 }
 
 impl GenericStream for i16 {
@@ -41,9 +41,6 @@ impl GenericStream for i16 {
         }
     }
 
-    fn _blank() -> bool {
-        false
-    }
 }
 
 impl GenericStream for u16 {
@@ -54,9 +51,6 @@ impl GenericStream for u16 {
         }
     }
 
-    fn _blank() -> bool {
-        false
-    }
 }
 
 impl GenericStream for i8{
@@ -67,9 +61,6 @@ impl GenericStream for i8{
         }
     }
 
-    fn _blank() -> bool {
-        false
-    }
 }
 
 impl GenericStream for u8{
@@ -80,9 +71,6 @@ impl GenericStream for u8{
         }
     }
 
-    fn _blank() -> bool {
-        false
-    }
 }
 
 
@@ -93,10 +81,6 @@ impl GenericStream for f32{
             desired_format: Formats::F32,
         }
     }
-
-    fn _blank() -> bool {
-        false
-    }
 }
 
 impl GenericStream for f64{
@@ -106,13 +90,10 @@ impl GenericStream for f64{
             desired_format: Formats::F64,
         }
     }
-
-    fn _blank() -> bool {
-        false
-    }
 }
 
-pub struct Stream<T: GenericStream> {
+
+pub struct Stream<T: GenericStream + From<i16> + Div<Output = T>> {
     pub direction: Direction,
     pub channel: i32,
 
@@ -126,31 +107,32 @@ pub struct Stream<T: GenericStream> {
 }
 
 
-impl<T:GenericStream> Stream<T> {
+impl<T:GenericStream + From<i16> + Div<Output = T>> Stream<T> {
     pub fn new(device: *mut bladerf,direction: Direction, channel:i32) -> Stream<T>{
         // get blade's name for channels
         let blade_channel =
             if direction == Direction::RX {
                 if channel == 1{
-                    bladerf_channel_layout_BLADERF_RX_X1 as bladerf_channel
+                    bladerf_channel_layout_BLADERF_RX_X1
                 }else {
-                    bladerf_channel_layout_BLADERF_RX_X2 as bladerf_channel
+                    bladerf_channel_layout_BLADERF_RX_X2
                 }
             }else if channel == 1{
-                bladerf_channel_layout_BLADERF_TX_X1 as bladerf_channel
+                bladerf_channel_layout_BLADERF_TX_X1
             }else {
-                bladerf_channel_layout_BLADERF_TX_X2 as bladerf_channel
+                bladerf_channel_layout_BLADERF_TX_X2
             };
 
         unsafe {
             // start stream (our code is designed to be synchronous so this will be always true)
-            bladerf_enable_module(device,blade_channel,true);
+            bladerf_enable_module(device,blade_channel as bladerf_channel,true);
+            bladerf_sync_config(device,blade_channel,T::return_format_type().format,16 as c_uint,2048 as c_uint, 8 as c_uint,1000 as c_uint);
         }
 
         Stream{
             direction,
             channel,
-            blade_channel,
+            blade_channel: blade_channel as bladerf_channel,
             meta: bladerf_metadata {
                 timestamp: 0,
                 flags: 0,
@@ -163,7 +145,60 @@ impl<T:GenericStream> Stream<T> {
         }
     }
 
-    pub fn rx(&self, arr:&mut [Complex<T>]){
+    /// This function takes data we have received from a sample and sets them, in place, with the
+    /// intended output
+    pub fn convert(&self,input:*mut c_void,output:&mut [Complex<T>]){
+
+        let arr:&[i16] = unsafe {
+             std::slice::from_raw_parts(input as *const i16,output.len() * 2)
+        };
+
+
+        match T::return_format_type().desired_format {
+            Formats::F32 => {
+                for (index,x) in output.iter_mut().enumerate(){
+                    x.re = T::from(arr[index * 2]) / T::from(2048);
+                    x.im = T::from(arr[(index * 2) + 1]) / T::from(2048);
+                }
+            },
+            Formats::F64 => {
+
+            },
+            Formats::U16 => {
+
+            },
+            Formats::U8 => {
+
+            },
+            Formats::I16 => {
+
+            },
+            Formats::I8 => {
+
+            },
+        }
+
+    }
+
+    pub fn rx(&mut self, arr:&mut [Complex<T>], timeout_ms: u32){
+
+        let samples = if T::return_format_type().format == bladerf_format_BLADERF_FORMAT_SC16_Q11{
+            vec![0i16; arr.len() * 2].as_mut_ptr() as *mut _
+        }else {
+            vec![0i8; arr.len() * 2].as_mut_ptr() as *mut _
+        };
+
+        unsafe {
+            bladerf_sync_rx(
+                self.device,
+                samples,
+                (arr.len() * 2) as _,
+                &mut self.meta as *mut _,
+                timeout_ms as c_uint
+            );
+        }
+
+        self.convert(samples, arr);
 
     }
     pub fn tx(&self, arr:&mut [Complex<T>]){
@@ -173,6 +208,7 @@ impl<T:GenericStream> Stream<T> {
     pub fn set_lo_frequency(&mut self, frequency: u64) -> Result<()> {
         unsafe {
             if bladerf_set_frequency(self.device, self.blade_channel, frequency) == 0 {
+
                 Ok(())
             } else {
                 Err(Error::msg("Error setting frequency"))
@@ -218,9 +254,9 @@ impl<T:GenericStream> Stream<T> {
     }
 }
 
-pub struct RxStream<T:GenericStream>{ stream: Stream<T>, }
+pub struct RxStream<T:GenericStream + From<i16> + Div<Output = T>>{ stream: Stream<T>, }
 
-impl<T:GenericStream> RxStream<T> {
+impl<T:GenericStream + From<i16> + Div<Output = T>> RxStream<T> {
     pub fn new(device: *mut bladerf,channel:i32) -> RxStream<T>{
         RxStream{
             stream: Stream::new(device, Direction::RX, channel)
@@ -243,13 +279,13 @@ impl<T:GenericStream> RxStream<T> {
         self.stream.set_sample_rate(sample_rate)
     }
 
-    pub fn rx(&mut self, arr: &mut [Complex<T>]){
-
+    pub fn rx(&mut self, arr: &mut [Complex<T>], timeout_ms:u32){
+        self.stream.rx(arr,timeout_ms);
     }
 }
 
-pub struct TxStream<T:GenericStream>{ stream: Stream<T>, }
-impl<T:GenericStream> TxStream<T> {
+pub struct TxStream<T:GenericStream + From<i16> + Div<Output = T>>{ stream: Stream<T>, }
+impl<T:GenericStream + From<i16> + Div<Output = T>> TxStream<T> {
     pub fn new(device: *mut bladerf,channel:i32) -> TxStream<T>{
         TxStream{
             stream: Stream::new(device, Direction::TX, channel)
@@ -272,19 +308,19 @@ impl<T:GenericStream> TxStream<T> {
         self.stream.set_sample_rate(sample_rate)
     }
 
-    pub fn rx(&mut self, arr: &mut [Complex<T>]){
+    pub fn tx(&mut self, arr: &mut [Complex<T>], timeout_ms:u32){
 
     }
 }
 
 
-pub struct Radio<T:GenericStream> {
+pub struct Radio<T:GenericStream + From<i16> + Div<Output = T>> {
     device: *mut bladerf,
 
     marker: PhantomData<T>,
 }
 
-impl<T:GenericStream> Radio<T>{
+impl<T:GenericStream + From<i16> + Div<Output = T>> Radio<T>{
     pub fn new() -> Result<Radio<T>> {
         // create the bladeRF struct
         let device_identifier = c_char::from(0); // just an empty string (yes I know it looks like a char, but C is dumb)
