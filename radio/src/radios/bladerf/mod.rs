@@ -15,6 +15,7 @@ pub enum Direction{
     TX
 }
 
+#[derive(PartialEq)]
 pub enum Formats{
     U16,
     I16,
@@ -93,7 +94,7 @@ impl GenericStream for f64{
 }
 
 
-pub struct Stream<T: GenericStream + From<i16> + Div<Output = T>> {
+pub struct Stream<T: GenericStream + From<i16> + Copy + Add<Output = T> + Div<Output = T>> {
     pub direction: Direction,
     pub channel: i32,
 
@@ -107,7 +108,7 @@ pub struct Stream<T: GenericStream + From<i16> + Div<Output = T>> {
 }
 
 
-impl<T:GenericStream + From<i16> + Div<Output = T>> Stream<T> {
+impl<T:GenericStream + From<i16> + Copy + Add<Output = T> + Div<Output = T>> Stream<T> {
     pub fn new(device: *mut bladerf,direction: Direction, channel:i32) -> Stream<T>{
         // get blade's name for channels
         let blade_channel =
@@ -154,28 +155,21 @@ impl<T:GenericStream + From<i16> + Div<Output = T>> Stream<T> {
         };
 
 
-        match T::return_format_type().desired_format {
-            Formats::F32 => {
-                for (index,x) in output.iter_mut().enumerate(){
-                    x.re = T::from(arr[index * 2]) / T::from(2048);
-                    x.im = T::from(arr[(index * 2) + 1]) / T::from(2048);
-                }
-            },
-            Formats::F64 => {
-
-            },
-            Formats::U16 => {
-
-            },
-            Formats::U8 => {
-
-            },
-            Formats::I16 => {
-
-            },
-            Formats::I8 => {
-
-            },
+        if T::return_format_type().desired_format == Formats::F64 || T::return_format_type().desired_format == Formats::F32 {
+            for (index, x) in output.iter_mut().enumerate() {
+                x.re = T::from(arr[index * 2]) / T::from(2048);
+                x.im = T::from(arr[(index * 2) + 1]) / T::from(2048);
+            }
+        } else if T::return_format_type().desired_format == Formats::U16{
+            for (index, x) in output.iter_mut().enumerate() {
+                x.re = T::from(arr[index * 2]) + T::from(2048);
+                x.im = T::from(arr[(index * 2) + 1]) + T::from(2048);
+            }
+        }else if T::return_format_type().desired_format == Formats::U8{
+            for (index, x) in output.iter_mut().enumerate() {
+                x.re = T::from(arr[index * 2]) + T::from(256);
+                x.im = T::from(arr[(index * 2) + 1]) + T::from(256);
+            }
         }
 
     }
@@ -254,9 +248,9 @@ impl<T:GenericStream + From<i16> + Div<Output = T>> Stream<T> {
     }
 }
 
-pub struct RxStream<T:GenericStream + From<i16> + Div<Output = T>>{ stream: Stream<T>, }
+pub struct RxStream<T:GenericStream + From<i16> + Copy + Add<Output = T> + Div<Output = T>>{ stream: Stream<T>, }
 
-impl<T:GenericStream + From<i16> + Div<Output = T>> RxStream<T> {
+impl<T:GenericStream + From<i16> + Copy + Add<Output = T> + Div<Output = T>> RxStream<T> {
     pub fn new(device: *mut bladerf,channel:i32) -> RxStream<T>{
         RxStream{
             stream: Stream::new(device, Direction::RX, channel)
@@ -284,8 +278,8 @@ impl<T:GenericStream + From<i16> + Div<Output = T>> RxStream<T> {
     }
 }
 
-pub struct TxStream<T:GenericStream + From<i16> + Div<Output = T>>{ stream: Stream<T>, }
-impl<T:GenericStream + From<i16> + Div<Output = T>> TxStream<T> {
+pub struct TxStream<T:GenericStream + From<i16> + Copy + Add<Output = T> + Div<Output = T>>{ stream: Stream<T>, }
+impl<T:GenericStream + From<i16> + Copy + Add<Output = T> + Div<Output = T>> TxStream<T> {
     pub fn new(device: *mut bladerf,channel:i32) -> TxStream<T>{
         TxStream{
             stream: Stream::new(device, Direction::TX, channel)
@@ -314,13 +308,13 @@ impl<T:GenericStream + From<i16> + Div<Output = T>> TxStream<T> {
 }
 
 
-pub struct Radio<T:GenericStream + From<i16> + Div<Output = T>> {
+pub struct Radio<T:GenericStream + From<i16> + Copy + Add<Output = T> + Div<Output = T>> {
     device: *mut bladerf,
 
     marker: PhantomData<T>,
 }
 
-impl<T:GenericStream + From<i16> + Div<Output = T>> Radio<T>{
+impl<T:GenericStream + From<i16> + Copy + Add<Output = T> + Div<Output = T>> Radio<T>{
     pub fn new() -> Result<Radio<T>> {
         // create the bladeRF struct
         let device_identifier = c_char::from(0); // just an empty string (yes I know it looks like a char, but C is dumb)
