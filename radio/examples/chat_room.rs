@@ -1,47 +1,53 @@
-use std::str;
-use std::sync::{Arc, RwLock};
-use std::thread::spawn;
+use std::io;
+use std::thread;
+
+use bytes::Bytes;
+
+use radio::pipeline::prelude::*;
+use radio::pipeline::middle_man; // TODO: remove
 
 fn main() {
-    // Start Radio stream
-    let check = radio::RadioStream::new();
+    // setup the tasks to send
+    let rx_input = user_input_thread();
+    let (encoder, rx_encode) = encode_task::Task::new(rx_input);
 
-    // Ensure radio is connected
-    assert!(check.is_ok(), "Radio is not connected!");
+    // TODO: replace w/ the radio sending and receiving task. REMEMBER TO START THEM!!!
+    let (middle_man, rx_middle_man) = middle_man::Task::new(rx_encode);
 
-    // Radio isn't thread safe due to soapysdr so we need to lock it
-    let stream = Arc::new(RwLock::new(check.unwrap()));
-    let thread_clone = stream.clone();
+    // setup the tasks to receive
+    let (searcher, rx_search) = search_task::Task::new(rx_middle_man);
+    let (decoder, rx_decode) = decode_task::Task::new(rx_search);
+    output_thread(rx_decode);
 
-    // This is the thread we read transmissions from asynchronously
-    spawn(move || {
+    // start the tasks
+    searcher.start();
+    decoder.start();
+    middle_man.start();
+    encoder.start();
+}
+
+fn user_input_thread() -> flume::Receiver<Bytes> {
+    let (tx, rx) = flume::bounded(1);
+
+    thread::spawn(move || {
+        let mut input = String::new();
+
         loop {
-            // Read transmissions
-            let arr = thread_clone.read().unwrap().read().unwrap();
+            io::stdin().read_line(&mut input).expect("failed to readline");
 
-            // Turn bytes into a string
-            let check = str::from_utf8(arr.as_slice());
-
-            if let Ok(..) = check {
-                let out = check.unwrap().to_string();
-
-                if !out.is_empty() {
-                    println!("Data: {out}")
-                }
-            }
+            tx.send(input.clone().into()).expect("failed to send");
         }
     });
 
+    rx
+}
 
-    // Start chat app
-    loop {
-        // allocate space for reading user input
-        let mut line = String::new();
-
-        // Take in user input
-        std::io::stdin().read_line(&mut line).unwrap();
-
-        // Send transmission
-        stream.read().unwrap().transmit(line.as_bytes()).unwrap();
-    }
+fn output_thread(rx: flume::Receiver<Bytes>) {
+    thread::spawn(move || {
+        loop {
+            while let Ok(bin) = rx.recv() {
+                dbg!(String::from_utf8_lossy(&bin));
+            }
+        }
+    });
 }
