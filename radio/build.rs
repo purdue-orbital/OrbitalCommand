@@ -1,6 +1,7 @@
+use std::env;
 
 fn main() {
+    let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     println!("cargo:rustc-link-lib=dylib=bladeRF");
-    // TODO make this build on other peoples computers
-    println!("cargo:rustc-link-search=native=/home/nicholasball/Documents/GitHub/OrbitalCommand/radio/lib");
+    println!("cargo:rustc-link-search=native={}/lib",dir);
 }
