@@ -14,6 +14,7 @@ lazy_static = "1.4.0"
 rustdsp = { git = "https://github.com/purdue-orbital/RustDSP.git", version = "0.1.0"}
 bitvec = "1.0.1"
 flume = "0.11"
+num = "0.4.1"
 
 [dev-dependencies]
 rand = "0.8.5"
