@@ -5,10 +5,10 @@ use radio::radios::bladerf::Radio;
 fn test_radio(){
 
     let sample_rate = 20_000_000;
-    let baud_rate = 100_000;
+    let baud_rate = 1_000_000;
 
     let m = rustdsp::Modulators::new((sample_rate / baud_rate) as usize, sample_rate as f32);
-    let mut signal = m.bpsk(&[255,255,255,255,255,255,255,255,255,255,255,255,255,255,255]);
+    let mut signal = m.bpsk(vec![255,0,255].as_mut_slice());
 
     let mut radio: Radio<f32> = Radio::new().unwrap();
     let mut rx_stream = radio.create_rx_stream(0);
@@ -16,33 +16,18 @@ fn test_radio(){
 
     let mut hold = vec![Complex::new(0.0,0.0); 1024];
 
-    dbg!("Test1");
-
     rx_stream.set_gain_auto().unwrap();
-    rx_stream.set_sample_rate(20_000_000).unwrap();
-    rx_stream.set_lo_frequency(915_000_000).unwrap();
-
-    dbg!("Test2");
+    rx_stream.set_sample_rate(sample_rate).unwrap();
+    rx_stream.set_lo_frequency(916_000_000).unwrap();
 
     tx_stream.set_gain(70).unwrap();
-    tx_stream.set_sample_rate(20_000_000).unwrap();
-    tx_stream.set_lo_frequency(915_000_000).unwrap();
+    tx_stream.set_sample_rate(sample_rate).unwrap();
+    tx_stream.set_lo_frequency(916_000_000).unwrap();
 
-    dbg!("Test3");
+    tx_stream.tx(&mut signal, 1000);
+    rx_stream.rx(&mut hold, 1000);
 
-    tx_stream.tx(&mut signal, 100);
-    rx_stream.rx(&mut hold, 100);
-
-    for each in hold.iter().rev() {
-        dbg!(each);
-    }
-
-    dbg!("Test4");
+    dbg!(hold);
 
     radio.close();
-
-    dbg!("Test5");
-
-    dbg!("Test6");
-
 }
