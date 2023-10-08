@@ -1,33 +1,26 @@
 use num_complex::Complex;
-use radio::radios::bladerf::Radio;
+use radio::radios::bladerf::radio::BladeRF;
 
 #[test]
 fn test_radio(){
+    let mut radio = BladeRF::default();
 
-    let sample_rate = 20_000_000;
-    let baud_rate = 1_000_000;
+    let r = radio.create_rx_stream();
+    let t = radio.create_tx_stream();
 
-    let m = rustdsp::Modulators::new((sample_rate / baud_rate) as usize, sample_rate as f32);
-    let mut signal = m.bpsk(vec![255,0,255].as_mut_slice());
+    r.set_gain_auto().unwrap();
+    r.set_frequency(916_000_000).unwrap();
+    r.set_sample_rate(20_000_000).unwrap();
 
-    let mut radio: Radio<f32> = Radio::new().unwrap();
-    let mut rx_stream = radio.create_rx_stream(0);
-    let mut tx_stream = radio.create_tx_stream(0);
 
-    let mut hold = vec![Complex::new(0.0,0.0); 1024];
+    //t.set_gain_auto().unwrap();
+    t.set_frequency(916_000_000).unwrap();
+    t.set_sample_rate(20_000_000).unwrap();
 
-    rx_stream.set_gain_auto().unwrap();
-    rx_stream.set_sample_rate(sample_rate).unwrap();
-    rx_stream.set_lo_frequency(916_000_000).unwrap();
+    loop{
+        t.tx(vec![Complex::new(1.0,0.0);10000].as_slice());
+    }
+    let out = r.rx(100);
 
-    tx_stream.set_gain(70).unwrap();
-    tx_stream.set_sample_rate(sample_rate).unwrap();
-    tx_stream.set_lo_frequency(916_000_000).unwrap();
-
-    tx_stream.tx(&mut signal, 1000);
-    rx_stream.rx(&mut hold, 1000);
-
-    dbg!(hold);
-
-    radio.close();
+    dbg!(out);
 }
