@@ -11,7 +11,7 @@ num-complex = "0.4"
 anyhow = "1.0.69"
 bytes = "1.5.0"
 lazy_static = "1.4.0"
-rustdsp = { git = "https://github.com/purdue-orbital/RustDSP.git", version = "0.1.0"}
+rustdsp = { git = "https://github.com/purdue-orbital/RustDSP.git", version = "0.1.0" }
 bitvec = "1.0.1"
 flume = "0.11"
 num = "0.4.1"

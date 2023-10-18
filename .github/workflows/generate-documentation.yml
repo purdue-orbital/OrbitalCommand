@@ -2,7 +2,7 @@ name: Generate Documentation
 
 on:
   push:
-    branches: [ "main", "Radio", "DSP"  ]
+    branches: [ "main", "Radio", "DSP" ]
 
 env:
   CARGO_TERM_COLOR: always

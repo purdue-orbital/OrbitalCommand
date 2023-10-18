@@ -1,16 +1,17 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
 
-use actix_web::{post, get, App, HttpResponse, HttpServer, Either};
+use actix_web::{App, Either, get, HttpResponse, HttpServer, post};
 use actix_web::Either::{Left, Right};
 use actix_web::web::{Data, Json};
 use async_mutex::Mutex;
-use common::Message;
-use radio::RadioStream;
 use serde::Serialize;
 
+use common::Message;
+use radio::RadioStream;
+
 struct State {
-    radio: Mutex<RadioStream>
+    radio: Mutex<RadioStream>,
 }
 
 #[post("/launch")]
@@ -93,7 +94,7 @@ async fn main() -> std::io::Result<()> {
             .service(map_token)
             .service(actix_files::Files::new("/", "./dist").index_file("index.html"))
     })
-    .bind(("0.0.0.0", 80))?
-    .run()
-    .await
+        .bind(("0.0.0.0", 80))?
+        .run()
+        .await
 }

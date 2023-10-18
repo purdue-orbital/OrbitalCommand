@@ -3,8 +3,10 @@ use std::thread;
 
 use bytes::Bytes;
 
+use radio::pipeline::middle_man;
 use radio::pipeline::prelude::*;
-use radio::pipeline::middle_man; // TODO: remove
+
+// TODO: remove
 
 fn main() {
     // setup the tasks to send

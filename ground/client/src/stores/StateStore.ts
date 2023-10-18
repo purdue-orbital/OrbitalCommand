@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import {writable} from "svelte/store";
 import State from "../data/State";
 
 class StateStore {
@@ -6,15 +6,29 @@ class StateStore {
     private _set: Function;
     private _update: Function;
 
-    private _launchState: State = State.NotStarted;
-    private _abortState: State = State.NotStarted;
-    private _cutState: State = State.NotStarted;
-
     constructor() {
-        let { subscribe, set, update } = writable(this);
+        let {subscribe, set, update} = writable(this);
         this.subscribe = subscribe;
         this._set = set;
         this._update = update;
+    }
+
+    private _launchState: State = State.NotStarted;
+
+    public get launchState(): State {
+        return this._launchState;
+    }
+
+    private _abortState: State = State.NotStarted;
+
+    public get abortState(): State {
+        return this._abortState;
+    }
+
+    private _cutState: State = State.NotStarted;
+
+    public get cutState(): State {
+        return this._cutState;
     }
 
     async launch() {
@@ -66,27 +80,12 @@ class StateStore {
     }
 
     async update() {
-        
-    }
-    
-    public get launchState() : State {
-        return this._launchState;
+
     }
 
-    
-    public get abortState() : State {
-        return this._abortState;
-    }
 
-    
-    public get cutState() : State {
-        return this._cutState;
-    }
-    
-    
-    
 }
 
 const stateStore = new StateStore();
 
-export { stateStore, type StateStore }
+export {stateStore, type StateStore}

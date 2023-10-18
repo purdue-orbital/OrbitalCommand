@@ -6,17 +6,29 @@ class Telemetry {
     private _set: Function;
     private _update: Function;
 
-    private _temperature: number = 0;
-
-    private _gps: Vector = new Vector(0, 0, 0);
-
-    private _accel: Vector = new Vector(0, 0, 0);
-
     constructor() {
-        let { subscribe, set, update } = writable(this);
+        let {subscribe, set, update} = writable(this);
         this.subscribe = subscribe;
         this._set = set;
         this._update = update;
+    }
+
+    private _temperature: number = 0;
+
+    public get temperature(): number {
+        return this._temperature;
+    }
+
+    private _gps: Vector = new Vector(0, 0, 0);
+
+    public get gps(): Vector {
+        return this._gps;
+    }
+
+    private _accel: Vector = new Vector(0, 0, 0);
+
+    public get accel(): Vector {
+        return this._accel;
     }
 
     async update() {
@@ -37,19 +49,7 @@ class Telemetry {
         });
     }
 
-    public get gps() : Vector {
-        return this._gps;
-    }
-    
-    public get accel() : Vector {
-        return this._accel;
-    }
-    
-    public get temperature() : number {
-        return this._temperature;
-    }
-    
 }
 
 const telemetryStore = new Telemetry();
-export { telemetryStore, type Telemetry };
+export {telemetryStore, type Telemetry};

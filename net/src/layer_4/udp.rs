@@ -1,5 +1,5 @@
+use anyhow::{Error, Result};
 use ux::u13;
-use anyhow::{Result, Error};
 
 use crate::layer_3::ipv4::{Address, AssuredForwarding, DifferentiatedServices, ECN, IPPrecedence, IPV4};
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr, u8s_to_u16};
@@ -155,8 +155,8 @@ impl UDPv4 {
         let data = ipv4.get_data();
 
         // ensure data integrity
-        if data.len() <= 8{
-            return Err(Error::msg("Packet too short for UDP!"))
+        if data.len() <= 8 {
+            return Err(Error::msg("Packet too short for UDP!"));
         }
 
         Ok(UDPv4 {

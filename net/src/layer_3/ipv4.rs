@@ -388,10 +388,10 @@ impl IPV4 {
     pub fn decode(arr: &[u8]) -> Result<IPV4> {
 
         // ensure integrity of the input
-        if arr.len() <= 20{
-            return Err(Error::msg("Array not long enough"))
-        }else if arr[0] >> 4 != 4{
-            return Err(Error::msg("Improper format"))
+        if arr.len() <= 20 {
+            return Err(Error::msg("Array not long enough"));
+        } else if arr[0] >> 4 != 4 {
+            return Err(Error::msg("Improper format"));
         }
 
         let total_length = ((arr[2] as u16) << 8) | (arr[3] as u16);
@@ -406,7 +406,7 @@ impl IPV4 {
             total_length,
             identification: ((arr[4] as u16) << 8) | (arr[5] as u16),
             flags: u3::new(arr[6] >> 5),
-            fragment_offset: u13::new((((arr[6] as u16) << 11 ) >> 3) | (arr[7] as u16)),
+            fragment_offset: u13::new((((arr[6] as u16) << 11) >> 3) | (arr[7] as u16)),
             time_to_live: arr[8],
             protocol: arr[9],
             header_checksum: (arr[10] as u16) << 8 | (arr[11] as u16),

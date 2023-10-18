@@ -3,24 +3,23 @@ use std::sync::{Arc, mpsc, RwLock};
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread::{JoinHandle, spawn};
 
+use anyhow::{Error, Result};
 use tun_tap::{Iface, Mode};
 
 use radio::RadioStream;
 
-use anyhow::{Error, Result};
-
 use crate::interface::Interface;
 use crate::interface::Interface::{ETHER, System, WLAN};
-use crate::layer_3::ipv4::{Address};
+use crate::layer_3::ipv4::Address;
 use crate::layer_4::tcp::TCPv4;
 use crate::layer_4::udp::UDPv4;
 use crate::services::Service;
 use crate::tools::run_commands;
 
-fn new_read_thread(stream: NetworkStream) -> (Receiver<Option<(usize, [u8; 1500])>>, JoinHandle<()>){
+fn new_read_thread(stream: NetworkStream) -> (Receiver<Option<(usize, [u8; 1500])>>, JoinHandle<()>) {
     let (thread_tx, thread_rx) = mpsc::channel();
 
-    let handle = spawn(move ||{
+    let handle = spawn(move || {
         let mut mtu = [0; 1500];
 
         match stream.recv(mtu.as_mut_slice()) {
@@ -70,12 +69,12 @@ pub struct Device {
 
     pub stream: NetworkStream,
 
-    tx: Option<Sender<( Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>, Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>, NetworkStream)>>
+    tx: Option<Sender<(Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>, Vec<Arc<RwLock<Option<Box<dyn Service + Send>>>>>, NetworkStream)>>,
 }
 
 impl Device {
     /// Start deice for sending/receiving traffic
-    pub fn start(&mut self){
+    pub fn start(&mut self) {
         // startup instance command
         let startup = format!(
             "ip link set dev {} up", self.name
@@ -96,7 +95,7 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
         self.tx = Some(tx);
 
         // start listen thread
-        spawn(move ||{
+        spawn(move || {
 
             // Get initial values
             let empty_vec = Vec::new();
@@ -108,7 +107,7 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
             loop {
 
                 // check for updates on protocols
-                if let Ok(x) = rx.try_recv(){
+                if let Ok(x) = rx.try_recv() {
                     // ide throws an error here but no error actually occurs
                     (ports, proto, stream) = x;
                 }
@@ -117,16 +116,15 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
                 let buff =
 
 
-                if let Ok(x) = thread_rx.0.try_recv(){
+                    if let Ok(x) = thread_rx.0.try_recv() {
+                        thread_rx = new_read_thread(stream.clone());
 
-                    thread_rx = new_read_thread(stream.clone());
-
-                    // return packet
-                    x.unwrap().1[..x.unwrap().0].to_vec()
-                }else{
-                    // return nothing by default
-                    empty_vec.clone()
-                };
+                        // return packet
+                        x.unwrap().1[..x.unwrap().0].to_vec()
+                    } else {
+                        // return nothing by default
+                        empty_vec.clone()
+                    };
 
                 // ensure it is a proper IPv4 packet
                 if !buff.is_empty() && buff[0] >> 4 == 4 {
@@ -135,7 +133,7 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
                     if proto.get(buff[9] as usize).unwrap().read().unwrap().is_some() {
 
                         // run service
-                        if proto[buff[9] as usize].write().unwrap().as_mut().unwrap().run_service(buff.as_slice()){
+                        if proto[buff[9] as usize].write().unwrap().as_mut().unwrap().run_service(buff.as_slice()) {
                             // service asks to be disabled, disable
                             proto[buff[9] as usize].write().unwrap().take();
                         };
@@ -154,7 +152,7 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
                         let tcp = TCPv4::decode(buff.as_slice()).unwrap();
 
                         // ensure port is open
-                        if let Some(x) = ports[tcp.dst_port as usize].write().unwrap().as_mut()  {
+                        if let Some(x) = ports[tcp.dst_port as usize].write().unwrap().as_mut() {
                             x.run_service(buff.as_slice());
                         }
                     }
@@ -162,7 +160,6 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
             }
         }
         );
-
     }
 
     /// Set gateway and the IP address of this device
@@ -174,7 +171,7 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
     /// # Parameter(s):
     /// - 'gateway' - this the gateway to all VNICs on this system (EX: 192.168.69.0/24)
     /// - 'ip' - IP address of this device on the VLAN (EX: 192.168.69.1)
-    pub fn set_ip(&mut self, gateway: &str, ip: &str) -> Result<()>{
+    pub fn set_ip(&mut self, gateway: &str, ip: &str) -> Result<()> {
         self.ip_addr = Some(Address::from_str(ip)?);
 
         let command = format!("ip addr add dev {} local {gateway} remote {ip}", self.name);
@@ -191,16 +188,16 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
     /// - 'host_port_num' - port to use
     /// # Error(s):
     /// 1. Returns an error if port is already in use
-    pub fn add_listen_service(&mut self, service: Box<dyn Service + Send>, host_port_num:u16) -> Result<()>{
-        let hold = if self.ports.get(host_port_num as usize).unwrap().read().unwrap().is_some(){
+    pub fn add_listen_service(&mut self, service: Box<dyn Service + Send>, host_port_num: u16) -> Result<()> {
+        let hold = if self.ports.get(host_port_num as usize).unwrap().read().unwrap().is_some() {
             Err(Error::msg("Port in use"))
-        }else {
-            self.ports.insert(host_port_num as usize,Arc::new(RwLock::from(Some(service))));
+        } else {
+            self.ports.insert(host_port_num as usize, Arc::new(RwLock::from(Some(service))));
             Ok(())
         };
 
         //send update if device is running and had been updated
-        if hold.is_ok() && self.tx.is_some(){
+        if hold.is_ok() && self.tx.is_some() {
             self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.stream.clone())).unwrap();
         }
 
@@ -211,8 +208,8 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
     ///
     /// # Parameter(s):
     /// - 'host_port_num' - port to stop
-    pub fn stop_listen_service(&mut self, host_port_num:u16){
-        if self.ports.get(host_port_num as usize).is_some(){
+    pub fn stop_listen_service(&mut self, host_port_num: u16) {
+        if self.ports.get(host_port_num as usize).is_some() {
             // disable port
             self.ports[host_port_num as usize].write().unwrap().take();
         }
@@ -229,16 +226,16 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
     /// - 'host_port_num' - port to use
     /// # Error(s):
     /// 1. Returns an error if port is already in use
-    pub fn add_listen_service_without_port(&mut self, service: Box<dyn Service + Send>, protocol_num:u16) -> Result<()>{
-        let hold = if self.protocols.get(protocol_num as usize).unwrap().read().unwrap().is_some(){
+    pub fn add_listen_service_without_port(&mut self, service: Box<dyn Service + Send>, protocol_num: u16) -> Result<()> {
+        let hold = if self.protocols.get(protocol_num as usize).unwrap().read().unwrap().is_some() {
             Err(Error::msg("Port in use"))
-        }else {
+        } else {
             self.protocols[protocol_num as usize] = Arc::new(RwLock::from(Some(service)));
             Ok(())
         };
 
         //send update if device is running and had been updated
-        if hold.is_ok() && self.tx.is_some(){
+        if hold.is_ok() && self.tx.is_some() {
             self.tx.as_mut().unwrap().send((self.ports.clone(), self.protocols.clone(), self.stream.clone())).unwrap();
         }
 
@@ -249,8 +246,8 @@ sysctl net.ipv4.ip_forward=1", self.name, self.interface_name, self.interface_na
     ///
     /// # Parameter(s):
     /// - 'host_port_num' - port to stop
-    pub fn stop_listen_service_without_port(&mut self, protocol_num:u16){
-        if self.protocols.get(protocol_num as usize).unwrap().read().unwrap().is_some(){
+    pub fn stop_listen_service_without_port(&mut self, protocol_num: u16) {
+        if self.protocols.get(protocol_num as usize).unwrap().read().unwrap().is_some() {
             // disable listening
             self.protocols[protocol_num as usize].write().unwrap().take();
         }
@@ -289,7 +286,6 @@ fn get_ports() -> Vec<String> {
 
 /// List all device that could be connected to this computer
 pub fn list_devices() -> Vec<Device> {
-
     let mut list = Vec::new();
 
     let empty = vec![Arc::new(RwLock::from(None)); u16::MAX as usize];
@@ -322,7 +318,7 @@ pub fn list_devices() -> Vec<Device> {
             //iface: Arc::new(RwLock::new(Some(sys))),
             //radio: Arc::new(RwLock::from(None)),
 
-            stream: NetworkStream {iface: Arc::new(RwLock::new(Some(sys))), radio: Arc::new(RwLock::from(None))},
+            stream: NetworkStream { iface: Arc::new(RwLock::new(Some(sys))), radio: Arc::new(RwLock::from(None)) },
 
             tx: None,
         });
@@ -347,7 +343,7 @@ pub fn list_devices() -> Vec<Device> {
             //iface: Arc::new(RwLock::new(None)),
             //radio: Arc::new(RwLock::from(Option::from(sdr.unwrap()))),
 
-            stream: NetworkStream {iface: Arc::new(RwLock::new(None)), radio: Arc::new(RwLock::from(Some(sdr.unwrap())))},
+            stream: NetworkStream { iface: Arc::new(RwLock::new(None)), radio: Arc::new(RwLock::from(Some(sdr.unwrap()))) },
 
             tx: None,
         })
@@ -358,32 +354,31 @@ pub fn list_devices() -> Vec<Device> {
 
 /// This function streamlines using
 #[derive(Clone)]
-pub struct NetworkStream{
+pub struct NetworkStream {
     pub iface: Arc<RwLock<Option<Iface>>>,
     pub radio: Arc<RwLock<Option<RadioStream>>>,
 }
 
-impl NetworkStream{
-    pub fn send(&self, arr:&[u8]) -> Result<()> {
-        if let Some(x) = self.iface.read().unwrap().as_ref(){
+impl NetworkStream {
+    pub fn send(&self, arr: &[u8]) -> Result<()> {
+        if let Some(x) = self.iface.read().unwrap().as_ref() {
             x.send(arr)?;
 
-            return Ok(())
-        } else if let Some(x) = self.radio.write().unwrap().as_mut(){
+            return Ok(());
+        } else if let Some(x) = self.radio.write().unwrap().as_mut() {
             x.transmit(arr)?;
 
-            return Ok(())
-
+            return Ok(());
         }
 
         Err(Error::msg("No device set!"))
     }
 
-    pub fn recv(&self, arr:&mut [u8]) -> Result<usize>{
-        if let Some(x) = self.iface.read().unwrap().as_ref(){
-            return Ok(x.recv(arr)?)
-        } else if let Some(x) = self.radio.read().unwrap().as_ref(){
-             return Ok(arr.as_mut().write(x.read()?.as_slice()).unwrap())
+    pub fn recv(&self, arr: &mut [u8]) -> Result<usize> {
+        if let Some(x) = self.iface.read().unwrap().as_ref() {
+            return Ok(x.recv(arr)?);
+        } else if let Some(x) = self.radio.read().unwrap().as_ref() {
+            return Ok(arr.as_mut().write(x.read()?.as_slice()).unwrap());
         }
 
         Err(Error::msg("No device set!"))

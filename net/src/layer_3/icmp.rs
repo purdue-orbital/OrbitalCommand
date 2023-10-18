@@ -1,8 +1,8 @@
+use anyhow::{Error, Result};
 use ux::u13;
-use anyhow::{Result, Error};
 
 use crate::layer_3::ipv4::{Address, DifferentiatedServices, ECN, IPV4};
-use crate::layer_3::ipv4::AssuredForwarding::{AFx0};
+use crate::layer_3::ipv4::AssuredForwarding::AFx0;
 use crate::layer_3::ipv4::IPPrecedence::DF;
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
 
@@ -197,18 +197,18 @@ impl ICMPv4 {
         let data: Vec<u8> = ipv4.get_data();
 
         // Ensure data integrity
-        if data.len() <= 8{
-            return Err(Error::msg("Packet too short for ICMP!"))
+        if data.len() <= 8 {
+            return Err(Error::msg("Packet too short for ICMP!"));
         }
 
         Ok(
-        ICMPv4 {
-            header: ipv4,
-            message_type: data[0],
-            code: data[1],
-            checksum: (data[2] as u16) << 8 | data[3] as u16,
-            rest_of_header: (data[4] as u32) << 24 | (data[5] as u32) << 16 | (data[6] as u32) << 8 | data[7] as u32,
-            data: data[8..].to_vec(),
-        })
+            ICMPv4 {
+                header: ipv4,
+                message_type: data[0],
+                code: data[1],
+                checksum: (data[2] as u16) << 8 | data[3] as u16,
+                rest_of_header: (data[4] as u32) << 24 | (data[5] as u32) << 16 | (data[6] as u32) << 8 | data[7] as u32,
+                data: data[8..].to_vec(),
+            })
     }
 }

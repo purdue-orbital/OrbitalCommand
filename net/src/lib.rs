@@ -9,7 +9,7 @@ pub mod device;
 pub mod interface;
 pub mod services;
 
-pub mod datagrams{
+pub mod datagrams {
     pub mod dns;
 }
 

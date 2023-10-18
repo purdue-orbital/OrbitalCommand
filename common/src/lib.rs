@@ -20,7 +20,7 @@ pub enum Message {
         temperature: f64,
         gps: Vec3,
         acceleration: Vec3,
-    }
+    },
 }
 
 impl TryFrom<&[u8]> for Message {

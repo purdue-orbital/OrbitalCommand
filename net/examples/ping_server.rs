@@ -1,9 +1,10 @@
 use std::thread;
 use std::time::Duration;
-use net::device::list_devices;
-use net::services::{Ping};
 
-fn main(){
+use net::device::list_devices;
+use net::services::Ping;
+
+fn main() {
     // Test settings
     let gateway = "192.168.69.0/24";
     let ip = "192.168.69.1";
@@ -12,7 +13,7 @@ fn main(){
     let mut device = list_devices()[0].clone();
 
     // set IP and gateway
-    device.set_ip(gateway,ip).unwrap();
+    device.set_ip(gateway, ip).unwrap();
 
     // start device
     device.start();

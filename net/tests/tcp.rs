@@ -1,7 +1,6 @@
 use net::layer_3::ipv4::Address;
 use net::layer_4::tcp::{TcpFlags, TCPv4};
 
-
 #[test]
 pub fn encode_decode() {
     let mut x = TCPv4::new(
