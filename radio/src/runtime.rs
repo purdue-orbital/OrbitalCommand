@@ -28,6 +28,7 @@ impl Runtime {
         tx_stream.set_frequency(settings.lo_frequency as u64)?;
         tx_stream.set_gain(50)?;
         tx_stream.set_sample_rate(settings.sample_rate as u64)?;
+        tx_stream.dc_calibrate();
 
         // create rx channel
         let (tx, rx) = flume::unbounded();
@@ -44,6 +45,8 @@ impl Runtime {
             rx_stream.set_frequency(settings.lo_frequency as u64).unwrap();
             rx_stream.set_gain_auto().unwrap();
             rx_stream.set_sample_rate(settings.sample_rate as u64).unwrap();
+            rx_stream.enable_pll();
+            rx_stream.dc_calibrate();
 
             loop {
                 // // sample
@@ -97,6 +100,10 @@ impl Runtime {
 
         for x in self.rx_channel.iter(){
             buffer.push(x);
+
+            if buffer.len() > 1_000{
+                return buffer;
+            }
         }
 
         buffer
