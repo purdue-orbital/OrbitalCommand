@@ -14,11 +14,19 @@ pub fn main() {
 
     let r = Runtime::new(setting).unwrap();
 
-    r.tx(&[255, 255, 255, 255]);
+    r.tx(&[127, 127, 127, 127]);
 
-    sleep(Duration::from_secs(10));
+    sleep(Duration::from_secs(1));
 
     let arr = r.rx();
 
-    dbg!(arr);
+    let test_arr = vec![0;4];
+
+    for x in arr{
+        for y in 0..8 {
+
+        }
+
+    }
+
 }
