@@ -21,7 +21,6 @@ use flume::{Receiver, Sender};
 use num_complex::Complex;
 use rustdsp::{Demodulators, Modulators};
 
-use crate::frame::Frame;
 use crate::pipeline::create_bytes_channel;
 use crate::pipeline::frame::encode_task;
 use crate::pipeline::frame::encode_task::Task;
@@ -179,7 +178,7 @@ impl RadioStream {
 
         // Radio settings
         let set = RadioSettings {
-            sample_rate: 2e7,
+            sample_rate: 4e6,
             lo_frequency: 916e6,
             lpf_filter: 1e5,
             channels_in_use: 0,
@@ -246,7 +245,7 @@ impl RadioStream {
 
         unsafe {self.encode_start.send(to_bytes).unwrap_unchecked()};
 
-        if let Ok(x) =  self.encode_end.recv(){
+        if let Ok(x) = self.encode_end.recv(){
             // Modulate
             let signal = self.modulation.bpsk(x.to_vec().as_slice());
 
@@ -260,11 +259,11 @@ impl RadioStream {
 
     }
 
-    /// This a wrapper function that allows for direct transmission of frames
-    pub fn transmit_frame(&self, frame: &Frame) -> Result<()> {
-        self.transmit(&frame.assemble())
-    }
-
+    // /// This a wrapper function that allows for direct transmission of frames
+    // pub fn transmit_frame(&self, frame: &Frame) -> Result<()> {
+    //     self.transmit(&frame.assemble())
+    // }
+    //
     /// This process samples read and return any data received
     pub fn read(&self) -> Result<Vec<u8>> {
         let mut stuff = if let Ok(stuff_to_clone) = self.rx_buffer.read() {
@@ -283,20 +282,22 @@ impl RadioStream {
 
         // Clear buffer
         if let Ok(mut writeable) = self.rx_buffer.write() {
+            let copy = stuff[0].clone();
+
             writeable.clear();
 
-            Ok(stuff[0].clone())
+            Ok(copy)
         } else {
             Err(Error::msg("Error trying to lock buffer to clear!"))
         }
     }
 
-    /// This is a wrapper class that allows for the reading and receiving of frames directly
-    pub fn receive_frames(&self) -> Result<Frame> {
-        if let Ok(bytes) = self.read() {
-            Ok(Frame::from(bytes.as_slice()))
-        } else {
-            Err(Error::msg("Failed to read from stream!"))
-        }
-    }
+    // /// This is a wrapper class that allows for the reading and receiving of frames directly
+    // pub fn receive_frames(&self) -> Result<Frame> {
+    //     if let Ok(bytes) = self.read() {
+    //         Ok(Frame::from(bytes.as_slice()))
+    //     } else {
+    //         Err(Error::msg("Failed to read from stream!"))
+    //     }
+    // }
 }

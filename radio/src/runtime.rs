@@ -11,8 +11,6 @@ use rustdsp::Demodulators;
 use rustdsp::filters::fir;
 use rustdsp::filters::fir::shapes::WindowShapes::Rectangle;
 
-use crate::frame::{Frame, IDENT_VEC};
-use crate::pipeline::{create_bytes_channel, middle_man};
 use crate::pipeline::frame::{decode_task, encode_task};
 use crate::pipeline::ident_search::search_task;
 
@@ -31,8 +29,6 @@ pub struct Runtime {
     demod_instance: Demodulators,
 
     demoded_value: u8,
-
-    ident_window: Vec<u8>,
 
     record_window: Vec<u8>,
 
@@ -69,8 +65,6 @@ impl Runtime {
 
             demoded_value: 0,
 
-            ident_window: vec![0; 3*(IDENT_VEC.len())],
-
             record_window: vec![],
 
             bin: 0,
@@ -89,7 +83,11 @@ impl Runtime {
 
     /// What to run on demod state
     pub fn demod(&mut self) {
-        unsafe {self.demoded_value = self.demod_instance.bpsk(self.current_samples.clone())[0]};
+        self.demoded_value = self.demod_instance.bpsk(self.current_samples.clone())[0];
+    }
+
+    pub fn filter(&mut self) {
+        self.filter_instance.run(self.current_samples.as_mut_slice());
     }
 
     pub fn eval(&mut self){
@@ -110,15 +108,15 @@ impl Runtime {
         self.current_samples = samples;
 
         // filter
-        //self.filter();
+        self.filter();
 
         // demod
         self.demod();
 
         self.eval();
 
-       if let Ok(x) = self.end.try_recv(){
+        if let Ok(x) = self.end.try_recv(){
            unsafe {self.buffer.write().unwrap_unchecked().push(x.to_vec())}
-       }
+        }
     }
 }

@@ -17,18 +17,22 @@ fn main() {
     spawn(move || {
         loop {
             // Read transmissions
-            let arr = thread_clone.read().unwrap().read().unwrap();
+            let p1 = thread_clone.read().unwrap();
+            let arr = p1.read().unwrap();
 
-            // Turn bytes into a string
-            let check = str::from_utf8(arr.as_slice());
+                // Turn bytes into a string
+                let check = str::from_utf8(arr.as_slice());
 
-            if let Ok(..) = check {
-                let out = check.unwrap().to_string();
 
-                if !out.is_empty() {
-                    println!("Data: {out}")
+                if let Ok(..) = check {
+                    let out = check.unwrap().to_string();
+
+                    if !out.is_empty() {
+                        println!("Data: {out}")
+                    }
                 }
-            }
+
+            p1.rx_buffer.write().unwrap().clear();
         }
     });
 
