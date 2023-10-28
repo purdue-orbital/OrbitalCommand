@@ -113,27 +113,6 @@ pub fn bits_per_symbol() -> u8 {
     }
 }
 
-/// This is a helper function that makes it easy to change mod and demod functions on the fly.
-pub fn demodulation(obj: &Demodulators, arr: Vec<Complex<f32>>) -> Vec<u8> {
-    match MOD_TYPE {
-        ModulationType::ASK => { obj.ask(arr) }
-        ModulationType::FSK => { obj.fsk(arr) }
-        ModulationType::BPSK => { obj.bpsk(arr) }
-        ModulationType::QPSK => { obj.qpsk(arr) }
-    }
-}
-
-/// This is a helper function that makes it easy to change mod and demod functions on the fly.
-pub fn modulation(obj: &Modulators, arr: &[u8]) -> Vec<Complex<f32>> {
-    match MOD_TYPE {
-        ModulationType::ASK => { obj.ask(arr) }
-        ModulationType::FSK => { obj.fsk(arr) }
-        ModulationType::BPSK => { obj.bpsk(arr) }
-        ModulationType::QPSK => { obj.qpsk(arr) }
-    }
-}
-
-
 unsafe impl Send for RadioStream {}
 
 unsafe impl Sync for RadioStream {}
@@ -184,7 +163,7 @@ impl RadioStream {
             channels_in_use: 0,
             gain: 100.0,
             radio,
-            baud_rate: 2e4,
+            baud_rate: 2e5,
             size: 0,
         };
 
@@ -220,7 +199,7 @@ impl RadioStream {
 
                 // rx loop
                 loop {
-                    let err = rx_stream.fetch(&[mtu.as_mut_slice()]);
+                    let err = rx_stream.fetch(&mut [mtu.as_mut_slice()]);
 
                     if err.is_err() {
                         println!("\

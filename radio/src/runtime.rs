@@ -9,7 +9,7 @@ use bytes::Bytes;
 use flume::{Receiver, Sender};
 use rustdsp::Demodulators;
 use rustdsp::filters::fir;
-use rustdsp::filters::fir::shapes::WindowShapes::Rectangle;
+use rustdsp::filters::fir::shapes::WindowShapes::{Blackman, Rectangle, Welch};
 
 use crate::pipeline::frame::{decode_task, encode_task};
 use crate::pipeline::ident_search::search_task;
@@ -36,8 +36,6 @@ pub struct Runtime {
 
     bin_counter: u8,
 
-    state_counter: u8,
-
     buffer: Arc<RwLock<Vec<Vec<u8>>>>,
 
     start: Sender<u8>,
@@ -59,7 +57,7 @@ impl Runtime {
         Runtime {
             current_samples: vec![],
 
-            filter_instance: fir::Windowing::new(Rectangle, samples_per_symbol, 0),
+            filter_instance: fir::Windowing::new(Blackman, samples_per_symbol, 0.16),
 
             demod_instance: Demodulators::new(samples_per_symbol, sample_rate),
 
@@ -71,8 +69,6 @@ impl Runtime {
 
             bin_counter: 0,
 
-            state_counter: 0,
-
             buffer,
 
             start: tx_start,
@@ -83,7 +79,7 @@ impl Runtime {
 
     /// What to run on demod state
     pub fn demod(&mut self) {
-        self.demoded_value = self.demod_instance.bpsk(self.current_samples.clone())[0];
+        self.demoded_value = self.demod_instance.bpsk(self.current_samples.as_slice())[0];
     }
 
     pub fn filter(&mut self) {

@@ -125,7 +125,7 @@ impl Rx {
     }
 
     /// This function fetches the sample in place (to improve performance)
-    pub fn fetch(&mut self, arr: &[&mut [Complex<f32>]]) -> Result<()> {
+    pub fn fetch(&mut self, arr: &mut [&mut [Complex<f32>]]) -> Result<()> {
         self.stream.read(arr, 100000000_i64)?;
 
         Ok(())
