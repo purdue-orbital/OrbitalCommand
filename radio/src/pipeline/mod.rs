@@ -1,11 +1,13 @@
 pub mod middle_man;
 pub mod frame;
 pub mod ident_search;
+pub mod filter;
 
 pub mod prelude {
 	pub use super::frame::{encode_task, decode_task};
 	pub use super::ident_search::search_task;
 	pub use super::create_bytes_channel;
+	pub use super::filter;
 }
 
 use flume::{Sender, Receiver};
