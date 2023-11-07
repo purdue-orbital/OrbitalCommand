@@ -1,16 +1,16 @@
-FROM rustlang/rust:nightly AS builder
+FROM rust AS builder
 
 ARG TARGET_CRATE=ground
 
 RUN apt-get update
 #RUN apk add soapy-sdr-dev --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
-RUN apt-get install -y libsoapysdr-dev build-essential clang
+RUN apt-get install -y libsoapysdr-dev build-essential clang libudev-dev
 RUN apt-get update && apt-get install -y \
     software-properties-common \
     npm
-RUN npm install npm@latest -g && \
-    npm install n -g && \
-    n latest
+# RUN npm install npm@latest -g && \
+#     npm install n -g && \
+#     n latest
 
 
 #RUN ldd /usr/lib/libSoapySDR.so && sleep 30
@@ -37,10 +37,10 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cargo build --release
 
 # Client shit
-RUN mkdir client
-COPY $TARGET_CRATE/client/*.* ./client/
-WORKDIR /usr/src/orbital/$TARGET_CRATE/client
-RUN if [ -e "package.json" ] ; then npm install ; fi
+# RUN mkdir client
+# COPY $TARGET_CRATE/client/*.* ./client/
+# WORKDIR /usr/src/orbital/$TARGET_CRATE/client
+# RUN if [ -e "package.json" ] ; then npm install ; fi
 
 # Copy and build internal libraries
 WORKDIR /usr/src/orbital

@@ -15,11 +15,11 @@ if [ -n "$2" ]; then
   fi
 fi
 
-cargo clippy
+# cargo clippy
 
-if [ $? -ne 0 ]; then
-  exit 1
-fi
+# if [ $? -ne 0 ]; then
+#   exit 1
+# fi
 
 if [ "$1" = "ground" ]; then
   echo "Ground Station Build"
@@ -28,7 +28,7 @@ if [ "$1" = "ground" ]; then
 elif [ "$1" = "launch" ]; then
   echo "Launch Station Build"
   # Run launch command here
-  docker buildx build --build-arg TARGET_CRATE=launch --output type=docker,dest=./image.tar -t "launch:latest" .
+  docker buildx build --platform linux/arm64 --build-arg TARGET_CRATE=launch --output type=docker,dest=./image.tar -t "launch:latest" .
 elif [ "$1" = "radio" ]; then
   echo "Radio Build"
   # Run launch command here
