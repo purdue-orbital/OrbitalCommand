@@ -15,4 +15,5 @@ log = "0.4.20"
 mpu9250-i2c = "0.6.8"
 rppal = { version = "0.15.0", features = ["hal"] }
 serialport = "4.2.2"
+signal-hook = "0.3.17"
 ublox = "0.4.4"

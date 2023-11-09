@@ -1,12 +1,13 @@
 #![deny(clippy::unwrap_used)]
 
-use std::{process::Command, str::FromStr};
+use std::{process::Command, str::FromStr, sync::{Arc, atomic::AtomicBool}, thread};
 
 use chrono::{NaiveDateTime, Utc, DateTime};
 use ds323x::{Ds323x, DateTimeAccess};
 use mpu9250_i2c::Mpu9250;
 use rppal::{i2c::I2c, hal::Delay};
 use serialport::SerialPort;
+use signal_hook::{consts::TERM_SIGNALS, flag};
 use ublox::{CfgPrtUartBuilder, UartPortId, UartMode, DataBits, Parity, StopBits, InProtoMask, OutProtoMask};
 use clap::{Parser as ClapParser, Subcommand};
 use log::{warn, error};
@@ -40,6 +41,18 @@ enum ClockCommands {
 }
 
 fn main() {
+    let termination_flag = Arc::new(AtomicBool::new(false));
+    for sig in TERM_SIGNALS {
+        // When terminated by a second term signal, exit with exit code 1.
+        // This will do nothing the first time (because term_now is false).
+        flag::register_conditional_shutdown(*sig, 1, Arc::clone(&termination_flag)).expect("Failed to register conditional signal!");
+        // But this will "arm" the above for the second time, by setting it to true.
+        // The order of registering these is important, if you put this one first, it will
+        // first arm and then terminate ‒ all in the first round.
+        flag::register(*sig, Arc::clone(&termination_flag)).expect("Failed to register signal!");
+    }
+    println!("Signals hooked");
+
     let args = Args::parse();
 
     let mut rtc = Ds323x::new_ds3231(I2c::new().expect("Failed to open RTC I2C connection!"));
@@ -68,7 +81,7 @@ fn main() {
         warn!("Failed to set system clock: {}", e.to_string());
     }
 
-    loop {
+    while !termination_flag.load(std::sync::atomic::Ordering::SeqCst) {
         gps
             .update(|packet| match packet {
                 PacketRef::MonVer(packet) => {
