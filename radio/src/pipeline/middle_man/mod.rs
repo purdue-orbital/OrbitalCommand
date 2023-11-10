@@ -9,7 +9,6 @@ use crate::pipeline::SEND_EXPECT_MSG;
 pub struct Task {
 	rx: Receiver<Bytes>,
 	tx: Sender<u8>,
-	thread: thread::Builder,
 }
 
 impl Task {
@@ -23,7 +22,6 @@ impl Task {
 			Self {
 				rx,
 				tx: output_tx,
-				thread: thread::Builder::new().name(Self::NAME.to_string())
 			},
 			output_rx
 		)
@@ -31,7 +29,7 @@ impl Task {
 
 	/// starts the thread for the task
 	pub fn start(self) {
-		self.thread.spawn(move || {
+		thread::Builder::new().name(Self::NAME.to_string()).spawn(move || {
 			while let Ok(bin) = self.rx.recv() {
 				for b in bin {
 					self.tx.send(b).expect(SEND_EXPECT_MSG);

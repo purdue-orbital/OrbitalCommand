@@ -66,8 +66,8 @@ impl Task {
 	}
 
 	fn ring_shift_insert(&mut self, sample: Complex<f32>) {
-		self.ident_ring_buffer.rotate_right(1);
-		self.ident_ring_buffer[0] = sample;
+		self.ident_ring_buffer.pop_back();
+		self.ident_ring_buffer.push_front(sample);
 	}
 
 	/// starts the thread for the task
@@ -75,61 +75,60 @@ impl Task {
 		thread::Builder::new()
 			.name(Self::NAME.to_string())
 			.spawn(move || {
-				while let Ok(mut sample_packet) = self.rx.recv() {
+				while let Ok(sample_packet) = self.rx.recv() {
+					self.sample_arr.append(&mut sample_packet.into());
+
 					match self.state {
 						State::Ident => {
-							for sample in sample_packet {
-								self.sample_arr.push_front(sample);
-							}
-
 							// loops sample by sample
 							while !self.sample_arr.is_empty() {
-								let temp = self.sample_arr.pop_back().unwrap();
+								let temp = self.sample_arr.pop_front().unwrap();
 								self.ring_shift_insert(temp);
 
 								let maybe_ident = self.demoder.bpsk(self.ident_ring_buffer.make_contiguous());
 								let mut decoder = WtfECC::new();
-								let plzbethefuckingident = decoder.decode(&mut Bytes::from(maybe_ident));
+								let plzbethefuckingident = decoder.decode(&mut Bytes::from(maybe_ident)); // maybe this is backwards?
 
 								if plzbethefuckingident.to_vec() == Frame::IDENT {
+									dbg!("IDENT FOUND!");
 									// HELL YEAH!!!!
 
 									self.state = State::Len;
 									break;
 								}
 							}
+
+							dbg!("no ident");
 						},
 						State::Len => {
 							let num_samples = self.samples_per_bit * 8 * Self::LEN_LEN;
-
-							for sample in sample_packet {
-								self.sample_arr.push_front(sample);
-							}
 
 							if self.sample_arr.len() >= num_samples {
 								let mut arr = Vec::with_capacity(num_samples);
 
 								for _ in 0..num_samples {
-									arr.push(self.sample_arr.pop_back().unwrap());
+									arr.push(self.sample_arr.pop_front().unwrap());
 								}
 
 								arr.reverse();
-								let encoded_len = self.demoder.bpsk(&arr);
+								let encoded_len = self.demoder.bpsk(&arr); // maybe this is backwards???
 								let mut decoder = WtfECC::new();
+
 								self.len = decoder.decode(&mut Bytes::from(encoded_len)).get_u16_le() as usize;
 								self.state = State::Data;
+
+								dbg!(self.len);
 							}
 						},
 						State::Data => {
 							let num_samples = self.samples_per_bit * 8 * WtfECC::EXPANSION_RATIO * self.len;
 
-							for sample in sample_packet {
-								self.sample_arr.push_front(sample);
-							}
+							dbg!(num_samples - self.sample_arr.len());
 
 							if self.sample_arr.len() >= num_samples {
-								let arr = self.sample_arr.make_contiguous();
-								let data = Bytes::from(self.demoder.bpsk(&arr));
+								let mut arr = self.sample_arr.make_contiguous();
+								arr.reverse();
+								let data = Bytes::from(self.demoder.bpsk(&arr)); // maybe this is backwards???
 								
 								self.tx.send(data).expect(SEND_EXPECT_MSG);
 								self.reset();
