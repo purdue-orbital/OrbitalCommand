@@ -3,12 +3,16 @@ pub mod frame;
 pub mod ident_search;
 pub mod middle_man;
 pub mod sample_ident_search;
+pub mod modulate;
 
 pub mod prelude {
     pub use super::create_bytes_channel;
     pub use super::filter;
     pub use super::frame::{decode_task, encode_task};
     pub use super::ident_search::search_task;
+    pub use super::sample_ident_search;
+    pub use super::middle_man;
+    pub use super::modulate;
 }
 
 use bytes::Bytes;

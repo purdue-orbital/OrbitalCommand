@@ -31,10 +31,14 @@ impl Task {
 	const NAME: &str = "samplewise ident search";
 	const LEN_LEN: usize = 2 * WtfECC::EXPANSION_RATIO; // length of len (I know that's weird)
 
+	fn samples_per_ident(&self) -> usize {
+		self.samples_per_bit * 8 * Frame::ENCODED_IDENT_LENGTH
+	}
+
 	fn reset(&mut self) {
 		self.ident_ring_buffer = vec![
 			Complex::new(0., 0.);
-			self.samples_per_bit * 8 * Frame::ENCODED_IDENT_LENGTH
+			self.samples_per_ident()
 		].into();
 
 		self.state = State::Ident;
@@ -66,7 +70,9 @@ impl Task {
 	}
 
 	fn ring_shift_insert(&mut self, sample: Complex<f32>) {
-		self.ident_ring_buffer.pop_back();
+		if self.ident_ring_buffer.len() >= self.samples_per_ident() {
+			self.ident_ring_buffer.pop_back();
+		}
 		self.ident_ring_buffer.push_front(sample);
 	}
 
@@ -86,10 +92,12 @@ impl Task {
 								self.ring_shift_insert(temp);
 
 								let maybe_ident = self.demoder.bpsk(self.ident_ring_buffer.make_contiguous());
+								// dbg!(&maybe_ident.len());
+
 								let mut decoder = WtfECC::new();
 								let plzbethefuckingident = decoder.decode(&mut Bytes::from(maybe_ident)); // maybe this is backwards?
-
-								if plzbethefuckingident.to_vec() == Frame::IDENT {
+								
+								if dbg!(plzbethefuckingident.to_vec()) == Frame::IDENT {
 									dbg!("IDENT FOUND!");
 									// HELL YEAH!!!!
 
@@ -126,7 +134,7 @@ impl Task {
 							dbg!(num_samples - self.sample_arr.len());
 
 							if self.sample_arr.len() >= num_samples {
-								let mut arr = self.sample_arr.make_contiguous();
+								let arr = self.sample_arr.make_contiguous();
 								arr.reverse();
 								let data = Bytes::from(self.demoder.bpsk(&arr)); // maybe this is backwards???
 								
@@ -136,7 +144,6 @@ impl Task {
 						},
 					}
 				}
-			})
-			.expect(Self::NAME);
+			}).expect(Self::NAME);
 	}
 }

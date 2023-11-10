@@ -1,6 +1,6 @@
 #[derive(Debug)]
 pub enum State {
-    Ident,
-    Len,
-    Data,
+	Ident,
+	Len,
+	Data,
 }
