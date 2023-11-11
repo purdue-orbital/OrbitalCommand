@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["create_bytes_channel"],"mod":["filter","frame","ident_search","middle_man","modulate","prelude","sample_ident_search"]};
