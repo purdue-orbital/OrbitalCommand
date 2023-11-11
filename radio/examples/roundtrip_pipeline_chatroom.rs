@@ -6,7 +6,7 @@ use bytes::Bytes;
 use radio::pipeline::prelude::*;
 use rustdsp::{Demodulators, Modulators};
 
-const SAMPLES_PER_BIT: usize = 10;
+const SAMPLES_PER_BIT: usize = 3;
 const SAMPLE_RATE: f32 = 1e6;
 
 fn main() {

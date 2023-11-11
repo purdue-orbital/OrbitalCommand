@@ -94,10 +94,16 @@ impl Task {
 								let maybe_ident = self.demoder.bpsk(self.ident_ring_buffer.make_contiguous());
 								// dbg!(&maybe_ident.len());
 
+								if (maybe_ident.len() == 12 && maybe_ident[0] == 240) {
+									dbg!(&maybe_ident);
+								}
+
 								let mut decoder = WtfECC::new();
-								let plzbethefuckingident = decoder.decode(&mut Bytes::from(maybe_ident)); // maybe this is backwards?
+								let mut plzbethefuckingident = decoder.decode(&mut Bytes::from(maybe_ident)).to_vec(); // maybe this is backwards?
+								plzbethefuckingident.reverse();
+
 								
-								if dbg!(plzbethefuckingident.to_vec()) == Frame::IDENT {
+								if plzbethefuckingident == Frame::IDENT {
 									dbg!("IDENT FOUND!");
 									// HELL YEAH!!!!
 

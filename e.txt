@@ -1,0 +1,2209 @@
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    120,
+    120,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    60,
+    60,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    60,
+    60,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    60,
+    60,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    30,
+    30,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    30,
+    30,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    30,
+    30,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    15,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    15,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    15,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    135,
+    7,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    248,
+    135,
+    0,
+    135,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    248,
+    135,
+    0,
+    135,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    252,
+    195,
+    0,
+    195,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    252,
+    195,
+    0,
+    195,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    252,
+    195,
+    0,
+    195,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    225,
+    0,
+    225,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    225,
+    0,
+    225,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    225,
+    0,
+    225,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    240,
+    0,
+    240,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    240,
+    0,
+    240,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    240,
+    0,
+    240,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    120,
+    0,
+    120,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    120,
+    0,
+    120,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    120,
+    0,
+    120,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    63,
+    60,
+    0,
+    60,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    63,
+    60,
+    0,
+    60,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    63,
+    60,
+    0,
+    60,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    31,
+    30,
+    0,
+    30,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    31,
+    30,
+    0,
+    30,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    31,
+    30,
+    0,
+    30,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    15,
+    0,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    15,
+    0,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    15,
+    0,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    135,
+    7,
+    128,
+    7,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    135,
+    7,
+    128,
+    7,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    135,
+    7,
+    128,
+    7,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    195,
+    3,
+    192,
+    3,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    195,
+    3,
+    192,
+    3,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    195,
+    3,
+    192,
+    3,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    225,
+    1,
+    224,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    225,
+    1,
+    224,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    225,
+    1,
+    224,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    240,
+    0,
+    240,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    240,
+    0,
+    240,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    240,
+    0,
+    240,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    120,
+    0,
+    120,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    120,
+    0,
+    120,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    120,
+    0,
+    120,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    60,
+    0,
+    60,
+    192,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    60,
+    0,
+    60,
+    192,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    60,
+    0,
+    60,
+    192,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    30,
+    0,
+    30,
+    224,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    30,
+    0,
+    30,
+    224,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    30,
+    0,
+    30,
+    224,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    0,
+    15,
+    240,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    0,
+    15,
+    240,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    0,
+    15,
+    240,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    7,
+    128,
+    7,
+    120,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    7,
+    128,
+    7,
+    120,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    7,
+    128,
+    7,
+    120,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    3,
+    192,
+    3,
+    60,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    3,
+    192,
+    3,
+    60,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    3,
+    192,
+    3,
+    60,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    224,
+    1,
+    30,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    224,
+    1,
+    30,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    224,
+    1,
+    30,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    240,
+    0,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    240,
+    0,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    240,
+    0,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    120,
+    0,
+    135,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    120,
+    0,
+    135,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    120,
+    0,
+    135,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    60,
+    0,
+    195,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    60,
+    0,
+    195,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    60,
+    0,
+    195,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    30,
+    128,
+    225,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    30,
+    128,
+    225,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    30,
+    128,
+    225,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    15,
+    64,
+    240,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    15,
+    64,
+    240,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    15,
+    64,
+    240,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    7,
+    160,
+    248,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    7,
+    160,
+    248,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    7,
+    160,
+    248,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    192,
+    3,
+    208,
+    252,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    192,
+    3,
+    208,
+    252,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    192,
+    3,
+    208,
+    252,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    224,
+    1,
+    232,
+    254,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    224,
+    1,
+    232,
+    254,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    224,
+    1,
+    232,
+    254,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    240,
+    0,
+    244,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    240,
+    0,
+    244,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    240,
+    0,
+    244,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    120,
+    128,
+    122,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    120,
+    128,
+    122,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    120,
+    128,
+    122,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    60,
+    192,
+    61,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    60,
+    192,
+    61,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    60,
+    192,
+    61,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    30,
+    224,
+    30,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    30,
+    224,
+    30,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    30,
+    224,
+    30,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    240,
+    15,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    240,
+    15,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    15,
+    240,
+    15,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    7,
+    248,
+    135,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    7,
+    248,
+    135,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    7,
+    248,
+    135,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    3,
+    252,
+    195,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    3,
+    252,
+    195,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    3,
+    252,
+    195,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    254,
+    225,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    254,
+    225,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    254,
+    225,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    255,
+    240,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    255,
+    240,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    0,
+    255,
+    240,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    127,
+    248,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    127,
+    248,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    127,
+    248,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    192,
+    63,
+    252,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    192,
+    63,
+    252,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    192,
+    63,
+    252,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    224,
+    159,
+    126,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    224,
+    159,
+    126,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    224,
+    159,
+    126,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    240,
+    79,
+    191,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    240,
+    79,
+    191,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    240,
+    79,
+    191,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    248,
+    167,
+    223,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    248,
+    167,
+    223,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    248,
+    167,
+    223,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    252,
+    211,
+    239,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    252,
+    211,
+    239,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    252,
+    211,
+    239,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    233,
+    247,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    233,
+    247,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    233,
+    247,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    244,
+    251,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    244,
+    251,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    244,
+    251,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    250,
+    253,
+    127,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    250,
+    253,
+    127,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    250,
+    253,
+    127,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    63,
+    253,
+    254,
+    63,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    63,
+    253,
+    254,
+    63,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    63,
+    253,
+    254,
+    63,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    159,
+    126,
+    255,
+    31,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    159,
+    126,
+    255,
+    31,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    159,
+    126,
+    255,
+    31,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    79,
+    191,
+    255,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    79,
+    191,
+    255,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    79,
+    191,
+    255,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    167,
+    223,
+    255,
+    7,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    167,
+    223,
+    255,
+    7,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    167,
+    223,
+    255,
+    7,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    211,
+    239,
+    255,
+    3,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    211,
+    239,
+    255,
+    3,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    211,
+    239,
+    255,
+    3,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    233,
+    247,
+    255,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    233,
+    247,
+    255,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    233,
+    247,
+    255,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    244,
+    251,
+    255,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    244,
+    251,
+    255,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    244,
+    251,
+    255,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    250,
+    253,
+    127,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    250,
+    253,
+    127,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    250,
+    253,
+    127,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    253,
+    254,
+    63,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    253,
+    254,
+    63,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    253,
+    254,
+    63,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    126,
+    255,
+    159,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    126,
+    255,
+    159,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    126,
+    255,
+    159,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    191,
+    255,
+    207,
+    192,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    191,
+    255,
+    79,
+    64,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    191,
+    255,
+    79,
+    64,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    223,
+    255,
+    39,
+    32,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    223,
+    255,
+    39,
+    32,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    223,
+    255,
+    39,
+    32,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    239,
+    255,
+    19,
+    16,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    239,
+    255,
+    19,
+    16,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    239,
+    255,
+    19,
+    16,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    247,
+    255,
+    9,
+    8,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    247,
+    255,
+    9,
+    8,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    247,
+    255,
+    9,
+    8,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    251,
+    255,
+    4,
+    4,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    251,
+    255,
+    4,
+    4,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    251,
+    255,
+    4,
+    4,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    253,
+    127,
+    2,
+    2,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    253,
+    127,
+    2,
+    2,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    253,
+    127,
+    2,
+    2,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    63,
+    1,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    63,
+    1,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    63,
+    1,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    159,
+    128,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    159,
+    128,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    159,
+    128,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    79,
+    64,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    79,
+    64,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    79,
+    64,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    39,
+    32,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    39,
+    32,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    39,
+    32,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    19,
+    16,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    19,
+    16,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    19,
+    16,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    9,
+    8,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    9,
+    8,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    9,
+    8,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    4,
+    4,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    4,
+    4,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    4,
+    4,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    2,
+    2,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    2,
+    2,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    2,
+    2,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    63,
+    1,
+    1,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    63,
+    1,
+    1,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    63,
+    1,
+    1,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    159,
+    128,
+    0,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    159,
+    128,
+    0,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    159,
+    128,
+    0,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    79,
+    64,
+    0,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    79,
+    64,
+    0,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    79,
+    64,
+    0,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    39,
+    32,
+    0,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    39,
+    32,
+    0,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    39,
+    32,
+    0,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    19,
+    16,
+    0,
+    64,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    19,
+    16,
+    0,
+    64,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    19,
+    16,
+    0,
+    64,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    9,
+    8,
+    0,
+    32,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    9,
+    8,
+    0,
+    32,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    9,
+    8,
+    0,
+    32,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    4,
+    4,
+    0,
+    144,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    4,
+    4,
+    0,
+    144,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    4,
+    4,
+    0,
+    144,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    2,
+    2,
+    128,
+    200,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    2,
+    2,
+    128,
+    200,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    2,
+    2,
+    128,
+    200,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    1,
+    64,
+    228,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    1,
+    64,
+    100,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    1,
+    64,
+    100,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    0,
+    32,
+    50,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    128,
+    160,
+    178,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    128,
+    160,
+    178,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    64,
+    64,
+    80,
+    217,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    64,
+    64,
+    80,
+    89,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    64,
+    64,
+    80,
+    89,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    32,
+    32,
+    168,
+    44,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    32,
+    32,
+    168,
+    172,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    32,
+    32,
+    168,
+    172,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    16,
+    16,
+    212,
+    214,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    16,
+    16,
+    212,
+    214,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    16,
+    16,
+    212,
+    214,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    8,
+    8,
+    234,
+    235,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    8,
+    8,
+    234,
+    235,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    8,
+    8,
+    234,
+    235,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    4,
+    4,
+    245,
+    245,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    4,
+    4,
+    245,
+    245,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    4,
+    4,
+    245,
+    245,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    2,
+    130,
+    250,
+    250,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    2,
+    130,
+    250,
+    122,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    2,
+    130,
+    250,
+    122,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    65,
+    253,
+    189,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    65,
+    253,
+    189,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    1,
+    65,
+    253,
+    189,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    160,
+    254,
+    94,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    160,
+    254,
+    94,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    128,
+    160,
+    254,
+    94,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    64,
+    80,
+    255,
+    175,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    64,
+    80,
+    255,
+    175,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    64,
+    80,
+    255,
+    175,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    32,
+    168,
+    255,
+    215,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    32,
+    168,
+    255,
+    215,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    32,
+    168,
+    255,
+    215,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    16,
+    212,
+    255,
+    235,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    16,
+    212,
+    255,
+    235,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    16,
+    212,
+    255,
+    235,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    8,
+    234,
+    255,
+    245,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    8,
+    234,
+    255,
+    245,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    8,
+    234,
+    255,
+    245,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    4,
+    245,
+    255,
+    250,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    4,
+    245,
+    255,
+    250,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    4,
+    245,
+    255,
+    250,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    130,
+    250,
+    255,
+    253,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    130,
+    250,
+    255,
+    253,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    130,
+    250,
+    255,
+    253,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    65,
+    253,
+    255,
+    126,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    65,
+    253,
+    255,
+    254,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    65,
+    253,
+    255,
+    254,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    160,
+    254,
+    127,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    160,
+    254,
+    127,
+    127,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    160,
+    254,
+    127,
+    127,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    80,
+    255,
+    191,
+    63,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    80,
+    255,
+    191,
+    191,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    80,
+    255,
+    191,
+    191,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    168,
+    255,
+    95,
+    223,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    168,
+    255,
+    95,
+    223,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    168,
+    255,
+    95,
+    223,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    212,
+    255,
+    47,
+    239,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    212,
+    255,
+    47,
+    239,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    212,
+    255,
+    47,
+    239,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    234,
+    255,
+    23,
+    247,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    234,
+    255,
+    23,
+    247,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    234,
+    255,
+    23,
+    247,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    245,
+    255,
+    11,
+    251,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    245,
+    255,
+    11,
+    251,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    245,
+    255,
+    11,
+    251,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    250,
+    127,
+    5,
+    253,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    250,
+    127,
+    5,
+    253,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    250,
+    127,
+    5,
+    253,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    253,
+    191,
+    2,
+    254,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    253,
+    191,
+    2,
+    254,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    253,
+    191,
+    2,
+    254,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    95,
+    129,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    95,
+    129,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    254,
+    95,
+    129,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    175,
+    64,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    175,
+    64,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    175,
+    64,
+    255,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    87,
+    160,
+    127,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    87,
+    160,
+    127,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    87,
+    160,
+    127,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    43,
+    208,
+    63,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    43,
+    208,
+    63,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    43,
+    208,
+    63,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    21,
+    232,
+    31,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    21,
+    232,
+    31,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    21,
+    232,
+    31,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    10,
+    244,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    10,
+    244,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    255,
+    10,
+    244,
+    15,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    5,
+    250,
+    7,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    5,
+    250,
+    7,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    127,
+    5,
+    250,
+    7,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    191,
+    2,
+    253,
+    3,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    191,
+    2,
+    253,
+    3,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    191,
+    2,
+    253,
+    3,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    95,
+    129,
+    254,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    95,
+    129,
+    254,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    95,
+    129,
+    254,
+    1,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    175,
+    64,
+    255,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    175,
+    64,
+    255,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    175,
+    64,
+    255,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    87,
+    160,
+    127,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    87,
+    160,
+    127,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    87,
+    160,
+    127,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    43,
+    208,
+    63,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    43,
+    208,
+    63,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    43,
+    208,
+    63,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    21,
+    232,
+    31,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    21,
+    232,
+    31,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    21,
+    232,
+    31,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    10,
+    244,
+    15,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    10,
+    244,
+    15,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    10,
+    244,
+    15,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    5,
+    250,
+    7,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    5,
+    250,
+    7,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    5,
+    250,
+    7,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    2,
+    253,
+    3,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    2,
+    253,
+    3,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    2,
+    253,
+    3,
+    0,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    129,
+    254,
+    1,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    129,
+    254,
+    1,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    129,
+    254,
+    1,
+    128,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    64,
+    255,
+    0,
+    64,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    64,
+    255,
+    0,
+    64,
+]
+[radio/src/pipeline/sample_ident_search/mod.rs:102] plzbethefuckingident = [
+    64,
+    255,
+    0,
+    64,
+]
