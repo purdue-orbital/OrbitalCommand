@@ -1,5 +1,4 @@
 use std::io::Read;
-use std::net::TcpListener;
 use serde_json;
 use std::thread;
 use std::sync::{Arc, Mutex};
@@ -22,17 +21,8 @@ pub fn receiving_command () -> Result<(), std::io::Error> {   //rocket will run 
 
         functions.len()
     };
-    //println!("{}", length);
-  //  let functions: Vec<fn()> = vec![cut, release, abort];
-    
-    let receiving_ip = ROCKET; //own ip
-
-
-    RadioStream::read()
-    let listener = TcpListener::bind(receiving_ip)?;
-
+ 
     println!("Waiting for a connection...");
-
 
     while(1) {
 
@@ -145,11 +135,7 @@ fn handle_data (telemetry_data : TelData) {
 }
 
 pub fn receiving_teldata () -> Result<(), std::io::Error> { //ground station will run this
-    
-    let receiving_ip = GROUND;
 
-    let listener = TcpListener::bind(receiving_ip)?;
-    
     println!("Waiting for a connection...");
 
     while(1) {

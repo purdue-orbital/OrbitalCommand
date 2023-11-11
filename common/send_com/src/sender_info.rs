@@ -1,5 +1,4 @@
 use std::io::Write;
-use std::net::TcpStream;
 
 use crate::data::GROUND;
 use crate::data::ROCKET;
@@ -10,8 +9,6 @@ extern crate radio;
 use radio::RadioStream
 
 pub fn send_command (command_enum : String) -> Result<(), std::io::Error> {  //for ground station to send command
-
-    let receiving_ip = ROCKET;  //rocket ip
 
     let command_bytes = command_enum.as_bytes();
 
@@ -41,8 +38,6 @@ pub fn send_command (command_enum : String) -> Result<(), std::io::Error> {  //f
 pub fn send_data (telemetry_data : &TelData) -> Result<(), std::io::Error> {  //for rocket to send telemetry data
     
     let serialized_data = serde_json::to_string(telemetry_data)?;
-
-    let ground_ip = GROUND;
 
     let data_bytes = serialized_data.as_bytes();
     

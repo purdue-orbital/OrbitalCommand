@@ -11,5 +11,5 @@ pub struct TelData {
     pub acc_z : String,
  }
 
-pub const ROCKET: &str = "127.0.0.1:2040";
-pub const GROUND: &str = "127.0.0.1:2040";
+//pub const ROCKET: &str = "127.0.0.1:2040";
+//pub const GROUND: &str = "127.0.0.1:2040";
