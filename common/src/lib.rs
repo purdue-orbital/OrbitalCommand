@@ -11,19 +11,28 @@ pub struct Vec3 {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum Message {
+pub enum MessageToLaunch {
     Abort,
     Launch,
     Cut,
-    Update,
-    Telemetry {
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum MessageToGround {
+    ImuTelemetry {
         temperature: f64,
-        gps: Vec3,
         acceleration: Vec3,
+    },
+    GpsTelemetry {
+        altitude: f64,
+        latitude: f64,
+        longitude: f64,
+        velocity: f64,
+        heading: f64,
     }
 }
 
-impl TryFrom<&[u8]> for Message {
+impl TryFrom<&[u8]> for MessageToGround {
     type Error = bincode::Error;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
@@ -31,10 +40,10 @@ impl TryFrom<&[u8]> for Message {
     }
 }
 
-impl TryFrom<Message> for Vec<u8> {
+impl TryFrom<MessageToGround> for Vec<u8> {
     type Error = bincode::Error;
 
-    fn try_from(value: Message) -> Result<Self, Self::Error> {
+    fn try_from(value: MessageToGround) -> Result<Self, Self::Error> {
         bincode::serialize(&value)
     }
 }

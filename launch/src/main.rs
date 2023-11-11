@@ -1,16 +1,18 @@
 #![deny(clippy::unwrap_used)]
 
-use std::{process::Command, str::FromStr, sync::{Arc, atomic::AtomicBool}, thread};
+use std::{process::Command, str::FromStr, sync::{Arc, atomic::AtomicBool, mpsc::channel}, thread::{self, sleep}, time::Duration as StdDuration};
 
-use chrono::{NaiveDateTime, Utc, DateTime};
+use chrono::{NaiveDateTime, Utc, DateTime, Duration};
+use common::{MessageToGround, Vec3};
 use ds323x::{Ds323x, DateTimeAccess};
+use flexi_logger::{Logger, FileSpec, detailed_format};
 use mpu9250_i2c::Mpu9250;
 use rppal::{i2c::I2c, hal::Delay};
 use serialport::SerialPort;
 use signal_hook::{consts::TERM_SIGNALS, flag};
 use ublox::{CfgPrtUartBuilder, UartPortId, UartMode, DataBits, Parity, StopBits, InProtoMask, OutProtoMask};
 use clap::{Parser as ClapParser, Subcommand};
-use log::{warn, error};
+use log::{warn, error, info, debug};
 use ublox::*;
 
 const DATE_FORMAT: &'static str = "%Y-%m-%d %H:%M:%S";
@@ -41,6 +43,25 @@ enum ClockCommands {
 }
 
 fn main() {
+    // Enable logging
+    let (stdout_log, _stdout_handle) = Logger::try_with_str("debug")
+        .unwrap()
+        .log_to_stdout()
+        .format(detailed_format)
+        .write_mode(flexi_logger::WriteMode::Direct)
+        .build()
+        .unwrap();
+
+    let (file_log, _fl_handle) = Logger::try_with_env_or_str("info")
+        .unwrap()
+        .log_to_file(FileSpec::default().directory("/var/log/orbital"))
+        .format(detailed_format)
+        .rotate(flexi_logger::Criterion::AgeOrSize(flexi_logger::Age::Day, 20_000_000), flexi_logger::Naming::Timestamps, flexi_logger::Cleanup::KeepLogFiles(100))
+        .write_mode(flexi_logger::WriteMode::Direct).build().unwrap();
+
+    let master_log = multi_log::MultiLogger::new(vec![stdout_log, file_log]);
+    log::set_boxed_logger(Box::new(master_log));
+
     let termination_flag = Arc::new(AtomicBool::new(false));
     for sig in TERM_SIGNALS {
         // When terminated by a second term signal, exit with exit code 1.
@@ -51,18 +72,19 @@ fn main() {
         // first arm and then terminate ‒ all in the first round.
         flag::register(*sig, Arc::clone(&termination_flag)).expect("Failed to register signal!");
     }
-    println!("Signals hooked");
+    info!("Signals hooked");
 
     let args = Args::parse();
 
     let mut rtc = Ds323x::new_ds3231(I2c::new().expect("Failed to open RTC I2C connection!"));
 
     let mut mpu = Mpu9250::new(I2c::new().expect("Failed to open MPU I2C connection!"), Delay, Default::default()).expect("Failed to initialize MPU!");
+    mpu.init().unwrap();
 
     let mut gps = initialize_gps().expect("Failed to initialize GPS!");
     
-    println!("System initialization successful!");
-    println!("RTC is: {}", rtc.datetime().expect("Failed to read DateTime from RTC!"));
+    info!("System initialization successful!");
+    info!("RTC is: {}", rtc.datetime().expect("Failed to read DateTime from RTC!"));
 
     if let Some(command) = args.command {
         match command {
@@ -70,7 +92,7 @@ fn main() {
                 ClockCommands::Set { time } => {
                     rtc.set_datetime(&NaiveDateTime::parse_from_str(&time, DATE_FORMAT).expect(&format!("Invalid date format! Expected {DATE_FORMAT}")));
 
-                    println!("Clock set! New time is:{}", rtc.datetime().expect("Failed to read DateTime from RTC!"));
+                    info!("Clock set! New time is:{}", rtc.datetime().expect("Failed to read DateTime from RTC!"));
                 },
                 ClockCommands::Get => return,
             },
@@ -81,52 +103,86 @@ fn main() {
         warn!("Failed to set system clock: {}", e.to_string());
     }
 
+    let (msg_tx, msg_rx) = channel();
+
+    let tf_gps = termination_flag.clone();
+    let tx_gps = msg_tx.clone();
+    let gps_hnd = thread::spawn(move || {
+        while !tf_gps.load(std::sync::atomic::Ordering::SeqCst) {
+            gps
+                .update(|packet| match packet {
+                    PacketRef::MonVer(packet) => {
+                        debug!(
+                            "SW version: {} HW version: {}; Extensions: {:?}",
+                            packet.software_version(),
+                            packet.hardware_version(),
+                            packet.extension().collect::<Vec<&str>>()
+                        );
+                        debug!("{:?}", packet);
+                    },
+                    PacketRef::NavPvt(sol) => {
+                        // let has_time = sol.fix_type() == GpsFix::Fix3D
+                        //     || sol.fix_type() == GpsFix::GPSPlusDeadReckoning
+                        //     || sol.fix_type() == GpsFix::TimeOnlyFix;
+                        let has_posvel = sol.fix_type() == GpsFix::Fix3D
+                            || sol.fix_type() == GpsFix::GPSPlusDeadReckoning;
+    
+                        if has_posvel {
+                            let pos: Position = (&sol).into();
+                            let vel: Velocity = (&sol).into();
+                            // println!(
+                            //     "Latitude: {:.5} Longitude: {:.5} Altitude: {:.2}m",
+                            //     pos.lat, pos.lon, pos.alt
+                            // );
+                            // println!(
+                            //     "Speed: {:.2} m/s Heading: {:.2} degrees",
+                            //     vel.speed, vel.heading
+                            // );
+                            // println!("Sol: {:?}", sol);
+                            
+                            tx_gps.send(MessageToGround::GpsTelemetry { altitude: pos.alt, latitude: pos.lat, longitude: pos.lon, velocity: vel.speed, heading: vel.heading }).unwrap();
+                        }
+    
+                        // if has_time {
+                        //     let time: DateTime<Utc> = (&sol)
+                        //         .try_into()
+                        //         .expect("Could not parse NAV-PVT time field to UTC");
+                        //     println!("Time: {:?}", time);
+                        // }
+                    },
+                    _ => {
+                        println!("{:?}", packet);
+                    },
+                })
+                .unwrap();
+        }
+    });
+
+    let tf_mpu = termination_flag.clone();
+    let tx_mpu = msg_tx.clone();
+    let mpu_hnd = thread::spawn(move || {
+        while !tf_mpu.load(std::sync::atomic::Ordering::SeqCst) {
+            let acc = mpu.get_accel().unwrap();
+            tx_mpu.send(MessageToGround::ImuTelemetry { temperature: mpu.get_temperature_celsius().unwrap() as f64, acceleration: Vec3 {
+                x: acc.x as f64,
+                y: acc.y as f64,
+                z: acc.z as f64,
+            } });
+
+            sleep(StdDuration::from_millis(1_000));
+        }
+    });
+
+    drop(msg_tx);
+
     while !termination_flag.load(std::sync::atomic::Ordering::SeqCst) {
-        gps
-            .update(|packet| match packet {
-                PacketRef::MonVer(packet) => {
-                    println!(
-                        "SW version: {} HW version: {}; Extensions: {:?}",
-                        packet.software_version(),
-                        packet.hardware_version(),
-                        packet.extension().collect::<Vec<&str>>()
-                    );
-                    println!("{:?}", packet);
-                },
-                PacketRef::NavPvt(sol) => {
-                    let has_time = sol.fix_type() == GpsFix::Fix3D
-                        || sol.fix_type() == GpsFix::GPSPlusDeadReckoning
-                        || sol.fix_type() == GpsFix::TimeOnlyFix;
-                    let has_posvel = sol.fix_type() == GpsFix::Fix3D
-                        || sol.fix_type() == GpsFix::GPSPlusDeadReckoning;
-
-                    if has_posvel {
-                        let pos: Position = (&sol).into();
-                        let vel: Velocity = (&sol).into();
-                        println!(
-                            "Latitude: {:.5} Longitude: {:.5} Altitude: {:.2}m",
-                            pos.lat, pos.lon, pos.alt
-                        );
-                        println!(
-                            "Speed: {:.2} m/s Heading: {:.2} degrees",
-                            vel.speed, vel.heading
-                        );
-                        println!("Sol: {:?}", sol);
-                    }
-
-                    if has_time {
-                        let time: DateTime<Utc> = (&sol)
-                            .try_into()
-                            .expect("Could not parse NAV-PVT time field to UTC");
-                        println!("Time: {:?}", time);
-                    }
-                },
-                _ => {
-                    println!("{:?}", packet);
-                },
-            })
-            .unwrap();
+        for msg in msg_rx.iter() {
+            println!("Message received: {:?}", msg);
+        }
     }
+
+    mpu_hnd.join();
+    gps_hnd.join();
 }
 
 #[derive(Debug)]
@@ -145,7 +201,7 @@ fn initialize_gps() -> Result<Device, GpsError> {
     let mut device = Device::new(builder);
 
     // Configure the device to talk UBX
-    println!("Configuring UART1 port ...");
+    debug!("Configuring UART1 port ...");
     device
         .write_all(
             &CfgPrtUartBuilder {
@@ -162,6 +218,7 @@ fn initialize_gps() -> Result<Device, GpsError> {
             .into_packet_bytes(),
         )
         .expect("Could not configure UBX-CFG-PRT-UART");
+    // TODO: Make retries automatic
     device
         .wait_for_ack::<CfgPrtUart>()
         .expect("Could not acknowledge UBX-CFG-PRT-UART msg");
@@ -182,7 +239,7 @@ fn initialize_gps() -> Result<Device, GpsError> {
         .expect("Unable to write request/poll for UBX-MON-VER message");
 
     // Start reading data
-    println!("Opened uBlox device, waiting for messages...");
+    debug!("Opened uBlox device, waiting for messages...");
 
     Ok(device)
 }
