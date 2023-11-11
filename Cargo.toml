@@ -5,5 +5,7 @@ members = [
     "launch",
     "common",
     "net",
+    "common/send_com",
+    "common/receive_com",
 ]
 resolver = "2"
