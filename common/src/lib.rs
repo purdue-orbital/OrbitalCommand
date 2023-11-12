@@ -22,6 +22,7 @@ pub enum MessageToGround {
     ImuTelemetry {
         temperature: f64,
         acceleration: Vec3,
+        gyro: Vec3,
     },
     GpsTelemetry {
         altitude: f64,

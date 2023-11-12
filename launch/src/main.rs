@@ -164,12 +164,13 @@ fn main() {
     let tx_mpu = msg_tx.clone();
     let mpu_hnd = thread::spawn(move || {
         while !tf_mpu.load(std::sync::atomic::Ordering::SeqCst) {
-            let acc = mpu.get_accel().unwrap();
+            let (acc, gyro) = mpu.get_accel_gyro().unwrap();
             tx_mpu.send(MessageToGround::ImuTelemetry { temperature: mpu.get_temperature_celsius().unwrap() as f64, acceleration: Vec3 {
                 x: acc.x as f64,
                 y: acc.y as f64,
                 z: acc.z as f64,
-            } });
+            },
+                gyro: Vec3 { x: gyro.x, y: gyro.y, z: gyro.z }, });
 
             sleep(StdDuration::from_millis(1_000));
         }
