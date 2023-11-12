@@ -1,18 +1,17 @@
 #![deny(clippy::unwrap_used)]
 
-use std::{process::Command, str::FromStr, sync::{Arc, atomic::AtomicBool, mpsc::channel}, thread::{self, sleep}, time::Duration as StdDuration};
+use std::{process::Command, sync::{Arc, atomic::AtomicBool, mpsc::channel}, thread::{self, sleep}, time::{Duration as StdDuration, Instant}, io::ErrorKind};
 
-use chrono::{NaiveDateTime, Utc, DateTime, Duration};
+use chrono::{NaiveDateTime, Utc};
 use common::{MessageToGround, Vec3};
 use ds323x::{Ds323x, DateTimeAccess};
 use flexi_logger::{Logger, FileSpec, detailed_format};
 use mpu9250_i2c::Mpu9250;
 use rppal::{i2c::I2c, hal::Delay};
-use serialport::SerialPort;
 use signal_hook::{consts::TERM_SIGNALS, flag};
 use ublox::{CfgPrtUartBuilder, UartPortId, UartMode, DataBits, Parity, StopBits, InProtoMask, OutProtoMask};
 use clap::{Parser as ClapParser, Subcommand};
-use log::{warn, error, info, debug};
+use log::{warn, info, debug};
 use ublox::*;
 
 const DATE_FORMAT: &'static str = "%Y-%m-%d %H:%M:%S";
@@ -93,6 +92,7 @@ fn main() {
                     rtc.set_datetime(&NaiveDateTime::parse_from_str(&time, DATE_FORMAT).expect(&format!("Invalid date format! Expected {DATE_FORMAT}")));
 
                     info!("Clock set! New time is:{}", rtc.datetime().expect("Failed to read DateTime from RTC!"));
+                    return;
                 },
                 ClockCommands::Get => return,
             },
@@ -102,6 +102,8 @@ fn main() {
     if let Err(e) = set_system_clock_from_rtc(&mut rtc) {
         warn!("Failed to set system clock: {}", e.to_string());
     }
+
+    info!("System clock set from RTC! UTC is now {:?}", Utc::now());
 
     let (msg_tx, msg_rx) = channel();
 
@@ -177,7 +179,7 @@ fn main() {
 
     while !termination_flag.load(std::sync::atomic::Ordering::SeqCst) {
         for msg in msg_rx.iter() {
-            println!("Message received: {:?}", msg);
+            info!("Generated radio message: {:?}", msg);
         }
     }
 
@@ -203,7 +205,7 @@ fn initialize_gps() -> Result<Device, GpsError> {
     // Configure the device to talk UBX
     debug!("Configuring UART1 port ...");
     device
-        .write_all(
+        .write_with_ack::<CfgPrtUart>(
             &CfgPrtUartBuilder {
                 portid: UartPortId::Uart1,
                 reserved0: 0,
@@ -219,19 +221,19 @@ fn initialize_gps() -> Result<Device, GpsError> {
         )
         .expect("Could not configure UBX-CFG-PRT-UART");
     // TODO: Make retries automatic
-    device
-        .wait_for_ack::<CfgPrtUart>()
-        .expect("Could not acknowledge UBX-CFG-PRT-UART msg");
+    // device
+    //     .wait_for_ack::<CfgPrtUart>()
+    //     .expect("Could not acknowledge UBX-CFG-PRT-UART msg");
 
     // Enable the NavPvt packet
     device
-        .write_all(
+        .write_with_ack::<CfgMsgAllPorts>(
             &CfgMsgAllPortsBuilder::set_rate_for::<NavPvt>([0, 1, 0, 0, 0, 0]).into_packet_bytes(),
         )
         .expect("Could not configure ports for UBX-NAV-PVT");
-    device
-        .wait_for_ack::<CfgMsgAllPorts>()
-        .expect("Could not acknowledge UBX-CFG-PRT-UART msg");
+    // device
+    //     .wait_for_ack::<CfgMsgAllPorts>()
+    //     .expect("Could not acknowledge UBX-CFG-PRT-UART msg");
 
     // Send a packet request for the MonVer packet
     device
@@ -250,10 +252,32 @@ struct Device {
     parser: Parser<Vec<u8>>,
 }
 
+const UART_TIMEOUT: StdDuration = StdDuration::from_millis(1000);
+const UART_RETRIES: usize = 10;
+
 impl Device {
     pub fn new(port: Box<dyn serialport::SerialPort>) -> Device {
         let parser = Parser::default();
         Device { port, parser }
+    }
+
+    pub fn write_with_ack<T: UbxPacketMeta>(&mut self, data: &[u8]) -> std::io::Result<()> {
+        // First write the packet
+        self.write_all(data)?;
+
+        // Start waiting for ACK, allowing retries until max is hit
+        let mut attempts = 0;
+        while attempts < UART_RETRIES {
+            match self.wait_for_ack::<T>() {
+                Ok(()) => return Ok(()),
+                Err(e) => match e.kind() {
+                    ErrorKind::TimedOut => attempts += 1,
+                    _ => return Err(e),
+                },
+            }
+        }
+        
+        Err(std::io::Error::from(ErrorKind::TimedOut))
     }
 
     pub fn write_all(&mut self, data: &[u8]) -> std::io::Result<()> {
@@ -292,6 +316,7 @@ impl Device {
 
     pub fn wait_for_ack<T: UbxPacketMeta>(&mut self) -> std::io::Result<()> {
         let mut found_packet = false;
+        let start = Instant::now();
         while !found_packet {
             self.update(|packet| {
                 if let PacketRef::AckAck(ack) = packet {
@@ -300,6 +325,10 @@ impl Device {
                     }
                 }
             })?;
+
+            if start.elapsed() > UART_TIMEOUT && !found_packet {
+                return Err(std::io::Error::from(ErrorKind::TimedOut));
+            }
         }
         Ok(())
     }
