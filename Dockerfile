@@ -19,6 +19,10 @@ ENV RUSTFLAGS=-Ctarget-feature=-crt-static
 
 WORKDIR /usr/src/orbital
 
+# Copy firmware file
+RUN mkdir -p /etc/Nuand/bladeRF/
+COPY hostedxA9.rbf /etc/Nuand/bladeRF/
+
 # Copy utility crates
 COPY Cargo.lock ./
 RUN printf "[workspace]\nmembers=[\"$TARGET_CRATE\"]" > Cargo.toml

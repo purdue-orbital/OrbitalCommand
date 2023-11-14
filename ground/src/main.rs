@@ -1,11 +1,10 @@
-#![deny(clippy::unwrap_used)]
-#![deny(clippy::expect_used)]
+// #![deny(clippy::unwrap_used)]
+// #![deny(clippy::expect_used)]
 
-use actix_web::{post, get, App, HttpResponse, HttpServer, Either};
-use actix_web::Either::{Left, Right};
+use actix_web::{post, get, App, HttpResponse, HttpServer};
 use actix_web::web::{Data, Json};
 use async_mutex::Mutex;
-use common::MessageToLaunch;
+use common::{MessageToLaunch, MessageToGround, Vec3};
 use radio::RadioStream;
 use serde::Serialize;
 
@@ -33,35 +32,54 @@ async fn cut(state: Data<State>) -> actix_web::Result<HttpResponse> {
 
 #[derive(Serialize)]
 struct Telemetry {
-    pos: Vec<f64>,
-    acc: Vec<f64>,
-    temp: f64,
+    imu: Option<ImuTelemetry>,
+    gps: Option<GpsTelemetry>,
+}
+
+#[derive(Debug, Serialize)]
+struct ImuTelemetry {
+    temperature: f64,
+    acceleration: Vec3,
+    gyro: Vec3,
+}
+
+#[derive(Debug, Serialize)]
+struct GpsTelemetry {
+    altitude: f64,
+    latitude: f64,
+    longitude: f64,
+    velocity: f64,
+    heading: f64,
 }
 
 #[get("/telemetry")]
-async fn telemetry(state: Data<State>) -> actix_web::Result<Either<Json<Telemetry>, HttpResponse>> {
+async fn telemetry(state: Data<State>) -> actix_web::Result<Json<Telemetry>> {
     let messages = state.radio.lock().await.receive_frames().unwrap();
+    let mut imu = None;
+    let mut gps = None;
     for msg in messages.iter().rev() {
-        if let Ok(msg) = MessageToLaunch::try_from(msg.data.as_slice()) {
-            return match msg {
-                MessageToLaunch::Telemetry { temperature, gps, acceleration } => Ok(Left(Json(Telemetry {
-                    pos: vec![gps.x, gps.y, gps.z],
-                    acc: vec![acceleration.x, acceleration.y, acceleration.z],
-                    temp: temperature,
-                }))),
-                _ => Ok(Right(HttpResponse::BadRequest().finish())),
-            };
+        if let Ok(msg) = MessageToGround::try_from(msg.data.as_slice()) {
+            match msg {
+                MessageToGround::ImuTelemetry { temperature, acceleration, gyro } => {let _ = imu.insert(ImuTelemetry {
+                    temperature,
+                    acceleration,
+                    gyro,
+                });},
+                MessageToGround::GpsTelemetry { altitude, latitude, longitude, velocity, heading } => {
+                    let _ = gps.insert(GpsTelemetry { altitude, latitude, longitude, velocity, heading });
+                }
+            }
         }
     }
 
-    Ok(Right(HttpResponse::NotFound().finish()))
+    Ok(Json(Telemetry { imu, gps }))
 }
 
-#[post("/update")]
-async fn update(state: Data<State>) -> actix_web::Result<HttpResponse> {
-    state.radio.lock().await.transmit(&std::convert::TryInto::<Vec<_>>::try_into(MessageToLaunch::Update).unwrap()).unwrap();
-    Ok(HttpResponse::Ok().finish())
-}
+// #[post("/update")]
+// async fn update(state: Data<State>) -> actix_web::Result<HttpResponse> {
+//     state.radio.lock().await.transmit(&std::convert::TryInto::<Vec<_>>::try_into(MessageToLaunch::Update).unwrap()).unwrap();
+//     Ok(HttpResponse::Ok().finish())
+// }
 
 #[derive(Serialize)]
 struct MapToken {
@@ -89,7 +107,7 @@ async fn main() -> std::io::Result<()> {
             .service(abort)
             .service(cut)
             .service(telemetry)
-            .service(update)
+            // .service(update)
             .service(map_token)
             .service(actix_files::Files::new("/", "./dist").index_file("index.html"))
     })

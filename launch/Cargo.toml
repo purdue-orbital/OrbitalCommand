@@ -20,3 +20,4 @@ serialport = "4.2.2"
 signal-hook = "0.3.17"
 ublox = "0.4.4"
 common = { path = "../common" }
+radio = { path = "../radio" }

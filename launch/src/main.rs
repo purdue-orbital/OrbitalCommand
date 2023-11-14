@@ -1,12 +1,13 @@
 #![deny(clippy::unwrap_used)]
 
-use std::{process::Command, sync::{Arc, atomic::AtomicBool, mpsc::channel}, thread::{self, sleep}, time::{Duration as StdDuration, Instant}, io::ErrorKind};
+use std::{process::Command, sync::{Arc, atomic::AtomicBool, mpsc::channel, RwLock}, thread::{self, sleep}, time::{Duration as StdDuration, Instant}, io::ErrorKind};
 
 use chrono::{NaiveDateTime, Utc};
-use common::{MessageToGround, Vec3};
+use common::{MessageToGround, Vec3, MessageToLaunch};
 use ds323x::{Ds323x, DateTimeAccess};
 use flexi_logger::{Logger, FileSpec, detailed_format};
 use mpu9250_i2c::Mpu9250;
+use radio::RadioStream;
 use rppal::{i2c::I2c, hal::Delay};
 use signal_hook::{consts::TERM_SIGNALS, flag};
 use ublox::{CfgPrtUartBuilder, UartPortId, UartMode, DataBits, Parity, StopBits, InProtoMask, OutProtoMask};
@@ -105,6 +106,8 @@ fn main() {
 
     info!("System clock set from RTC! UTC is now {:?}", Utc::now());
 
+    let radio = Arc::new(RwLock::new(RadioStream::new().unwrap()));
+
     let (msg_tx, msg_rx) = channel();
 
     let tf_gps = termination_flag.clone();
@@ -170,7 +173,7 @@ fn main() {
                 y: acc.y as f64,
                 z: acc.z as f64,
             },
-                gyro: Vec3 { x: gyro.x, y: gyro.y, z: gyro.z }, });
+                gyro: Vec3 { x: gyro.x as f64, y: gyro.y as f64, z: gyro.z as f64 }, });
 
             sleep(StdDuration::from_millis(1_000));
         }
@@ -178,14 +181,36 @@ fn main() {
 
     drop(msg_tx);
 
+    let radio_rx = radio.clone();
+    let tf_radio = termination_flag.clone();
+    let radio_hnd = thread::spawn(move || {
+        while !tf_radio.load(std::sync::atomic::Ordering::SeqCst) {
+            let received = radio_rx.read().unwrap().read().unwrap();
+
+            if let Ok(val) = MessageToLaunch::try_from(&received) {
+                match val {
+                    MessageToLaunch::Abort => todo!("abort"),
+                    MessageToLaunch::Launch => todo!("launch"),
+                    MessageToLaunch::Cut => todo!("cut"),
+                }
+            }
+
+            thread::sleep(StdDuration::from_millis(100));
+        }
+    });
+
+    let radio_tx = radio.clone();
     while !termination_flag.load(std::sync::atomic::Ordering::SeqCst) {
         for msg in msg_rx.iter() {
             info!("Generated radio message: {:?}", msg);
+            let msg: Vec<u8> = msg.try_into().unwrap();
+            radio_tx.read().unwrap().transmit(&msg).unwrap();
         }
     }
 
-    mpu_hnd.join();
-    gps_hnd.join();
+    mpu_hnd.join().unwrap();
+    gps_hnd.join().unwrap();
+    radio_hnd.join().unwrap();
 }
 
 #[derive(Debug)]
@@ -272,7 +297,11 @@ impl Device {
             match self.wait_for_ack::<T>() {
                 Ok(()) => return Ok(()),
                 Err(e) => match e.kind() {
-                    ErrorKind::TimedOut => attempts += 1,
+                    ErrorKind::TimedOut => {
+                        // Didn't receive packet, try again
+                        self.write_all(data)?;
+                        attempts += 1;
+                    },
                     _ => return Err(e),
                 },
             }

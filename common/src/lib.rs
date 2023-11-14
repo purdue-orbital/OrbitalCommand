@@ -49,6 +49,22 @@ impl TryFrom<MessageToGround> for Vec<u8> {
     }
 }
 
+impl TryFrom<&[u8]> for MessageToLaunch {
+    type Error = bincode::Error;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        bincode::deserialize(value)
+    }
+}
+
+impl TryFrom<MessageToLaunch> for Vec<u8> {
+    type Error = bincode::Error;
+
+    fn try_from(value: MessageToLaunch) -> Result<Self, Self::Error> {
+        bincode::serialize(&value)
+    }
+}
+
 // pub fn add(left: usize, right: usize) -> usize {
 //     left + right
 // }
