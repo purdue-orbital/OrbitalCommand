@@ -1,6 +1,6 @@
 #![deny(clippy::unwrap_used)]
 
-use std::{process::Command, sync::{Arc, atomic::AtomicBool, mpsc::channel, RwLock}, thread::{self, sleep}, time::{Duration as StdDuration, Instant}, io::ErrorKind};
+use std::{process::Command, sync::{Arc, atomic::AtomicBool, mpsc::channel, RwLock, Mutex}, thread::{self, sleep}, time::{Duration as StdDuration, Instant}, io::ErrorKind, ops::DerefMut};
 
 use chrono::{NaiveDateTime, Utc};
 use common::{MessageToGround, Vec3, MessageToLaunch};
@@ -8,7 +8,7 @@ use ds323x::{Ds323x, DateTimeAccess};
 use flexi_logger::{Logger, FileSpec, detailed_format};
 use mpu9250_i2c::Mpu9250;
 use radio::RadioStream;
-use rppal::{i2c::I2c, hal::Delay};
+use rppal::{i2c::I2c, hal::Delay, gpio::Gpio};
 use signal_hook::{consts::TERM_SIGNALS, flag};
 use ublox::{CfgPrtUartBuilder, UartPortId, UartMode, DataBits, Parity, StopBits, InProtoMask, OutProtoMask};
 use clap::{Parser as ClapParser, Subcommand};
@@ -106,6 +106,9 @@ fn main() {
 
     info!("System clock set from RTC! UTC is now {:?}", Utc::now());
 
+    let gpio = Arc::new(Mutex::new(Gpio::new().unwrap()));
+    let gpio_gps = gpio.clone();
+
     let radio = Arc::new(RwLock::new(RadioStream::new().unwrap()));
 
     let (msg_tx, msg_rx) = channel();
@@ -113,6 +116,7 @@ fn main() {
     let tf_gps = termination_flag.clone();
     let tx_gps = msg_tx.clone();
     let gps_hnd = thread::spawn(move || {
+        let mut last_packet = Instant::now();
         while !tf_gps.load(std::sync::atomic::Ordering::SeqCst) {
             gps
                 .update(|packet| match packet {
@@ -145,6 +149,13 @@ fn main() {
                             // );
                             // println!("Sol: {:?}", sol);
                             
+                            // Dead man's switch at 10,000 ft
+                            last_packet = Instant::now();
+                            if pos.alt >= 3_048.0 {
+                                info!("Dead man's switch hit! Cutting down.");
+                                cutdown(&mut gpio_gps.lock().unwrap());
+                            }
+                            
                             tx_gps.send(MessageToGround::GpsTelemetry { altitude: pos.alt, latitude: pos.lat, longitude: pos.lon, velocity: vel.speed, heading: vel.heading }).unwrap();
                         }
     
@@ -160,6 +171,11 @@ fn main() {
                     },
                 })
                 .unwrap();
+
+                if Instant::now() > last_packet + StdDuration::from_millis(300 * 1000) {
+                    info!("No GPS for over 5 minutes! Cutting down.");
+                    cutdown(&mut gpio_gps.lock().unwrap());
+                }
         }
     });
 
@@ -187,7 +203,7 @@ fn main() {
         while !tf_radio.load(std::sync::atomic::Ordering::SeqCst) {
             let received = radio_rx.read().unwrap().read().unwrap();
 
-            if let Ok(val) = MessageToLaunch::try_from(&received) {
+            if let Ok(val) = MessageToLaunch::try_from(received.as_slice()) {
                 match val {
                     MessageToLaunch::Abort => todo!("abort"),
                     MessageToLaunch::Launch => todo!("launch"),
@@ -411,4 +427,12 @@ fn set_system_clock_from_rtc(rtc: &mut Ds323x<ds323x::interface::I2cInterface<I2
         },
         Err(e) => Err(ClockError::CommandWait(e.to_string())),
     }
+}
+
+const RIP_GPIO: u8 = 5;
+
+fn cutdown(gpio: &mut Gpio) {
+    gpio.get(RIP_GPIO).unwrap().into_output().set_high();
+    sleep(StdDuration::from_millis(500));
+    gpio.get(RIP_GPIO).unwrap().into_output().set_low();
 }
