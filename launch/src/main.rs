@@ -205,7 +205,7 @@ fn main() {
 
             if let Ok(val) = MessageToLaunch::try_from(received.as_slice()) {
                 match val {
-                    MessageToLaunch::Abort => todo!("abort"),
+                    MessageoLaunch::Abort => todo!("abort"),
                     MessageToLaunch::Launch => todo!("launch"),
                     MessageToLaunch::Cut => todo!("cut"),
                 }
