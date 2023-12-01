@@ -8,7 +8,7 @@ use ds323x::{Ds323x, DateTimeAccess};
 use flexi_logger::{Logger, FileSpec, detailed_format};
 use mpu9250_i2c::Mpu9250;
 use radio::RadioStream;
-use rppal::{i2c::I2c, hal::Delay, gpio::Gpio};
+use rppal::{i2c::I2c, hal::Delay, gpio::Gpio, gpio::OutputPin};
 use signal_hook::{consts::TERM_SIGNALS, flag};
 use ublox::{CfgPrtUartBuilder, UartPortId, UartMode, DataBits, Parity, StopBits, InProtoMask, OutProtoMask};
 use clap::{Parser as ClapParser, Subcommand};
@@ -106,8 +106,10 @@ fn main() {
 
     info!("System clock set from RTC! UTC is now {:?}", Utc::now());
 
-    let gpio = Arc::new(Mutex::new(Gpio::new().unwrap()));
-    let gpio_gps = gpio.clone();
+    let rip_done = Arc::new(AtomicBool::new(false));
+    let rip_pin = Arc::new(Mutex::new(Gpio::new().unwrap().get(RIP_BCM_GPIO).unwrap().into_output()));
+    rip_pin.lock().unwrap().set_low();
+    let rip_pin_gps = rip_pin.clone();
 
     let radio = Arc::new(RwLock::new(RadioStream::new().unwrap()));
 
@@ -115,6 +117,7 @@ fn main() {
 
     let tf_gps = termination_flag.clone();
     let tx_gps = msg_tx.clone();
+    let rip_done_gps = rip_done.clone();
     let gps_hnd = thread::spawn(move || {
         let mut last_packet = Instant::now();
         while !tf_gps.load(std::sync::atomic::Ordering::SeqCst) {
@@ -151,9 +154,10 @@ fn main() {
                             
                             // Dead man's switch at 10,000 ft
                             last_packet = Instant::now();
-                            if pos.alt >= 3_048.0 {
+                            if pos.alt >= 3_048.0 && !rip_done_gps.load(std::sync::atomic::Ordering::SeqCst) {
                                 info!("Dead man's switch hit! Cutting down.");
-                                cutdown(&mut gpio_gps.lock().unwrap());
+                                rip_done_gps.store(true, std::sync::atomic::Ordering::SeqCst);
+                                cutdown(&mut rip_pin_gps.lock().unwrap());
                             }
                             
                             tx_gps.send(MessageToGround::GpsTelemetry { altitude: pos.alt, latitude: pos.lat, longitude: pos.lon, velocity: vel.speed, heading: vel.heading }).unwrap();
@@ -172,9 +176,10 @@ fn main() {
                 })
                 .unwrap();
 
-                if Instant::now() > last_packet + StdDuration::from_millis(300 * 1000) {
+                if Instant::now() > last_packet + StdDuration::from_millis(300 * 1000) && !rip_done_gps.load(std::sync::atomic::Ordering::SeqCst) {
                     info!("No GPS for over 5 minutes! Cutting down.");
-                    cutdown(&mut gpio_gps.lock().unwrap());
+                    rip_done_gps.store(true, std::sync::atomic::Ordering::SeqCst);
+                    cutdown(&mut rip_pin_gps.lock().unwrap());
                 }
         }
     });
@@ -196,7 +201,9 @@ fn main() {
     });
 
     drop(msg_tx);
-
+    
+    let rip_pin_rx = rip_pin.clone();
+    let rip_done_rx = rip_done.clone();
     let radio_rx = radio.clone();
     let tf_radio = termination_flag.clone();
     let radio_hnd = thread::spawn(move || {
@@ -205,9 +212,12 @@ fn main() {
 
             if let Ok(val) = MessageToLaunch::try_from(received.as_slice()) {
                 match val {
-                    MessageoLaunch::Abort => todo!("abort"),
+                    MessageToLaunch::Abort => todo!("abort"),
                     MessageToLaunch::Launch => todo!("launch"),
-                    MessageToLaunch::Cut => todo!("cut"),
+                    MessageToLaunch::Cut => if !rip_done_rx.load(std::sync::atomic::Ordering::SeqCst) {
+                        cutdown(rip_pin_rx.lock().unwrap().deref_mut());
+                        rip_done_rx.store(true, std::sync::atomic::Ordering::SeqCst);
+                    },
                 }
             }
 
@@ -429,10 +439,10 @@ fn set_system_clock_from_rtc(rtc: &mut Ds323x<ds323x::interface::I2cInterface<I2
     }
 }
 
-const RIP_GPIO: u8 = 5;
+const RIP_BCM_GPIO: u8 = 5;
 
-fn cutdown(gpio: &mut Gpio) {
-    gpio.get(RIP_GPIO).unwrap().into_output().set_high();
+fn cutdown(rip_pin: &mut OutputPin) {
+    rip_pin.set_high();
     sleep(StdDuration::from_millis(500));
-    gpio.get(RIP_GPIO).unwrap().into_output().set_low();
+    rip_pin.set_low();
 }
