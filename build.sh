@@ -24,7 +24,7 @@ fi
 if [ "$1" = "ground" ]; then
   echo "Ground Station Build"
   # Run ground command here
-  docker buildx build --build-arg MAPBOX_TOKEN="${MAPBOX_TOKEN}" --output type=docker,dest=./image.tar -t "ground:latest" .
+  docker buildx build --build-arg MAPBOX_TOKEN="${MAPBOX_TOKEN}" --build-arg CARGO_BUILD="leptos" --load -t "ground:latest" .
 elif [ "$1" = "launch" ]; then
   echo "Launch Station Build"
   # Run launch command here

@@ -1,2 +1,8 @@
-target/
-ground/client/node_modules/
+*
+!Cargo.toml
+!Cargo.lock
+!radio/
+!net/
+!launch/
+!ground/
+!common/

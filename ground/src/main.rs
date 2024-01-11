@@ -1,99 +1,69 @@
-#![deny(clippy::unwrap_used)]
-#![deny(clippy::expect_used)]
-
-use actix_web::{post, get, App, HttpResponse, HttpServer, Either};
-use actix_web::Either::{Left, Right};
-use actix_web::web::{Data, Json};
-use async_mutex::Mutex;
-use common::Message;
-use radio::RadioStream;
-use serde::Serialize;
-
-struct State {
-    radio: Mutex<RadioStream>
-}
-
-#[post("/launch")]
-async fn launch(state: Data<State>) -> actix_web::Result<HttpResponse> {
-    state.radio.lock().await.transmit(&std::convert::TryInto::<Vec<_>>::try_into(Message::Launch).unwrap()).unwrap();
-    Ok(HttpResponse::Ok().finish())
-}
-
-#[post("/abort")]
-async fn abort(state: Data<State>) -> actix_web::Result<HttpResponse> {
-    state.radio.lock().await.transmit(&std::convert::TryInto::<Vec<_>>::try_into(Message::Abort).unwrap()).unwrap();
-    Ok(HttpResponse::Ok().finish())
-}
-
-#[post("/cut")]
-async fn cut(state: Data<State>) -> actix_web::Result<HttpResponse> {
-    state.radio.lock().await.transmit(&std::convert::TryInto::<Vec<_>>::try_into(Message::Cut).unwrap()).unwrap();
-    Ok(HttpResponse::Ok().finish())
-}
-
-#[derive(Serialize)]
-struct Telemetry {
-    pos: Vec<f64>,
-    acc: Vec<f64>,
-    temp: f64,
-}
-
-#[get("/telemetry")]
-async fn telemetry(state: Data<State>) -> actix_web::Result<Either<Json<Telemetry>, HttpResponse>> {
-    let messages = state.radio.lock().await.receive_frames().unwrap();
-    for msg in messages.iter().rev() {
-        if let Ok(msg) = Message::try_from(msg.data.as_slice()) {
-            return match msg {
-                Message::Telemetry { temperature, gps, acceleration } => Ok(Left(Json(Telemetry {
-                    pos: vec![gps.x, gps.y, gps.z],
-                    acc: vec![acceleration.x, acceleration.y, acceleration.z],
-                    temp: temperature,
-                }))),
-                _ => Ok(Right(HttpResponse::BadRequest().finish())),
-            };
-        }
-    }
-
-    Ok(Right(HttpResponse::NotFound().finish()))
-}
-
-#[post("/update")]
-async fn update(state: Data<State>) -> actix_web::Result<HttpResponse> {
-    state.radio.lock().await.transmit(&std::convert::TryInto::<Vec<_>>::try_into(Message::Update).unwrap()).unwrap();
-    Ok(HttpResponse::Ok().finish())
-}
-
-#[derive(Serialize)]
-struct MapToken {
-    token: String,
-}
-
-#[get("/map_token")]
-async fn map_token() -> actix_web::Result<Json<MapToken>> {
-    Ok(Json(MapToken {
-        token: option_env!("MAPBOX_TOKEN").unwrap_or("NO_TOKEN").to_string(),
-    }))
-}
-
+#[cfg(feature = "ssr")]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let state = Data::new(State {
-        radio: Mutex::new(RadioStream::new().unwrap()),
-    });
+    use actix_files::Files;
+    use actix_web::*;
+    use leptos::*;
+    use leptos_actix::{generate_route_list, LeptosRoutes};
+    use ground::app::*;
+
+    let conf = get_configuration(None).await.unwrap();
+    let addr = conf.leptos_options.site_addr;
+    // Generate the list of routes in your Leptos App
+    let routes = generate_route_list(App);
+    println!("listening on http://{}", &addr);
 
     HttpServer::new(move || {
-        let state = state.clone();
+        let leptos_options = &conf.leptos_options;
+        let site_root = &leptos_options.site_root;
+
         App::new()
-            .app_data(state)
-            .service(launch)
-            .service(abort)
-            .service(cut)
-            .service(telemetry)
-            .service(update)
-            .service(map_token)
-            .service(actix_files::Files::new("/", "./dist").index_file("index.html"))
+            .route("/api/{tail:.*}", leptos_actix::handle_server_fns())
+            // serve JS/WASM/CSS from `pkg`
+            .service(Files::new("/pkg", format!("{site_root}/pkg")))
+            // serve other assets from the `assets` directory
+            .service(Files::new("/assets", site_root))
+            // serve the favicon from /favicon.ico
+            .service(favicon)
+            .leptos_routes(leptos_options.to_owned(), routes.to_owned(), App)
+            .app_data(web::Data::new(leptos_options.to_owned()))
+        //.wrap(middleware::Compress::default())
     })
-    .bind(("0.0.0.0", 80))?
+    .bind(&addr)?
     .run()
     .await
+}
+
+#[cfg(feature = "ssr")]
+#[actix_web::get("favicon.ico")]
+async fn favicon(
+    leptos_options: actix_web::web::Data<leptos::LeptosOptions>,
+) -> actix_web::Result<actix_files::NamedFile> {
+    let leptos_options = leptos_options.into_inner();
+    let site_root = &leptos_options.site_root;
+    Ok(actix_files::NamedFile::open(format!(
+        "{site_root}/favicon.ico"
+    ))?)
+}
+
+#[cfg(not(any(feature = "ssr", feature = "csr")))]
+pub fn main() {
+    // no client-side main function
+    // unless we want this to work with e.g., Trunk for pure client-side testing
+    // see lib.rs for hydration function instead
+    // see optional feature `csr` instead
+}
+
+#[cfg(all(not(feature = "ssr"), feature = "csr"))]
+pub fn main() {
+    // a client-side main function is required for using `trunk serve`
+    // prefer using `cargo leptos serve` instead
+    // to run: `trunk serve --open --features csr`
+    use leptos::*;
+    use ground::app::*;
+    use wasm_bindgen::prelude::wasm_bindgen;
+
+    console_error_panic_hook::set_once();
+
+    leptos::mount_to_body(App);
 }
