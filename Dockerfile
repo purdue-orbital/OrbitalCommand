@@ -36,7 +36,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 RUN mkdir /usr/src/orbital/out
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/src/orbital/target \
-    cargo $CARGO_BUILD build --release && mv ../target/release/$TARGET_CRATE ../out/app && if [ "$CARGO_BUILD" = "leptos" ]; then mv /usr/src/orbital/target/site /usr/src/orbital/out/; fi
+    cargo $CARGO_BUILD build --release && mv ../target/release/$TARGET_CRATE /usr/src/oribtal/out/app && if [ "$CARGO_BUILD" = "leptos" ]; then mv /usr/src/orbital/target/site /usr/src/orbital/out/; fi
 
 EXPOSE 8080
 # EXPOSE 27017
