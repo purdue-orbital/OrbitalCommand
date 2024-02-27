@@ -2,7 +2,7 @@
 
 use std::{process::Command, sync::{Arc, atomic::AtomicBool, mpsc::channel, RwLock, Mutex}, thread::{self, sleep}, time::{Duration as StdDuration, Instant}, io::ErrorKind, ops::DerefMut};
 
-use chrono::{NaiveDateTime, Utc};
+use chrono::{NaiveDateTime, Utc, DateTime};
 use common::{MessageToGround, Vec3, MessageToLaunch};
 use ds323x::{Ds323x, DateTimeAccess};
 use flexi_logger::{Logger, FileSpec, detailed_format};
@@ -52,7 +52,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let (file_log, _fl_handle) = Logger::try_with_env_or_str("info")
+    let (file_log, _fl_handle) = Logger::try_with_env_or_str("debug")
         .unwrap()
         .log_to_file(FileSpec::default().directory("/var/log/orbital"))
         .format(detailed_format)
@@ -133,9 +133,9 @@ fn main() {
                         debug!("{:?}", packet);
                     },
                     PacketRef::NavPvt(sol) => {
-                        // let has_time = sol.fix_type() == GpsFix::Fix3D
-                        //     || sol.fix_type() == GpsFix::GPSPlusDeadReckoning
-                        //     || sol.fix_type() == GpsFix::TimeOnlyFix;
+                        let has_time = sol.fix_type() == GpsFix::Fix3D
+                            || sol.fix_type() == GpsFix::GPSPlusDeadReckoning
+                            || sol.fix_type() == GpsFix::TimeOnlyFix;
                         let has_posvel = sol.fix_type() == GpsFix::Fix3D
                             || sol.fix_type() == GpsFix::GPSPlusDeadReckoning;
     
@@ -150,6 +150,7 @@ fn main() {
                             //     "Speed: {:.2} m/s Heading: {:.2} degrees",
                             //     vel.speed, vel.heading
                             // );
+                            info!("TELEMETRY: Lat {:.5} Long {:5} Alt {:.2} m Spd {:.2} m/s Head {:.2} deg", pos.lat, pos.lon, pos.alt, vel.speed, vel.heading);
                             // println!("Sol: {:?}", sol);
                             
                             // Dead man's switch at 10,000 ft
@@ -163,12 +164,12 @@ fn main() {
                             tx_gps.send(MessageToGround::GpsTelemetry { altitude: pos.alt, latitude: pos.lat, longitude: pos.lon, velocity: vel.speed, heading: vel.heading }).unwrap();
                         }
     
-                        // if has_time {
-                        //     let time: DateTime<Utc> = (&sol)
-                        //         .try_into()
-                        //         .expect("Could not parse NAV-PVT time field to UTC");
-                        //     println!("Time: {:?}", time);
-                        // }
+                        if has_time {
+                            let time: DateTime<Utc> = (&sol)
+                                .try_into()
+                                .expect("Could not parse NAV-PVT time field to UTC");
+                            info!("GPS TIME (UTC): {:?}", time);
+                        }
                     },
                     _ => {
                         println!("{:?}", packet);
