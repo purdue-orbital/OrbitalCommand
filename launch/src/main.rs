@@ -226,6 +226,23 @@ fn main() {
         }
     });
 
+    let rip_pin_timer = rip_pin.clone();
+    let tf_timer = termination_flag.clone();
+    let start = Instant::now();
+    let rip_done_timer = rip_done.clone();
+    let timer_hnd = thread::spawn(move || {
+        while !tf_timer.load(std::sync::atomic::Ordering::SeqCst) {
+            // 20 minute cutdown
+            if Instant::now() > start + StdDuration::from_millis(1_200 * 1000) && !rip_done_timer.load(std::sync::atomic::Ordering::SeqCst) {
+                info!("20 minute limit! Cutting down.");
+                rip_done_timer.store(true, std::sync::atomic::Ordering::SeqCst);
+                cutdown(&mut rip_pin_timer.lock().unwrap());
+            }
+
+            thread::sleep(StdDuration::from_millis(100));
+        }
+    });
+
     let radio_tx = radio.clone();
     while !termination_flag.load(std::sync::atomic::Ordering::SeqCst) {
         for msg in msg_rx.iter() {
