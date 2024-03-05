@@ -106,12 +106,20 @@ fn main() {
 
     info!("System clock set from RTC! UTC is now {:?}", Utc::now());
 
+    // Just turn these off for now
+    let gpio = Gpio::new().unwrap();
+    let mut ign = gpio.get(IGNITITON_BCM_GPIO).unwrap().into_output();
+    ign.set_low();
+    let mut qdm = gpio.get(QDM_BCM_GPIO).unwrap().into_output();
+    qdm.set_low();
+
     let rip_done = Arc::new(AtomicBool::new(false));
     let rip_pin = Arc::new(Mutex::new(Gpio::new().unwrap().get(RIP_BCM_GPIO).unwrap().into_output()));
     rip_pin.lock().unwrap().set_low();
     let rip_pin_gps = rip_pin.clone();
 
-    let radio = Arc::new(RwLock::new(RadioStream::new().unwrap()));
+    // TODO: Does this need USB-3?
+    // let radio = Arc::new(RwLock::new(RadioStream::new().unwrap()));
 
     let (msg_tx, msg_rx) = channel();
 
@@ -177,10 +185,10 @@ fn main() {
                 })
                 .unwrap();
 
-                if Instant::now() > last_packet + StdDuration::from_millis(300 * 1000) && !rip_done_gps.load(std::sync::atomic::Ordering::SeqCst) {
-                    info!("No GPS for over 5 minutes! Cutting down.");
-                    rip_done_gps.store(true, std::sync::atomic::Ordering::SeqCst);
-                    cutdown(&mut rip_pin_gps.lock().unwrap());
+                if Instant::now() > last_packet + StdDuration::from_millis(600 * 1000) && !rip_done_gps.load(std::sync::atomic::Ordering::SeqCst) {
+                    info!("No GPS for over 10 minutes! Cutting down.");
+                    // rip_done_gps.store(true, std::sync::atomic::Ordering::SeqCst);
+                    // cutdown(&mut rip_pin_gps.lock().unwrap());
                 }
         }
     });
@@ -205,25 +213,25 @@ fn main() {
     
     let rip_pin_rx = rip_pin.clone();
     let rip_done_rx = rip_done.clone();
-    let radio_rx = radio.clone();
+    // let radio_rx = radio.clone();
     let tf_radio = termination_flag.clone();
     let radio_hnd = thread::spawn(move || {
-        while !tf_radio.load(std::sync::atomic::Ordering::SeqCst) {
-            let received = radio_rx.read().unwrap().read().unwrap();
-
-            if let Ok(val) = MessageToLaunch::try_from(received.as_slice()) {
-                match val {
-                    MessageToLaunch::Abort => todo!("abort"),
-                    MessageToLaunch::Launch => todo!("launch"),
-                    MessageToLaunch::Cut => if !rip_done_rx.load(std::sync::atomic::Ordering::SeqCst) {
-                        cutdown(rip_pin_rx.lock().unwrap().deref_mut());
-                        rip_done_rx.store(true, std::sync::atomic::Ordering::SeqCst);
-                    },
-                }
-            }
-
-            thread::sleep(StdDuration::from_millis(100));
-        }
+        // while !tf_radio.load(std::sync::atomic::Ordering::SeqCst) {
+        //     let received = radio_rx.read().unwrap().read().unwrap();
+        //
+        //     if let Ok(val) = MessageToLaunch::try_from(received.as_slice()) {
+        //         match val {
+        //             MessageToLaunch::Abort => todo!("abort"),
+        //             MessageToLaunch::Launch => todo!("launch"),
+        //             MessageToLaunch::Cut => if !rip_done_rx.load(std::sync::atomic::Ordering::SeqCst) {
+        //                 cutdown(rip_pin_rx.lock().unwrap().deref_mut());
+        //                 rip_done_rx.store(true, std::sync::atomic::Ordering::SeqCst);
+        //             },
+        //         }
+        //     }
+        //
+        //     thread::sleep(StdDuration::from_millis(100));
+        // }
     });
 
     let rip_pin_timer = rip_pin.clone();
@@ -232,9 +240,9 @@ fn main() {
     let rip_done_timer = rip_done.clone();
     let timer_hnd = thread::spawn(move || {
         while !tf_timer.load(std::sync::atomic::Ordering::SeqCst) {
-            // 20 minute cutdown
-            if Instant::now() > start + StdDuration::from_millis(1_200 * 1000) && !rip_done_timer.load(std::sync::atomic::Ordering::SeqCst) {
-                info!("20 minute limit! Cutting down.");
+            // Timed cutdown
+            if Instant::now() > start + StdDuration::from_millis(CUTDOWN_TIME_SECS * 1000) && !rip_done_timer.load(std::sync::atomic::Ordering::SeqCst) {
+                info!("Time's up! Cutting down.");
                 rip_done_timer.store(true, std::sync::atomic::Ordering::SeqCst);
                 cutdown(&mut rip_pin_timer.lock().unwrap());
             }
@@ -243,12 +251,12 @@ fn main() {
         }
     });
 
-    let radio_tx = radio.clone();
+    // let radio_tx = radio.clone();
     while !termination_flag.load(std::sync::atomic::Ordering::SeqCst) {
         for msg in msg_rx.iter() {
             info!("Generated radio message: {:?}", msg);
             let msg: Vec<u8> = msg.try_into().unwrap();
-            radio_tx.read().unwrap().transmit(&msg).unwrap();
+            // radio_tx.read().unwrap().transmit(&msg).unwrap();
         }
     }
 
@@ -256,6 +264,8 @@ fn main() {
     gps_hnd.join().unwrap();
     radio_hnd.join().unwrap();
 }
+
+const CUTDOWN_TIME_SECS: usize = 500;
 
 #[derive(Debug)]
 enum GpsError {
@@ -458,9 +468,11 @@ fn set_system_clock_from_rtc(rtc: &mut Ds323x<ds323x::interface::I2cInterface<I2
 }
 
 const RIP_BCM_GPIO: u8 = 5;
+const IGNITITON_BCM_GPIO: u8 = 6;
+const QDM_BCM_GPIO: u8 = 13;
 
 fn cutdown(rip_pin: &mut OutputPin) {
     rip_pin.set_high();
-    sleep(StdDuration::from_millis(500));
+    sleep(StdDuration::from_millis(5000));
     rip_pin.set_low();
 }
