@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ux = "0.1.5"
+#ux = "0.1.5"
 num = "0.4"
 num-derive = "0.3"
 num-traits = "0.2"
 anyhow = "1.0.69"
 tun-tap = "0.1.3"
-radio = { path = "../radio" }
+#radio = { path = "../radio" }
 num_enum = "0.6.1"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

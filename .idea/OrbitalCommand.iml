@@ -12,6 +12,7 @@
       <sourceFolder url="file://$MODULE_DIR$/radio/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/radio/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/radio/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/radio/examples/lab/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

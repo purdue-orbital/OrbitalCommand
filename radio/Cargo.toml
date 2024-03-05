@@ -1,22 +1,17 @@
 [package]
 name = "radio"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+js-sys = "0.3.69"
 soapysdr = "0.4.0"
-num-complex = "0.4"
-anyhow = "1.0.69"
-bytes = "1.5.0"
 lazy_static = "1.4.0"
-rustdsp = { git = "https://github.com/purdue-orbital/RustDSP.git", version = "0.1.2"}
-bitvec = "1.0.1"
-flume = "0.11"
-once_cell = "1.18.0"
-rand = "0.8.5"
+num-complex = "0.4.5"
+rustdsp = { git = "https://github.com/purdue-orbital/RustDSP.git", version = "0.3.2",features = ["ui"] }
+anyhow = "1.0.80"
+
 
 [dev-dependencies]
 criterion = "0.5.1"

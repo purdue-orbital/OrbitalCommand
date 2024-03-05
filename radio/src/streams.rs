@@ -94,19 +94,23 @@ impl Rx {
         // Get radio
         let device = settings.radio.get_radio()?;
 
-        //device.set_bandwidth(Direction::Rx,settings.channels_in_use,40e6).unwrap();
+        device.set_bandwidth(Direction::Rx,settings.channels_in_use,40e6).unwrap();
 
         // Set radio sample rate
         device.set_sample_rate(Direction::Rx, settings.channels_in_use, settings.sample_rate)?;
 
         // Set gain
         //device.set_gain(Direction::Rx, settings.channels_in_use, settings.gain)?;
-        device.set_gain_mode(Direction::Rx, settings.channels_in_use, true)?;
+        device.set_gain_mode(Direction::Rx, settings.channels_in_use,true)?;
 
         // Set carrier frequency
         device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
 
-        device.set_dc_offset_mode(Direction::Rx, settings.channels_in_use, true)?;
+        //device.set_dc_offset_mode(Direction::Rx, settings.channels_in_use, true)?;
+
+        //device.set_clock_source("PLL")?;
+
+        //device.set_iq_balance(Direction::Rx,settings.channels_in_use,1.0,1.0)?;
 
         // Get rx stream
         let mut rx = Rx {
@@ -148,11 +152,16 @@ impl Tx {
         device.set_sample_rate(Direction::Tx, settings.channels_in_use, settings.sample_rate)?;
 
         // Set gain
-        //device.set_gain(Direction::Tx, settings.channels_in_use, settings.gain)?;
-        device.set_gain_mode(Direction::Tx, settings.channels_in_use, true)?;
+
+        //dbg!(device.list_gains(Direction::Tx,0)?);
+
+        device.set_gain(Direction::Tx, settings.channels_in_use, settings.gain)?;
+        //device.set_gain_mode(Direction::Tx, settings.channels_in_use, true)?;
 
         // Set carrier frequency
         device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
+
+        //device.set_dc_offset_mode(Direction::Tx,settings.channels_in_use,true)?;
 
         // Set hardware low pass filter
         //device.set_bandwidth(Direction::Tx, settings.channels_in_use, settings.lpf_filter)?;
