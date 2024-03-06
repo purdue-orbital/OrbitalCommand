@@ -1,0 +1,6 @@
+sample_rate = 1000000.0
+lo_frequency = 916000000.0
+channels_in_use = 0
+gain = 20.0
+baud_rate = 100.0
+sps = 16

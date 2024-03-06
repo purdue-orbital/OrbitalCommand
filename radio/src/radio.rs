@@ -21,7 +21,7 @@ impl Radio {
 
         args.set("driver", "bladerf");
 
-        // get list of radios
+        // get a list of radios
         let err = Device::new(args);
 
         // if we get the radio properly, set the radio data

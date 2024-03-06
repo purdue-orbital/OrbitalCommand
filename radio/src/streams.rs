@@ -1,13 +1,15 @@
+use std::fs;
 use std::sync::{Arc, RwLock};
 
 use anyhow::{Error, Result};
 use num_complex::Complex;
 use soapysdr::{Args, Direction, ErrorCode, RxStream, TxStream};
+use serde::{Deserialize, Serialize};
 
 use crate::radio::Radio;
 
 /// settings for configuring a stream
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct RadioSettings {
     /// The rate the radio will take a sample in hz
     pub sample_rate: f64,
@@ -44,21 +46,6 @@ pub struct RadioSettings {
     /// `output_frequency = 144.1MHz`
     pub lo_frequency: f64,
 
-    /// Low pass filter frequency the radio will filter after lo_frequency down sample
-    /// # RX Example
-    /// `lpf_filter = 100KHz
-    /// incoming_frequency = ±101KHz
-    /// then
-    /// No Signal Is Received`
-    ///
-    /// also
-    ///
-    /// `lpf_filter = 100KHz
-    /// incoming_frequency = ±99KHz
-    /// then
-    /// Signal Is Received`
-    pub lpf_filter: f64,
-
     /// The number of Channels the stream is currently using.
     /// The maximum value highly depends on your SDR and how it is configured.
     ///
@@ -72,14 +59,29 @@ pub struct RadioSettings {
     /// Gain of stream
     pub gain: f64,
 
-    /// Radio to use for stream(s)
-    pub radio: Radio,
-
     /// Amount of bits per a second the radio will read
     pub baud_rate: f32,
 
-    /// Optimized and preferred sample size
-    pub size: usize,
+    /// Samples per a symbol
+    pub sps: usize
+}
+
+impl RadioSettings{
+    pub fn load_from_file(filename: &str) -> Option<RadioSettings> {
+        
+        let loaded = fs::read_to_string(filename);
+        
+        if loaded.is_ok(){
+            Some(toml::from_str(loaded.unwrap().as_str()).unwrap())
+        }else { 
+            None
+        }
+    }
+    
+    pub fn save_to_file(&self, filename: &str){
+        let output = toml::to_string(self).unwrap();
+        fs::write(filename,output).unwrap();
+    }
 }
 
 
@@ -89,10 +91,10 @@ pub struct Rx {
 }
 
 impl Rx {
-    pub fn new(mut settings: RadioSettings) -> Result<Rx, soapysdr::Error> {
+    pub fn new(radio: Radio, mut settings: RadioSettings) -> Result<Rx, soapysdr::Error> {
 
         // Get radio
-        let device = settings.radio.get_radio()?;
+        let device = radio.get_radio()?;
 
         device.set_bandwidth(Direction::Rx,settings.channels_in_use,40e6).unwrap();
 
@@ -100,17 +102,10 @@ impl Rx {
         device.set_sample_rate(Direction::Rx, settings.channels_in_use, settings.sample_rate)?;
 
         // Set gain
-        //device.set_gain(Direction::Rx, settings.channels_in_use, settings.gain)?;
         device.set_gain_mode(Direction::Rx, settings.channels_in_use,true)?;
 
         // Set carrier frequency
         device.set_frequency(Direction::Rx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
-
-        //device.set_dc_offset_mode(Direction::Rx, settings.channels_in_use, true)?;
-
-        //device.set_clock_source("PLL")?;
-
-        //device.set_iq_balance(Direction::Rx,settings.channels_in_use,1.0,1.0)?;
 
         // Get rx stream
         let mut rx = Rx {
@@ -120,12 +115,14 @@ impl Rx {
         // Activate RX stream
         rx.stream.activate(Default::default())?;
 
-        settings.size = rx.stream.mtu()?;
-
         // Increase counter
         settings.channels_in_use += 1;
 
         Ok(rx)
+    }
+
+    pub fn get_mtu(&self) -> usize{
+        self.stream.mtu().unwrap()
     }
 
     /// This function fetches the sample in place (to improve performance)
@@ -143,28 +140,18 @@ pub struct Tx {
 }
 
 impl Tx {
-    pub fn new(mut settings: RadioSettings) -> Result<Tx, soapysdr::Error> {
+    pub fn new(radio: Radio, mut settings: RadioSettings) -> Result<Tx, soapysdr::Error> {
 
         // Get radio
-        let device = settings.radio.get_radio()?;
+        let device = radio.get_radio()?;
 
         // Set radio sample rate
         device.set_sample_rate(Direction::Tx, settings.channels_in_use, settings.sample_rate)?;
 
-        // Set gain
-
-        //dbg!(device.list_gains(Direction::Tx,0)?);
-
         device.set_gain(Direction::Tx, settings.channels_in_use, settings.gain)?;
-        //device.set_gain_mode(Direction::Tx, settings.channels_in_use, true)?;
 
         // Set carrier frequency
         device.set_frequency(Direction::Tx, settings.channels_in_use, settings.lo_frequency, Args::new())?;
-
-        //device.set_dc_offset_mode(Direction::Tx,settings.channels_in_use,true)?;
-
-        // Set hardware low pass filter
-        //device.set_bandwidth(Direction::Tx, settings.channels_in_use, settings.lpf_filter)?;
 
         let stream = Arc::new(RwLock::new(device.tx_stream(&[settings.channels_in_use])?));
 
@@ -175,8 +162,6 @@ impl Tx {
 
         let x = if let Ok(mut x) = stream.write() {
             x.activate(Default::default())?;
-
-            settings.size = x.mtu()?;
 
             // Increase counter
             settings.channels_in_use += 1;
@@ -191,6 +176,10 @@ impl Tx {
             )
         };
         x
+    }
+
+    pub fn get_mtu(&self) -> usize{
+        self.stream.read().unwrap().mtu().unwrap()
     }
 
     pub fn send(&self, arr: &[Complex<f32>]) -> Result<()> {

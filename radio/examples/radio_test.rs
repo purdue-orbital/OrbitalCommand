@@ -1,5 +1,11 @@
 use radio::OrbitalRadio;
 
 fn main() {
-    OrbitalRadio::new();
+    let radio = OrbitalRadio::default();
+
+    loop {
+        radio.send(&[1.0]);
+        dbg!(radio.fetch());
+    }
+    
 }

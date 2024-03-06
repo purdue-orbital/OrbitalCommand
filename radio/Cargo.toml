@@ -9,8 +9,10 @@ js-sys = "0.3.69"
 soapysdr = "0.4.0"
 lazy_static = "1.4.0"
 num-complex = "0.4.5"
-rustdsp = { git = "https://github.com/purdue-orbital/RustDSP.git", version = "0.3.2",features = ["ui"] }
+rustdsp = { git = "https://github.com/purdue-orbital/RustDSP.git", version = "0.3.2"}
 anyhow = "1.0.80"
+serde = { version = "1.0.197", features = ["derive"] }
+toml = "0.8.10"
 
 
 [dev-dependencies]
