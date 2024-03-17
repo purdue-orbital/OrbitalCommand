@@ -197,10 +197,10 @@ fn main() {
                             info!("TELEMETRY: Lat {:.5} Long {:5} Alt {:.2} m Spd {:.2} m/s Head {:.2} deg", pos.lat, pos.lon, pos.alt, vel.speed, vel.heading);
                             // println!("Sol: {:?}", sol);
                             
-                            // Dead man's switch at 10,000 ft
+                            // Dead man's switch at 5,000 ft
                             last_packet = Instant::now();
-                            if pos.alt >= 3_048.0 && !rip_done_gps.load(std::sync::atomic::Ordering::SeqCst) {
-                                info!("Dead man's switch hit! Cutting down.");
+                            if pos.alt >= CUTDOWN_ALTITUDE_M && !rip_done_gps.load(std::sync::atomic::Ordering::SeqCst) {
+                                info!("Dead man's switch hit at {CUTDOWN_ALTITUDE_M} m! Cutting down.");
                                 rip_done_gps.store(true, std::sync::atomic::Ordering::SeqCst);
                                 cutdown(&mut rip_pin_gps.lock().unwrap());
                             }
@@ -235,20 +235,22 @@ fn main() {
     let tx_mpu = msg_tx.clone();
     let mpu_hnd = thread::spawn(move || {
         while !tf_mpu.load(std::sync::atomic::Ordering::SeqCst) {
-            let all: rolly::MargMeasurements<[f32; 3]> = mpu.all().unwrap();
-            tx_mpu.send(MessageToGround::ImuTelemetry {
-                temperature: all.temp as f64,
-                acceleration: Vec3 {
-                    x: all.accel[0] as f64,
-                    y: all.accel[1] as f64,
-                    z: all.accel[2] as f64,
-                },
-                gyro: Vec3 {
-                    x: all.gyro[0] as f64,
-                    y: all.gyro[1] as f64,
-                    z: all.gyro[2] as f64,
-                },
-            });
+            let all: Result<rolly::MargMeasurements<[f32; 3]>, _> = mpu.all();
+            if let Ok(all) = all {
+                tx_mpu.send(MessageToGround::ImuTelemetry {
+                    temperature: all.temp as f64,
+                    acceleration: Vec3 {
+                        x: all.accel[0] as f64,
+                        y: all.accel[1] as f64,
+                        z: all.accel[2] as f64,
+                    },
+                    gyro: Vec3 {
+                        x: all.gyro[0] as f64,
+                        y: all.gyro[1] as f64,
+                        z: all.gyro[2] as f64,
+                    },
+                });
+            }
 
             sleep(StdDuration::from_millis(1_000));
         }
@@ -284,6 +286,7 @@ fn main() {
     let start = Instant::now();
     let rip_done_timer = rip_done.clone();
     let timer_hnd = thread::spawn(move || {
+        info!("Starting cutdown timer for {CUTDOWN_TIME_SECS} seconds");
         while !tf_timer.load(std::sync::atomic::Ordering::SeqCst) {
             // Timed cutdown
             if Instant::now() > start + StdDuration::from_millis(CUTDOWN_TIME_SECS * 1000)
@@ -312,7 +315,8 @@ fn main() {
     radio_hnd.join().unwrap();
 }
 
-const CUTDOWN_TIME_SECS: u64 = 500;
+const CUTDOWN_TIME_SECS: u64 = 420;
+const CUTDOWN_ALTITUDE_M: f64 = 609.6;
 
 #[derive(Debug)]
 enum GpsError {
@@ -521,8 +525,10 @@ fn set_system_clock_from_rtc(
     }
 }
 
-const RIP_BCM_GPIO: u8 = 5;
-const IGNITITON_BCM_GPIO: u8 = 6;
+// const RIP_BCM_GPIO: u8 = 5;
+const RIP_BCM_GPIO: u8 = 6;
+// const IGNITITON_BCM_GPIO: u8 = 6;
+const IGNITITON_BCM_GPIO: u8 = 5;
 const QDM_BCM_GPIO: u8 = 13;
 
 fn cutdown(rip_pin: &mut OutputPin) {
