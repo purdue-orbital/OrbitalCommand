@@ -1,6 +1,5 @@
 /// These are possible interfaces that could be present on a device
-#[derive(PartialEq)]
-#[derive(Clone, Copy)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum Interface {
     /// Use the connected Software Defined Radio
     SDR,

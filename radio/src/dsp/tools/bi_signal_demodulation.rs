@@ -12,7 +12,12 @@ use crate::dsp::tools::goertzel_algorithm::GoertzelAlgorithm;
 /// * `scratch` - Scratch space for fft calculation (for performance)
 /// * `samples_per_symbol` - the number of samples per a symbol (in this case a number_of_symbols == bin.len()) (this can be calculated doing sample_rate / baud_rate)
 #[inline]
-pub fn bi_signal_demodulation(arr: &mut [Complex<f32>], algo: &GoertzelAlgorithm, threshold: &f32, samples_per_symbol: &usize) -> Vec<u8> {
+pub fn bi_signal_demodulation(
+    arr: &mut [Complex<f32>],
+    algo: &GoertzelAlgorithm,
+    threshold: &f32,
+    samples_per_symbol: &usize,
+) -> Vec<u8> {
     let mut out = Vec::new();
 
     let mut counter = 0;
@@ -33,7 +38,7 @@ pub fn bi_signal_demodulation(arr: &mut [Complex<f32>], algo: &GoertzelAlgorithm
         }
     }
 
-    if counter > 0{
+    if counter > 0 {
         out.push(bin);
     }
 

@@ -24,7 +24,6 @@ pub fn bin_to_u8(bin: &str) -> Vec<u8> {
             let next_char = chars.next().unwrap_unchecked();
             hold.push(next_char);
 
-
             if x % 8 == 7 {
                 let radix = u8::from_str_radix(hold.as_str(), 2).unwrap_unchecked();
                 to_return.push(radix);

@@ -5,8 +5,7 @@ use std::thread;
 use std::time::Duration;
 
 #[test]
-fn self_test_128bytes()
-{
+fn self_test_128bytes() {
     let err = radio::RadioStream::new();
 
     // if an error happens, most likely the radio is not connected so skip
@@ -33,6 +32,9 @@ fn self_test_128bytes()
 
     // Verify
     assert_eq!(test_arr, arr.unwrap().as_slice());
-    assert_eq!(stream.settings.radio.clone().get_radio().unwrap().type_id(), stream.settings.radio.get_radio().unwrap().type_id());
+    assert_eq!(
+        stream.settings.radio.clone().get_radio().unwrap().type_id(),
+        stream.settings.radio.get_radio().unwrap().type_id()
+    );
     assert!(stream.settings.radio.is_connected());
 }

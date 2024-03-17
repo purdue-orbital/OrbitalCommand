@@ -18,10 +18,9 @@ mod bpsk_bench;
 mod qpsk_bench;
 
 use ask_bench::ask_benchmark;
-use fsk_bench::fsk_benchmark;
 use bpsk_bench::bpsk_benchmark;
+use fsk_bench::fsk_benchmark;
 use qpsk_bench::qpsk_benchmark;
-
 
 criterion_group!(fsk, fsk_benchmark);
 criterion_group!(ask, ask_benchmark);

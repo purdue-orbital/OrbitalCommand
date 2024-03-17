@@ -9,7 +9,10 @@ static QPSK_FREQUENCY: f32 = 100.0;
 
 impl Modulation {
     pub fn new(samples_per_symbol: usize, sample_rate: f32) -> Modulation {
-        Modulation { samples_per_symbol, sample_rate }
+        Modulation {
+            samples_per_symbol,
+            sample_rate,
+        }
     }
 
     /// Modulate a radio signal using qpsk
@@ -24,19 +27,48 @@ impl Modulation {
             for y in (0..8).step_by(2) {
                 let val = (x << y) >> 6;
 
-                to_return.extend(
-                    match val {
-                        1 => { generate_wave(QPSK_FREQUENCY, self.sample_rate, self.samples_per_symbol as i32, 0, 1.0, PI, 0.0) }
-                        2 => { generate_wave(QPSK_FREQUENCY, self.sample_rate, self.samples_per_symbol as i32, 0, 1.0, 0.0, PI) }
-                        3 => { generate_wave(QPSK_FREQUENCY, self.sample_rate, self.samples_per_symbol as i32, 0, 1.0, 0.0, 0.0) }
+                to_return.extend(match val {
+                    1 => generate_wave(
+                        QPSK_FREQUENCY,
+                        self.sample_rate,
+                        self.samples_per_symbol as i32,
+                        0,
+                        1.0,
+                        PI,
+                        0.0,
+                    ),
+                    2 => generate_wave(
+                        QPSK_FREQUENCY,
+                        self.sample_rate,
+                        self.samples_per_symbol as i32,
+                        0,
+                        1.0,
+                        0.0,
+                        PI,
+                    ),
+                    3 => generate_wave(
+                        QPSK_FREQUENCY,
+                        self.sample_rate,
+                        self.samples_per_symbol as i32,
+                        0,
+                        1.0,
+                        0.0,
+                        0.0,
+                    ),
 
-                        // defualt as 0
-                        _ => { generate_wave(QPSK_FREQUENCY, self.sample_rate, self.samples_per_symbol as i32, 0, 1.0, PI, PI) }
-                    }
-                )
+                    // defualt as 0
+                    _ => generate_wave(
+                        QPSK_FREQUENCY,
+                        self.sample_rate,
+                        self.samples_per_symbol as i32,
+                        0,
+                        1.0,
+                        PI,
+                        PI,
+                    ),
+                })
             }
         }
-
 
         to_return
     }

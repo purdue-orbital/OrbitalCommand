@@ -1,2 +1,7 @@
-target/
-ground-old/client/node_modules/
+target
+ground-old/client/node_modules
+.git
+.idea
+.github
+doc
+images

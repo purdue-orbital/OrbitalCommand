@@ -2,20 +2,18 @@ use num_complex::Complex;
 
 use ask::structs::demodulation::Demodulation as ask_demod;
 use ask::structs::modulation::Modulation as ask_mod;
-use bpsk::structs::modulation::Modulation as bpsk_mod;
 use bpsk::structs::demodulation::Demodulation as bpsk_demod;
-use qpsk::structs::modulation::Modulation as qpsk_mod;
-use qpsk::structs::demodulation::Demodulation as qpsk_demod;
+use bpsk::structs::modulation::Modulation as bpsk_mod;
 use fsk::structs::demodulation::Demodulation as fsk_demod;
 use fsk::structs::modulation::Modulation as fsk_mod;
+use qpsk::structs::demodulation::Demodulation as qpsk_demod;
+use qpsk::structs::modulation::Modulation as qpsk_mod;
 
-pub mod tools;
-pub mod qpsk;
-pub mod bpsk;
 pub mod ask;
+pub mod bpsk;
 pub mod fsk;
-
-
+pub mod qpsk;
+pub mod tools;
 
 pub struct Demodulators {
     ask: ask_demod,
@@ -71,7 +69,6 @@ impl Modulators {
             qpsk: qpsk_mod::new(samples_per_symbol, sample_rate),
         }
     }
-
 
     pub fn update(&mut self, samples_per_symbol: usize, sample_rate: f32) {
         self.ask = ask_mod::new(samples_per_symbol, sample_rate);

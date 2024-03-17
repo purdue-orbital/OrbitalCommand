@@ -13,7 +13,7 @@ clap = { version = "4.4.7", features = ["derive"] }
 ds323x = "0.5.1"
 flexi_logger = "0.27.3"
 log = "0.4.20"
-mpu9250-i2c = "0.6.8"
+# mpu9250-i2c = "0.6.8"
 multi_log = "0.1.2"
 rppal = { version = "0.15.0", features = ["hal"] }
 serialport = "4.2.2"
@@ -21,3 +21,4 @@ signal-hook = "0.3.17"
 ublox = "0.4.4"
 common = { path = "../common" }
 radio = { path = "../radio" }
+rolly = { git = "https://github.com/ImTheSquid/rolly.git", features = ["i2c", "i2c_ad0"]}

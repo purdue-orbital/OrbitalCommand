@@ -30,7 +30,7 @@ pub enum MessageToGround {
         longitude: f64,
         velocity: f64,
         heading: f64,
-    }
+    },
 }
 
 impl TryFrom<&[u8]> for MessageToGround {

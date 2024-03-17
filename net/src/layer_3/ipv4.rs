@@ -1,7 +1,7 @@
 extern crate num;
 
-use std::{fmt, vec};
 use std::fmt::Formatter;
+use std::{fmt, vec};
 
 use anyhow::{bail, Error, Result};
 use ux::{u13, u2, u3, u4, u6};
@@ -27,17 +27,30 @@ impl Address {
             bail!("Invalid IP input")
         }
 
-        Ok(Address { field1: arr[0].parse()?, field2: arr[1].parse()?, field3: arr[2].parse()?, field4: arr[3].parse()? })
+        Ok(Address {
+            field1: arr[0].parse()?,
+            field2: arr[1].parse()?,
+            field3: arr[2].parse()?,
+            field4: arr[3].parse()?,
+        })
     }
 
     /// Create ipv4 address
     pub fn new(field1: u8, field2: u8, field3: u8, field4: u8) -> Address {
-        Address { field1, field2, field3, field4 }
+        Address {
+            field1,
+            field2,
+            field3,
+            field4,
+        }
     }
 
     /// Convert address to a u32 value
     pub fn encode(&self) -> u32 {
-        (self.field1 as u32) << 24 | (self.field2 as u32) << 16 | (self.field3 as u32) << 8 | (self.field4 as u32)
+        (self.field1 as u32) << 24
+            | (self.field2 as u32) << 16
+            | (self.field3 as u32) << 8
+            | (self.field4 as u32)
     }
 
     /// Take a u32 and return an address object
@@ -54,10 +67,13 @@ impl Address {
 /// make a clean version to represent an address
 impl fmt::Display for Address {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}.{}.{}.{}", self.field1, self.field2, self.field3, self.field4)
+        write!(
+            f,
+            "{}.{}.{}.{}",
+            self.field1, self.field2, self.field3, self.field4
+        )
     }
 }
-
 
 /// Flags configure data about fragmentation. If "don't fragment" and "more fragments" are set, the
 /// packet will just be dropped
@@ -102,7 +118,10 @@ impl ECN {
     }
 
     pub fn decode(input: u2) -> ECN {
-        ECN { enabled: input > u2::new(2), congested: u32::from(input) % 2 == 1 }
+        ECN {
+            enabled: input > u2::new(2),
+            congested: u32::from(input) % 2 == 1,
+        }
     }
 }
 
@@ -184,8 +203,14 @@ pub struct DifferentiatedServices {
 }
 
 impl DifferentiatedServices {
-    pub fn new(ip_precedence: IPPrecedence, assured_forwarding: AssuredForwarding) -> DifferentiatedServices {
-        DifferentiatedServices { ip_precedence, assured_forwarding }
+    pub fn new(
+        ip_precedence: IPPrecedence,
+        assured_forwarding: AssuredForwarding,
+    ) -> DifferentiatedServices {
+        DifferentiatedServices {
+            ip_precedence,
+            assured_forwarding,
+        }
     }
 
     pub fn encode(&self) -> u6 {
@@ -312,9 +337,9 @@ impl IPV4 {
 
         // set ipv4 main header settings
         to_return.internet_header_length = u4::new(ihl as u8);
-        to_return.differentiated_services_code_point = u6::new(u8::from(differentiated_services.encode()));
+        to_return.differentiated_services_code_point =
+            u6::new(u8::from(differentiated_services.encode()));
         to_return.explicit_congestion_notification = u2::new(u8::from(ecn.encode()));
-
 
         to_return.identification = identification;
         to_return.fragment_offset = fragment_offset;
@@ -344,18 +369,17 @@ impl IPV4 {
         self.data = data.to_vec();
     }
 
-
     pub fn get_data(&self) -> Vec<u8> {
         self.data.clone()
     }
 
     /// Encodes the values set in the IPV4 header into bytes (for transmission)
     pub fn encode(&self, ignore_data: bool) -> Vec<u8> {
-
         // Convert each section into a u8
-        let mut to_return = vec! {
+        let mut to_return = vec![
             (u8::from(self.version) << 4) | (u8::from(self.internet_header_length)),
-            u8::from(self.differentiated_services_code_point) << 2 | u8::from(self.explicit_congestion_notification),
+            u8::from(self.differentiated_services_code_point) << 2
+                | u8::from(self.explicit_congestion_notification),
             (self.total_length >> 8) as u8,
             self.total_length as u8,
             (self.identification >> 8) as u8,
@@ -374,7 +398,7 @@ impl IPV4 {
             (self.destination_ip_address >> 16) as u8,
             (self.destination_ip_address >> 8) as u8,
             self.destination_ip_address as u8,
-        };
+        ];
 
         to_return.extend_from_slice(self.option.as_slice());
 
@@ -386,12 +410,11 @@ impl IPV4 {
     }
 
     pub fn decode(arr: &[u8]) -> Result<IPV4> {
-
         // ensure integrity of the input
-        if arr.len() <= 20{
-            return Err(Error::msg("Array not long enough"))
-        }else if arr[0] >> 4 != 4{
-            return Err(Error::msg("Improper format"))
+        if arr.len() <= 20 {
+            return Err(Error::msg("Array not long enough"));
+        } else if arr[0] >> 4 != 4 {
+            return Err(Error::msg("Improper format"));
         }
 
         let total_length = ((arr[2] as u16) << 8) | (arr[3] as u16);
@@ -406,14 +429,21 @@ impl IPV4 {
             total_length,
             identification: ((arr[4] as u16) << 8) | (arr[5] as u16),
             flags: u3::new(arr[6] >> 5),
-            fragment_offset: u13::new((((arr[6] as u16) << 11 ) >> 3) | (arr[7] as u16)),
+            fragment_offset: u13::new((((arr[6] as u16) << 11) >> 3) | (arr[7] as u16)),
             time_to_live: arr[8],
             protocol: arr[9],
             header_checksum: (arr[10] as u16) << 8 | (arr[11] as u16),
-            source_ip_address: (arr[12] as u32) << 24 | (arr[13] as u32) << 16 | (arr[14] as u32) << 8 | (arr[15] as u32),
-            destination_ip_address: (arr[16] as u32) << 24 | (arr[17] as u32) << 16 | (arr[18] as u32) << 8 | (arr[19] as u32),
+            source_ip_address: (arr[12] as u32) << 24
+                | (arr[13] as u32) << 16
+                | (arr[14] as u32) << 8
+                | (arr[15] as u32),
+            destination_ip_address: (arr[16] as u32) << 24
+                | (arr[17] as u32) << 16
+                | (arr[18] as u32) << 8
+                | (arr[19] as u32),
             option: arr[20..(u8::from(internet_header_length) * 4) as usize].to_vec(),
-            data: arr[(u8::from(internet_header_length) * 4) as usize..total_length as usize].to_vec(),
+            data: arr[(u8::from(internet_header_length) * 4) as usize..total_length as usize]
+                .to_vec(),
         })
     }
 }

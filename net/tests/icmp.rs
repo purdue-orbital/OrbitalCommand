@@ -1,10 +1,11 @@
-use net::layer_3::icmp::{IcmpTypes, ICMPv4};
+use net::layer_3::icmp::{ICMPv4, IcmpTypes};
 use net::layer_3::ipv4::Address;
 
 #[test]
 pub fn encode_decode() {
     let mut x = ICMPv4::new(
-        IcmpTypes::EchoRequest, 128,
+        IcmpTypes::EchoRequest,
+        128,
         Address::from_str("192.168.1.4").unwrap(),
         Address::from_str("192.168.1.4").unwrap(),
         u32::MAX - 1,
@@ -21,11 +22,11 @@ pub fn encode_decode() {
     assert_eq!(decode.message_type, x.message_type);
 }
 
-
 #[test]
 pub fn checksum() {
     let mut x = ICMPv4::new(
-        IcmpTypes::EchoRequest, 128,
+        IcmpTypes::EchoRequest,
+        128,
         Address::from_str("192.168.1.4").unwrap(),
         Address::from_str("192.168.1.4").unwrap(),
         21780,
@@ -45,5 +46,8 @@ pub fn checksum() {
     x.update_checksum();
 
     // this should be true
-    assert!(x.verify(), "Failed to verify checksum as true after update!");
+    assert!(
+        x.verify(),
+        "Failed to verify checksum as true after update!"
+    );
 }

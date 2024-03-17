@@ -7,19 +7,16 @@ use std::str::Chars;
 /// # Arguments
 /// * `arr` - Array Of Values To Preform Operations
 ///
-pub fn subtract_left_adjacent(arr: Vec<f32>) -> Vec<f32>
-{
+pub fn subtract_left_adjacent(arr: Vec<f32>) -> Vec<f32> {
     // Left shift values
     let mut out = Vec::new();
 
-    for x in 1..arr.len()
-    {
+    for x in 1..arr.len() {
         out.push(arr.clone().get(x - 1).unwrap() - arr.clone().get(x).unwrap())
     }
 
     out
 }
-
 
 /// Find the moving average of an array of numbers
 ///
@@ -27,8 +24,7 @@ pub fn subtract_left_adjacent(arr: Vec<f32>) -> Vec<f32>
 /// * `arr` - Array Of Values To Preform Operations
 /// * `size` - Number of values to average together to form average
 ///
-pub fn moving_average(arr: Vec<f32>, size: usize) -> Vec<f32>
-{
+pub fn moving_average(arr: Vec<f32>, size: usize) -> Vec<f32> {
     // return vector
     let mut out = Vec::new();
 
@@ -41,7 +37,6 @@ pub fn moving_average(arr: Vec<f32>, size: usize) -> Vec<f32>
 
         // if array is the size to preform average on, preform moving average
         if to_sum.len() == size {
-
             // calculate average and add to array
             out.push(to_sum.iter().sum::<f32>() / size as f32);
 
@@ -59,8 +54,7 @@ pub fn moving_average(arr: Vec<f32>, size: usize) -> Vec<f32>
 /// * `arr` - Array Of Values To Preform Operations
 /// * `size` - Number of values to average together to form average
 ///
-pub fn normalize(arr: Vec<f32>) -> Vec<f32>
-{
+pub fn normalize(arr: Vec<f32>) -> Vec<f32> {
     // Get max
     let max = *arr.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap();
 
@@ -94,7 +88,6 @@ pub fn u32_to_char_bin(num: u32, len: usize) -> Vec<char> {
     to_return
 }
 
-
 /// Although the format! macro does this for us, we sometimes want to dynamically set the fixed
 /// length of the formatted binary
 ///
@@ -126,7 +119,6 @@ pub fn sum_with_carries(to_sum: &[u16]) -> u16 {
     let mut sum: u16 = 0;
 
     for &x in to_sum {
-
         // check for a carry
         let to_check = sum.checked_add(x);
 
@@ -149,7 +141,6 @@ pub fn sum_with_carries(to_sum: &[u16]) -> u16 {
     (Wrapping(sum) + Wrapping(carries)).0
 }
 
-
 /// Convert an array of u8s to an array of u16s
 pub fn u8_arr_to_u16_arr(arr: &[u8]) -> Vec<u16> {
     let mut new_arr = arr.to_vec();
@@ -170,9 +161,11 @@ pub fn u8_arr_to_u16_arr(arr: &[u8]) -> Vec<u16> {
 
 /// Run multiple commands seperated by enter keys on the system
 pub fn run_commands(command: &str) -> String {
-
     // breakup commands
-    let brokenup = command.split('\n').map(|b| { b.split(' ').collect::<Vec<&str>>() }).collect::<Vec<Vec<&str>>>();
+    let brokenup = command
+        .split('\n')
+        .map(|b| b.split(' ').collect::<Vec<&str>>())
+        .collect::<Vec<Vec<&str>>>();
 
     let mut to_return = String::new();
 

@@ -1,9 +1,9 @@
+use anyhow::{Error, Result};
 use ux::u13;
-use anyhow::{Result, Error};
 
-use crate::layer_3::ipv4::{Address, DifferentiatedServices, ECN, IPV4};
-use crate::layer_3::ipv4::AssuredForwarding::{AFx0};
+use crate::layer_3::ipv4::AssuredForwarding::AFx0;
 use crate::layer_3::ipv4::IPPrecedence::DF;
+use crate::layer_3::ipv4::{Address, DifferentiatedServices, ECN, IPV4};
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
 
 #[derive(Clone, Copy, FromPrimitive, Debug)]
@@ -80,7 +80,6 @@ pub enum IcmpTypes {
     ExtendedEchoReply,
 }
 
-
 /// Internet Control Message Protocol (ICMP) is also sometimes called a "ping" packet. This is the
 /// protocol that is used to help troubleshoot networks and make sure everything is working
 #[derive(Clone)]
@@ -99,14 +98,20 @@ pub struct ICMPv4 {
 }
 
 impl ICMPv4 {
-    pub fn new(icmp_type: IcmpTypes, time_to_live: u8, source_ip: Address, dest_ip: Address, rest_of_header: u32, data: &[u8]) -> ICMPv4 {
-
+    pub fn new(
+        icmp_type: IcmpTypes,
+        time_to_live: u8,
+        source_ip: Address,
+        dest_ip: Address,
+        rest_of_header: u32,
+        data: &[u8],
+    ) -> ICMPv4 {
         // create header
         let header = IPV4::new(
             &[],
             &[],
             &DifferentiatedServices::new(DF, AFx0), // ICMP really isn't important
-            ECN::new(false, false), // ICMP doesn't use ECN
+            ECN::new(false, false),                 // ICMP doesn't use ECN
             9210,
             u13::new(0),
             time_to_live,
@@ -197,17 +202,19 @@ impl ICMPv4 {
         let data: Vec<u8> = ipv4.get_data();
 
         // Ensure data integrity
-        if data.len() <= 8{
-            return Err(Error::msg("Packet too short for ICMP!"))
+        if data.len() <= 8 {
+            return Err(Error::msg("Packet too short for ICMP!"));
         }
 
-        Ok(
-        ICMPv4 {
+        Ok(ICMPv4 {
             header: ipv4,
             message_type: data[0],
             code: data[1],
             checksum: (data[2] as u16) << 8 | data[3] as u16,
-            rest_of_header: (data[4] as u32) << 24 | (data[5] as u32) << 16 | (data[6] as u32) << 8 | data[7] as u32,
+            rest_of_header: (data[4] as u32) << 24
+                | (data[5] as u32) << 16
+                | (data[6] as u32) << 8
+                | data[7] as u32,
             data: data[8..].to_vec(),
         })
     }

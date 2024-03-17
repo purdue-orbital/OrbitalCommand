@@ -14,7 +14,10 @@ impl Radio {
     /// This will attempt to connect to a radio connected to the system
     pub fn new() -> Result<Radio> {
         // Initialize values of a radio
-        let mut new_radio = Radio { device: None, is_connected: false };
+        let mut new_radio = Radio {
+            device: None,
+            is_connected: false,
+        };
 
         // Set that we are looking for lime devices
         let mut args = soapysdr::Args::new();
@@ -35,7 +38,9 @@ impl Radio {
     }
 
     /// Return bool value of if the radio is connected to the system
-    pub fn is_connected(&self) -> bool { self.is_connected }
+    pub fn is_connected(&self) -> bool {
+        self.is_connected
+    }
 
     /// Get Radio
     /// This will get an already established radio instance so you don't have to try to reconnect
@@ -43,12 +48,10 @@ impl Radio {
         if let Some(x) = self.device.as_ref() {
             Ok(x)
         } else {
-            Err(
-                soapysdr::Error {
-                    code: ErrorCode::Other,
-                    message: "Unable to fetch radio!".to_string(),
-                }
-            )
+            Err(soapysdr::Error {
+                code: ErrorCode::Other,
+                message: "Unable to fetch radio!".to_string(),
+            })
         }
     }
 }

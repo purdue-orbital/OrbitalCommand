@@ -4,10 +4,7 @@ ARG TARGET_CRATE=ground
 
 RUN apt-get update
 #RUN apk add soapy-sdr-dev --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
-RUN apt-get install -y libsoapysdr-dev build-essential clang libudev-dev
-RUN apt-get update && apt-get install -y \
-    software-properties-common \
-    npm
+RUN apt-get install -y libsoapysdr-dev build-essential clang libudev-dev software-properties-common
 # RUN npm install npm@latest -g && \
 #     npm install n -g && \
 #     n latest

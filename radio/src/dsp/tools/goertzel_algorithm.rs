@@ -32,7 +32,6 @@ impl GoertzelAlgorithm {
 
     /// Default calculation
     pub fn run(&self, arr: &[Complex<f32>]) -> f32 {
-
         // Initialize values
         let mut q_0: f32 = 0.0;
         let mut q_1: f32 = 0.0;

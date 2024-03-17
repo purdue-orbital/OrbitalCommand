@@ -15,13 +15,12 @@ use crate::radio::Radio;
 use crate::rx_handling::{RXLoop, WindowHandler};
 use crate::streams::{RadioSettings, Rx, Tx};
 
-
-mod radio;
-mod streams;
 pub mod dsp;
 pub mod frame;
-pub mod tools;
+mod radio;
 pub mod rx_handling;
+mod streams;
+pub mod tools;
 
 pub static AMBLE: &str = "10101010101010101010101010101010";
 pub static IDENT: &str = "11110000111100001111000011110000";
@@ -36,36 +35,34 @@ pub enum ModulationType {
 
 pub fn bits_per_symbol() -> u8 {
     match MOD_TYPE {
-        ModulationType::ASK => { 1 }
-        ModulationType::FSK => { 1 }
-        ModulationType::BPSK => { 1 }
-        ModulationType::QPSK => { 2 }
+        ModulationType::ASK => 1,
+        ModulationType::FSK => 1,
+        ModulationType::BPSK => 1,
+        ModulationType::QPSK => 2,
     }
 }
 
 pub fn demodulation(obj: &Demodulators, arr: Vec<Complex<f32>>) -> Vec<u8> {
     match MOD_TYPE {
-        ModulationType::ASK => { obj.ask(arr) }
-        ModulationType::FSK => { obj.fsk(arr) }
-        ModulationType::BPSK => { obj.bpsk(arr) }
-        ModulationType::QPSK => { obj.qpsk(arr) }
+        ModulationType::ASK => obj.ask(arr),
+        ModulationType::FSK => obj.fsk(arr),
+        ModulationType::BPSK => obj.bpsk(arr),
+        ModulationType::QPSK => obj.qpsk(arr),
     }
 }
 
 pub fn modulation(obj: &Modulators, arr: &[u8]) -> Vec<Complex<f32>> {
     match MOD_TYPE {
-        ModulationType::ASK => { obj.ask(arr) }
-        ModulationType::FSK => { obj.fsk(arr) }
-        ModulationType::BPSK => { obj.bpsk(arr) }
-        ModulationType::QPSK => { obj.qpsk(arr) }
+        ModulationType::ASK => obj.ask(arr),
+        ModulationType::FSK => obj.fsk(arr),
+        ModulationType::BPSK => obj.bpsk(arr),
+        ModulationType::QPSK => obj.qpsk(arr),
     }
 }
-
 
 unsafe impl Send for RadioStream {}
 
 unsafe impl Sync for RadioStream {}
-
 
 pub struct RadioStream {
     pub tx_stream: Tx,
@@ -74,10 +71,8 @@ pub struct RadioStream {
     pub settings: RadioSettings,
 }
 
-
 impl RadioStream {
     pub fn new() -> Result<RadioStream> {
-
         // Check if radio is connected
         let radio = Radio::new()?;
 
@@ -106,16 +101,19 @@ impl RadioStream {
             tx_stream: Tx::new(set.clone())?,
             rx_buffer: buffer.clone(),
             settings: set.clone(),
-            modulation: Modulators::new((set.sample_rate / set.baud_rate as f64) as usize, set.sample_rate as f32),
+            modulation: Modulators::new(
+                (set.sample_rate / set.baud_rate as f64) as usize,
+                set.sample_rate as f32,
+            ),
         };
-
 
         // Spawn rx thread
         spawn(move || {
             // create stream
             if let Ok(mut rx_stream) = Rx::new(set.clone()) {
                 let samples_per_a_symbol = set.sample_rate as f32 / set.baud_rate;
-                let instance = Demodulators::new(samples_per_a_symbol as usize, set.sample_rate as f32);
+                let instance =
+                    Demodulators::new(samples_per_a_symbol as usize, set.sample_rate as f32);
 
                 // create mtu
                 let mut mtu = vec![Complex::new(0.0, 0.0); samples_per_a_symbol as usize];
@@ -135,8 +133,7 @@ impl RadioStream {
                         println!("Error!")
                     }
 
-                    window.add(demodulation(&instance,mtu.clone()).as_slice());
-
+                    window.add(demodulation(&instance, mtu.clone()).as_slice());
                 }
             }
         });
@@ -147,7 +144,6 @@ impl RadioStream {
 
     /// This will transmit binary data to the radio
     pub fn transmit(&self, data: &[u8]) -> Result<()> {
-
         // add layer 2 data (frame header and trailer)
         let frame = Frame::new(data);
 

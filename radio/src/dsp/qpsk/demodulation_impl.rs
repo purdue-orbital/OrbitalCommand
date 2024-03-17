@@ -4,15 +4,17 @@ use crate::dsp::qpsk::structs::demodulation::Demodulation;
 
 impl Demodulation {
     pub fn new(samples_per_symbol: usize, sample_rate: f32) -> Demodulation {
-        Demodulation { samples_per_symbol, sample_rate }
+        Demodulation {
+            samples_per_symbol,
+            sample_rate,
+        }
     }
 
     /// Demodulate a radio signal using QPSK
     ///
     /// # Arguments
     /// * `arr` - Array of radio samples to
-    pub fn run(&self, arr: Vec<Complex<f32>>) -> Vec<u8>
-    {
+    pub fn run(&self, arr: Vec<Complex<f32>>) -> Vec<u8> {
         let mut to_return = Vec::with_capacity(arr.len() / self.samples_per_symbol);
 
         let mut bin: u8 = 0;
@@ -25,19 +27,17 @@ impl Demodulation {
             let sum: Complex<f32> = arr[x..x + self.samples_per_symbol].iter().sum();
 
             // evaluate
-            bin ^=
-                if sum.re.is_sign_positive() {
-                    if sum.im.is_sign_positive() {
-                        3
-                    } else {
-                        2
-                    }
-                } else if sum.im.is_sign_positive() {
-                    1
+            bin ^= if sum.re.is_sign_positive() {
+                if sum.im.is_sign_positive() {
+                    3
                 } else {
-                    0
+                    2
                 }
-            ;
+            } else if sum.im.is_sign_positive() {
+                1
+            } else {
+                0
+            };
 
             if counter == 8 {
                 to_return.push(bin);

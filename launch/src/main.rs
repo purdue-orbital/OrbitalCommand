@@ -1,19 +1,28 @@
 #![deny(clippy::unwrap_used)]
 
-use std::{process::Command, sync::{Arc, atomic::AtomicBool, mpsc::channel, RwLock, Mutex}, thread::{self, sleep}, time::{Duration as StdDuration, Instant}, io::ErrorKind, ops::DerefMut};
+use std::{
+    io::ErrorKind,
+    ops::DerefMut,
+    process::Command,
+    sync::{atomic::AtomicBool, mpsc::channel, Arc, Mutex, RwLock},
+    thread::{self, sleep},
+    time::{Duration as StdDuration, Instant},
+};
 
-use chrono::{NaiveDateTime, Utc, DateTime};
-use common::{MessageToGround, Vec3, MessageToLaunch};
-use ds323x::{Ds323x, DateTimeAccess};
-use flexi_logger::{Logger, FileSpec, detailed_format};
-use mpu9250_i2c::Mpu9250;
-use radio::RadioStream;
-use rppal::{i2c::I2c, hal::Delay, gpio::Gpio, gpio::OutputPin};
-use signal_hook::{consts::TERM_SIGNALS, flag};
-use ublox::{CfgPrtUartBuilder, UartPortId, UartMode, DataBits, Parity, StopBits, InProtoMask, OutProtoMask};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use clap::{Parser as ClapParser, Subcommand};
-use log::{warn, info, debug};
+use common::{MessageToGround, MessageToLaunch, Vec3};
+use ds323x::{DateTimeAccess, Ds323x};
+use flexi_logger::{detailed_format, FileSpec, Logger};
+use log::{debug, info, warn};
+use radio::RadioStream;
+use rolly::Mpu9250;
+use rppal::{gpio::Gpio, gpio::OutputPin, hal::Delay, i2c::I2c};
+use signal_hook::{consts::TERM_SIGNALS, flag};
 use ublox::*;
+use ublox::{
+    CfgPrtUartBuilder, DataBits, InProtoMask, OutProtoMask, Parity, StopBits, UartMode, UartPortId,
+};
 
 const DATE_FORMAT: &'static str = "%Y-%m-%d %H:%M:%S";
 
@@ -29,17 +38,15 @@ enum Commands {
     Clock {
         #[command(subcommand)]
         command: ClockCommands,
-    }
+    },
 }
 
 #[derive(Debug, Subcommand)]
 enum ClockCommands {
-    /// Set the current RTC time with an ISO8601 string and exit
-    Set {
-        time: String,
-    },
+    /// Set the current RTC time with an ISO8601 string (%Y-%m-%d %H:%M:%S) and exit
+    Set { time: String },
     /// Get the current RTC time and exit
-    Get
+    Get,
 }
 
 fn main() {
@@ -56,8 +63,14 @@ fn main() {
         .unwrap()
         .log_to_file(FileSpec::default().directory("/var/log/orbital"))
         .format(detailed_format)
-        .rotate(flexi_logger::Criterion::AgeOrSize(flexi_logger::Age::Day, 20_000_000), flexi_logger::Naming::Timestamps, flexi_logger::Cleanup::KeepLogFiles(100))
-        .write_mode(flexi_logger::WriteMode::Direct).build().unwrap();
+        .rotate(
+            flexi_logger::Criterion::AgeOrSize(flexi_logger::Age::Day, 20_000_000),
+            flexi_logger::Naming::Timestamps,
+            flexi_logger::Cleanup::KeepLogFiles(100),
+        )
+        .write_mode(flexi_logger::WriteMode::Direct)
+        .build()
+        .unwrap();
 
     let master_log = multi_log::MultiLogger::new(vec![stdout_log, file_log]);
     log::set_boxed_logger(Box::new(master_log));
@@ -66,7 +79,8 @@ fn main() {
     for sig in TERM_SIGNALS {
         // When terminated by a second term signal, exit with exit code 1.
         // This will do nothing the first time (because term_now is false).
-        flag::register_conditional_shutdown(*sig, 1, Arc::clone(&termination_flag)).expect("Failed to register conditional signal!");
+        flag::register_conditional_shutdown(*sig, 1, Arc::clone(&termination_flag))
+            .expect("Failed to register conditional signal!");
         // But this will "arm" the above for the second time, by setting it to true.
         // The order of registering these is important, if you put this one first, it will
         // first arm and then terminate ‒ all in the first round.
@@ -77,24 +91,40 @@ fn main() {
     let args = Args::parse();
 
     let mut rtc = Ds323x::new_ds3231(I2c::new().expect("Failed to open RTC I2C connection!"));
+    rtc.enable().expect("RTC enable to work all the time");
 
-    let mut mpu = Mpu9250::new(I2c::new().expect("Failed to open MPU I2C connection!"), Delay, Default::default()).expect("Failed to initialize MPU!");
-    mpu.init().unwrap();
+    info!(
+        "RTC initialized. Time reads: {}",
+        rtc.datetime().expect("Failed to read DateTime from RTC!")
+    );
+
+    // let mut mpu = Mpu9250::new(I2c::new().expect("Failed to open MPU I2C connection!"), Delay, Default::default()).expect("Failed to initialize MPU!");
+    // mpu.init().unwrap();
+    let mut mpu = Mpu9250::marg_default(
+        I2c::new().expect("Failed to open MPU I2C connection!"),
+        &mut Delay,
+    )
+    .expect("unable to make MPU9250");
 
     let mut gps = initialize_gps().expect("Failed to initialize GPS!");
-    
+
     info!("System initialization successful!");
-    info!("RTC is: {}", rtc.datetime().expect("Failed to read DateTime from RTC!"));
 
     if let Some(command) = args.command {
         match command {
             Commands::Clock { command } => match command {
                 ClockCommands::Set { time } => {
-                    rtc.set_datetime(&NaiveDateTime::parse_from_str(&time, DATE_FORMAT).expect(&format!("Invalid date format! Expected {DATE_FORMAT}")));
+                    let parsed = NaiveDateTime::parse_from_str(&time, DATE_FORMAT)
+                        .expect(&format!("Invalid date format! Expected {DATE_FORMAT}"));
+                    info!("Parsed format: {}", parsed);
+                    rtc.set_datetime(&parsed);
 
-                    info!("Clock set! New time is:{}", rtc.datetime().expect("Failed to read DateTime from RTC!"));
+                    info!(
+                        "Clock set! New time is: {}",
+                        rtc.datetime().expect("Failed to read DateTime from RTC!")
+                    );
                     return;
-                },
+                }
                 ClockCommands::Get => return,
             },
         }
@@ -114,7 +144,13 @@ fn main() {
     qdm.set_low();
 
     let rip_done = Arc::new(AtomicBool::new(false));
-    let rip_pin = Arc::new(Mutex::new(Gpio::new().unwrap().get(RIP_BCM_GPIO).unwrap().into_output()));
+    let rip_pin = Arc::new(Mutex::new(
+        Gpio::new()
+            .unwrap()
+            .get(RIP_BCM_GPIO)
+            .unwrap()
+            .into_output(),
+    ));
     rip_pin.lock().unwrap().set_low();
     let rip_pin_gps = rip_pin.clone();
 
@@ -185,11 +221,13 @@ fn main() {
                 })
                 .unwrap();
 
-                if Instant::now() > last_packet + StdDuration::from_millis(600 * 1000) && !rip_done_gps.load(std::sync::atomic::Ordering::SeqCst) {
-                    info!("No GPS for over 10 minutes! Cutting down.");
-                    // rip_done_gps.store(true, std::sync::atomic::Ordering::SeqCst);
-                    // cutdown(&mut rip_pin_gps.lock().unwrap());
-                }
+            if Instant::now() > last_packet + StdDuration::from_millis(600 * 1000)
+                && !rip_done_gps.load(std::sync::atomic::Ordering::SeqCst)
+            {
+                info!("No GPS for over 10 minutes! Cutting down.");
+                // rip_done_gps.store(true, std::sync::atomic::Ordering::SeqCst);
+                // cutdown(&mut rip_pin_gps.lock().unwrap());
+            }
         }
     });
 
@@ -197,20 +235,27 @@ fn main() {
     let tx_mpu = msg_tx.clone();
     let mpu_hnd = thread::spawn(move || {
         while !tf_mpu.load(std::sync::atomic::Ordering::SeqCst) {
-            let (acc, gyro) = mpu.get_accel_gyro().unwrap();
-            tx_mpu.send(MessageToGround::ImuTelemetry { temperature: mpu.get_temperature_celsius().unwrap() as f64, acceleration: Vec3 {
-                x: acc.x as f64,
-                y: acc.y as f64,
-                z: acc.z as f64,
-            },
-                gyro: Vec3 { x: gyro.x as f64, y: gyro.y as f64, z: gyro.z as f64 }, });
+            let all: rolly::MargMeasurements<[f32; 3]> = mpu.all().unwrap();
+            tx_mpu.send(MessageToGround::ImuTelemetry {
+                temperature: all.temp as f64,
+                acceleration: Vec3 {
+                    x: all.accel[0] as f64,
+                    y: all.accel[1] as f64,
+                    z: all.accel[2] as f64,
+                },
+                gyro: Vec3 {
+                    x: all.gyro[0] as f64,
+                    y: all.gyro[1] as f64,
+                    z: all.gyro[2] as f64,
+                },
+            });
 
             sleep(StdDuration::from_millis(1_000));
         }
     });
 
     drop(msg_tx);
-    
+
     let rip_pin_rx = rip_pin.clone();
     let rip_done_rx = rip_done.clone();
     // let radio_rx = radio.clone();
@@ -241,7 +286,9 @@ fn main() {
     let timer_hnd = thread::spawn(move || {
         while !tf_timer.load(std::sync::atomic::Ordering::SeqCst) {
             // Timed cutdown
-            if Instant::now() > start + StdDuration::from_millis(CUTDOWN_TIME_SECS * 1000) && !rip_done_timer.load(std::sync::atomic::Ordering::SeqCst) {
+            if Instant::now() > start + StdDuration::from_millis(CUTDOWN_TIME_SECS * 1000)
+                && !rip_done_timer.load(std::sync::atomic::Ordering::SeqCst)
+            {
                 info!("Time's up! Cutting down.");
                 rip_done_timer.store(true, std::sync::atomic::Ordering::SeqCst);
                 cutdown(&mut rip_pin_timer.lock().unwrap());
@@ -265,7 +312,7 @@ fn main() {
     radio_hnd.join().unwrap();
 }
 
-const CUTDOWN_TIME_SECS: usize = 500;
+const CUTDOWN_TIME_SECS: u64 = 500;
 
 #[derive(Debug)]
 enum GpsError {
@@ -355,12 +402,12 @@ impl Device {
                         // Didn't receive packet, try again
                         self.write_all(data)?;
                         attempts += 1;
-                    },
+                    }
                     _ => return Err(e),
                 },
             }
         }
-        
+
         Err(std::io::Error::from(ErrorKind::TimedOut))
     }
 
@@ -384,14 +431,14 @@ impl Device {
                 match it.next() {
                     Some(Ok(packet)) => {
                         cb(packet);
-                    },
+                    }
                     Some(Err(_)) => {
                         // Received a malformed packet, ignore it
-                    },
+                    }
                     None => {
                         // We've eaten all the packets we have
                         break;
-                    },
+                    }
                 }
             }
         }
@@ -427,7 +474,7 @@ impl Device {
                 } else {
                     Err(e)
                 }
-            },
+            }
         }
     }
 }
@@ -448,7 +495,9 @@ impl ToString for ClockError {
     }
 }
 
-fn set_system_clock_from_rtc(rtc: &mut Ds323x<ds323x::interface::I2cInterface<I2c>, ds323x::ic::DS3231>) -> Result<(), ClockError> {
+fn set_system_clock_from_rtc(
+    rtc: &mut Ds323x<ds323x::interface::I2cInterface<I2c>, ds323x::ic::DS3231>,
+) -> Result<(), ClockError> {
     // Set the system clock
     let time = rtc.datetime().map_err(|_| ClockError::Fetch)?;
 
@@ -458,11 +507,16 @@ fn set_system_clock_from_rtc(rtc: &mut Ds323x<ds323x::interface::I2cInterface<I2
         .map_err(|e| ClockError::CommandStart(e.to_string()));
 
     match command {
-        Ok(code) => if !code.status.success() {
-            Err(ClockError::CommandWait(format!("Bad exit code: {}", code.status.to_string())))
-        } else {
-            Ok(())
-        },
+        Ok(code) => {
+            if !code.status.success() {
+                Err(ClockError::CommandWait(format!(
+                    "Bad exit code: {}",
+                    code.status.to_string()
+                )))
+            } else {
+                Ok(())
+            }
+        }
         Err(e) => Err(ClockError::CommandWait(e.to_string())),
     }
 }

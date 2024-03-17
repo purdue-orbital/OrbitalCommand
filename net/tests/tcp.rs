@@ -1,6 +1,5 @@
 use net::layer_3::ipv4::Address;
-use net::layer_4::tcp::{TcpFlags, TCPv4};
-
+use net::layer_4::tcp::{TCPv4, TcpFlags};
 
 #[test]
 pub fn encode_decode() {
@@ -30,7 +29,6 @@ pub fn encode_decode() {
     assert_eq!(decode.data, x.data);
     assert_eq!(decode.ipv4.source_ip_address, x.ipv4.source_ip_address);
 }
-
 
 #[test]
 pub fn checksum() {
@@ -62,5 +60,8 @@ pub fn checksum() {
     x.update_checksum();
 
     // this should be true
-    assert!(x.verify(), "Failed to verify checksum as true after update!");
+    assert!(
+        x.verify(),
+        "Failed to verify checksum as true after update!"
+    );
 }

@@ -1,5 +1,5 @@
 use crate::tools::{bin_to_u8, u8_to_bin};
-use crate::{AMBLE,IDENT};
+use crate::{AMBLE, IDENT};
 
 /// The Frame design implemented here is CCSDS SDLP which is specifically designed for use in
 /// spacecraft and space bound communication
@@ -31,28 +31,42 @@ pub struct Frame {
     // 16 bits
     data_status: u16,
 
-
     //--------------------------------
     // Main body
     //--------------------------------
-
     pub data: Vec<u8>,
 }
 
-
 impl Frame {
     pub fn new(bytes: &[u8]) -> Frame {
-        Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bytes.to_vec() }
+        Frame {
+            version_number: 0,
+            spacecraft_id: 0,
+            virtual_channel_id: 0,
+            ocf: false,
+            master_frame_count: 0,
+            virtual_frame_count: 0,
+            data_status: 0,
+            data: bytes.to_vec(),
+        }
     }
 
     /// Turn a string into frame segments (if any)
-    pub fn from(data: Vec<String>) -> Vec<Frame>
-    {
+    pub fn from(data: Vec<String>) -> Vec<Frame> {
         // Create return vector
         let mut to_return = Vec::new();
 
         for x in data {
-            to_return.push(Frame { version_number: 0, spacecraft_id: 0, virtual_channel_id: 0, ocf: false, master_frame_count: 0, virtual_frame_count: 0, data_status: 0, data: bin_to_u8(x.as_str()) });
+            to_return.push(Frame {
+                version_number: 0,
+                spacecraft_id: 0,
+                virtual_channel_id: 0,
+                ocf: false,
+                master_frame_count: 0,
+                virtual_frame_count: 0,
+                data_status: 0,
+                data: bin_to_u8(x.as_str()),
+            });
         }
 
         to_return
@@ -65,7 +79,7 @@ impl Frame {
 
         let len_bin = u8_to_bin(&[(len >> 8) as u8, len as u8]);
 
-        let amble= AMBLE;
+        let amble = AMBLE;
         let ident = IDENT;
 
         bin_to_u8(format!("{amble}{ident}{len_bin}{bin}").as_str())

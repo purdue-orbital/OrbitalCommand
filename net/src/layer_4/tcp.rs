@@ -1,7 +1,9 @@
+use anyhow::{Error, Result};
 use ux::{u13, u4};
-use anyhow::{Result, Error};
 
-use crate::layer_3::ipv4::{Address, AssuredForwarding, DifferentiatedServices, ECN, IPPrecedence, IPV4};
+use crate::layer_3::ipv4::{
+    Address, AssuredForwarding, DifferentiatedServices, IPPrecedence, ECN, IPV4,
+};
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr};
 
 /// These are flags to specify the specifics of this packet
@@ -64,14 +66,24 @@ pub struct TCPv4 {
 
 impl TCPv4 {
     /// Create / initialize a tcp packet
-    pub fn new(src_addr: Address, src_port: u16, dest_addr: Address, dst_port: u16, data: &[u8], options: &[u8], flags: &[TcpFlags], seq_num: u32, ack_num: u32, window_size: u16, urgent_pointer: u16) -> TCPv4 {
-
+    pub fn new(
+        src_addr: Address,
+        src_port: u16,
+        dest_addr: Address,
+        dst_port: u16,
+        data: &[u8],
+        options: &[u8],
+        flags: &[TcpFlags],
+        seq_num: u32,
+        ack_num: u32,
+        window_size: u16,
+        urgent_pointer: u16,
+    ) -> TCPv4 {
         // pad out options
         let mut options = options.to_vec();
         while options.len() % 4 != 0 {
             options.push(0);
         }
-
 
         // calculate offset
         let offset = u4::new((20 + options.len() as u8) / 4);
@@ -88,7 +100,6 @@ impl TCPv4 {
                 65461,
                 u13::new(0),
                 64,
-
                 // always will be 6
                 6,
                 src_addr.encode(),
@@ -123,14 +134,14 @@ impl TCPv4 {
         // set flags
         for x in flags {
             match x {
-                TcpFlags::Cwr => { to_return.cwr = true }
-                TcpFlags::Ece => { to_return.ece = true }
-                TcpFlags::Urg => { to_return.urg = true }
-                TcpFlags::Ack => { to_return.ack = true }
-                TcpFlags::Psh => { to_return.psh = true }
-                TcpFlags::Rst => { to_return.rst = true }
-                TcpFlags::Syn => { to_return.syn = true }
-                TcpFlags::Fin => { to_return.fin = true }
+                TcpFlags::Cwr => to_return.cwr = true,
+                TcpFlags::Ece => to_return.ece = true,
+                TcpFlags::Urg => to_return.urg = true,
+                TcpFlags::Ack => to_return.ack = true,
+                TcpFlags::Psh => to_return.psh = true,
+                TcpFlags::Rst => to_return.rst = true,
+                TcpFlags::Syn => to_return.syn = true,
+                TcpFlags::Fin => to_return.fin = true,
             }
         }
 
@@ -157,7 +168,15 @@ impl TCPv4 {
             self.seq_num as u16,
             (self.ack_num >> 16) as u16,
             self.ack_num as u16,
-            (u16::from(self.data_offset) << 12) | (self.cwr as u16) << 7 | (self.ece as u16) << 6 | (self.urg as u16) << 5 | (self.ack as u16) << 4 | (self.psh as u16) << 3 | (self.rst as u16) << 2 | (self.syn as u16) << 1 | self.fin as u16,
+            (u16::from(self.data_offset) << 12)
+                | (self.cwr as u16) << 7
+                | (self.ece as u16) << 6
+                | (self.urg as u16) << 5
+                | (self.ack as u16) << 4
+                | (self.psh as u16) << 3
+                | (self.rst as u16) << 2
+                | (self.syn as u16) << 1
+                | self.fin as u16,
             self.window_size,
             self.checksum,
             self.urgent_pointer,
@@ -189,7 +208,15 @@ impl TCPv4 {
             self.seq_num as u16,
             (self.ack_num >> 16) as u16,
             self.ack_num as u16,
-            (u16::from(self.data_offset) << 12) | (self.cwr as u16) << 7 | (self.ece as u16) << 6 | (self.urg as u16) << 5 | (self.ack as u16) << 4 | (self.psh as u16) << 3 | (self.rst as u16) << 2 | (self.syn as u16) << 1 | self.fin as u16,
+            (u16::from(self.data_offset) << 12)
+                | (self.cwr as u16) << 7
+                | (self.ece as u16) << 6
+                | (self.urg as u16) << 5
+                | (self.ack as u16) << 4
+                | (self.psh as u16) << 3
+                | (self.rst as u16) << 2
+                | (self.syn as u16) << 1
+                | self.fin as u16,
             self.window_size,
             0,
             self.urgent_pointer,
@@ -211,7 +238,6 @@ impl TCPv4 {
 
     /// encode the data into a vector of u8s
     pub fn encode(&mut self, ignore_ipv4: bool) -> Vec<u8> {
-
         // Encode this packet
         let mut arr = vec![
             (self.src_port >> 8) as u8,
@@ -227,7 +253,14 @@ impl TCPv4 {
             (self.ack_num >> 8) as u8,
             self.ack_num as u8,
             (u8::from(self.data_offset) << 4),
-            (self.cwr as u8) << 7 | (self.ece as u8) << 6 | (self.urg as u8) << 5 | (self.ack as u8) << 4 | (self.psh as u8) << 3 | (self.rst as u8) << 2 | (self.syn as u8) << 1 | self.fin as u8,
+            (self.cwr as u8) << 7
+                | (self.ece as u8) << 6
+                | (self.urg as u8) << 5
+                | (self.ack as u8) << 4
+                | (self.psh as u8) << 3
+                | (self.rst as u8) << 2
+                | (self.syn as u8) << 1
+                | self.fin as u8,
             (self.window_size >> 8) as u8,
             self.window_size as u8,
             (self.checksum >> 8) as u8,
@@ -254,16 +287,15 @@ impl TCPv4 {
 
     /// decode an array of u8s into an tcp packet
     pub fn decode(arr: &[u8]) -> Result<TCPv4> {
-        
         // decode to ipv4
         let ipv4 = IPV4::decode(arr)?;
-        
+
         // get ipv4 data
         let data = ipv4.get_data();
-        
+
         // ensure integrity
-        if data.len() <= 20{
-            return Err(Error::msg("Packet too short for TCP!"))
+        if data.len() <= 20 {
+            return Err(Error::msg("Packet too short for TCP!"));
         }
 
         let data_offset = u4::new(data[12] >> 4);
@@ -272,8 +304,14 @@ impl TCPv4 {
             ipv4,
             src_port: ((data[0] as u16) << 8) | data[1] as u16,
             dst_port: ((data[2] as u16) << 8) | data[3] as u16,
-            seq_num: ((data[4] as u32) << 24) | ((data[5] as u32) << 16) | ((data[6] as u32) << 8) | data[7] as u32,
-            ack_num: ((data[8] as u32) << 24) | ((data[9] as u32) << 16) | ((data[10] as u32) << 8) | data[11] as u32,
+            seq_num: ((data[4] as u32) << 24)
+                | ((data[5] as u32) << 16)
+                | ((data[6] as u32) << 8)
+                | data[7] as u32,
+            ack_num: ((data[8] as u32) << 24)
+                | ((data[9] as u32) << 16)
+                | ((data[10] as u32) << 8)
+                | data[11] as u32,
             data_offset,
             cwr: data[13] & 1 == 1,
             ece: (data[13] >> 1) & 1 == 1,
@@ -288,7 +326,6 @@ impl TCPv4 {
             urgent_pointer: ((data[18] as u16) << 8) | data[19] as u16,
             options: data[20..(u8::from(data_offset) as usize * 4)].to_vec(),
             data: data[(u8::from(data_offset) as usize * 4)..].to_vec(),
-        }
-        )
+        })
     }
 }

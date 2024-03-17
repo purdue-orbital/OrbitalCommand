@@ -1,9 +1,11 @@
-use crate::datagrams::dns::_dns::{BasicDns, DnsTypes, Opcode, QueryClass, QuestionSection, ResourceType, ResponseCode};
+use crate::datagrams::dns::_dns::{
+    BasicDns, DnsTypes, Opcode, QueryClass, QuestionSection, ResourceType, ResponseCode,
+};
 use crate::layer_3::ipv4::Address;
 use crate::layer_4::udp::UDPv4;
 
 /// This holds the parent class for the different DNS packet types
-mod _dns{
+mod _dns {
     use num_enum::TryFromPrimitive;
 
     #[derive(Copy, Clone, TryFromPrimitive)]
@@ -19,7 +21,7 @@ mod _dns{
         CH = 3,
 
         /// Hesiod query apart of "Project Athena" (This is also old and outdated with questionable security practices)
-        HS = 4
+        HS = 4,
     }
 
     #[derive(Copy, Clone, TryFromPrimitive)]
@@ -51,9 +53,9 @@ mod _dns{
     }
 
     #[derive(Clone)]
-    pub struct QuestionSection{
+    pub struct QuestionSection {
         /// Name of resource
-        pub name:String,
+        pub name: String,
 
         /// Record Type
         pub r_type: ResourceType,
@@ -63,13 +65,12 @@ mod _dns{
     }
 
     impl QuestionSection {
-        pub fn encode(&self)-> Vec<u8>{
+        pub fn encode(&self) -> Vec<u8> {
             let mut to_return = self.name.as_bytes().to_vec();
 
             to_return.extend_from_slice(&[
                 (self.r_type as u16 >> 8) as u8,
                 self.r_type as u8,
-
                 (self.class as u16 >> 8) as u8,
                 self.class as u8,
             ]);
@@ -77,23 +78,28 @@ mod _dns{
             to_return
         }
 
-        pub fn decode(data:&[u8])-> QuestionSection{
+        pub fn decode(data: &[u8]) -> QuestionSection {
+            let window = data.len() - 4;
 
-            let window = data.len()-4;
-
-            QuestionSection{
+            QuestionSection {
                 name: String::from_utf8(data[..window].to_vec()).unwrap(),
 
-                r_type: ResourceType::try_from((data[window] as u16) << 8 | (data[window+1] as u16)).unwrap(),
-                class: QueryClass::try_from((data[window+2] as u16) << 8 | (data[window+3] as u16)).unwrap(),
+                r_type: ResourceType::try_from(
+                    (data[window] as u16) << 8 | (data[window + 1] as u16),
+                )
+                .unwrap(),
+                class: QueryClass::try_from(
+                    (data[window + 2] as u16) << 8 | (data[window + 3] as u16),
+                )
+                .unwrap(),
             }
         }
     }
 
     #[derive(Clone)]
-    pub struct ResourceRecord{
+    pub struct ResourceRecord {
         /// Name of resource
-        pub name:String,
+        pub name: String,
 
         /// Record Type
         pub r_type: ResourceType,
@@ -108,13 +114,12 @@ mod _dns{
         pub rd_length: u16,
 
         /// The data of this field (like an IP address for A and AAAA records)
-        pub rdata: String
+        pub rdata: String,
     }
 
-
-    #[derive(Clone,TryFromPrimitive)]
+    #[derive(Clone, TryFromPrimitive)]
     #[repr(u8)]
-    pub enum DnsTypes{
+    pub enum DnsTypes {
         /// Query request (request from client)
         Query,
 
@@ -122,9 +127,9 @@ mod _dns{
         Reply,
     }
 
-    #[derive(Clone,TryFromPrimitive)]
+    #[derive(Clone, TryFromPrimitive)]
     #[repr(u8)]
-    pub enum Opcode{
+    pub enum Opcode {
         /// Standard query
         Query,
 
@@ -135,9 +140,9 @@ mod _dns{
         Status,
     }
 
-    #[derive(Clone,TryFromPrimitive)]
+    #[derive(Clone, TryFromPrimitive)]
     #[repr(u8)]
-    pub enum ResponseCode{
+    pub enum ResponseCode {
         /// No error occurred
         NoError,
 
@@ -152,7 +157,7 @@ mod _dns{
     }
 
     #[derive(Clone)]
-    pub struct BasicDns{
+    pub struct BasicDns {
         /// DNS type
         pub qr: DnsTypes,
 
@@ -178,42 +183,46 @@ mod _dns{
         pub questions: Vec<QuestionSection>,
 
         /// A response can have multiple responses
-        pub responses: Vec<ResourceRecord>
+        pub responses: Vec<ResourceRecord>,
     }
 
-    impl BasicDns{
-        pub fn encode(&self)-> Vec<u8>{
+    impl BasicDns {
+        pub fn encode(&self) -> Vec<u8> {
             // The header is only 16 bits
             let mut to_return = vec![
-                (self.clone().qr as u8) << 7 | (self.clone().opcode as u8) << 3 | (self.aa as u8) << 2 | (self.tc as u8) << 1 | (self.rd as u8),
-                (self.ra as u8) << 7 | (self.clone().rcode as u8)
+                (self.clone().qr as u8) << 7
+                    | (self.clone().opcode as u8) << 3
+                    | (self.aa as u8) << 2
+                    | (self.tc as u8) << 1
+                    | (self.rd as u8),
+                (self.ra as u8) << 7 | (self.clone().rcode as u8),
             ];
 
-            for x in &self.questions{
+            for x in &self.questions {
                 to_return.extend_from_slice(x.encode().as_slice())
             }
 
-            for x in &self.responses{
+            for x in &self.responses {
                 //to_return.extend_from_slice()
             }
 
             to_return
         }
 
-        pub fn decode(&self, data: &[u8])-> BasicDns{
-           let mut to_return = BasicDns{
+        pub fn decode(&self, data: &[u8]) -> BasicDns {
+            let mut to_return = BasicDns {
                 qr: DnsTypes::try_from(data[0] >> 7).unwrap(),
                 opcode: Opcode::try_from((data[0] << 1) >> 4).unwrap(),
                 aa: ((data[0] >> 2) & 1) == 1,
                 tc: ((data[0] >> 1) & 1) == 1,
                 rd: (data[0] & 1) == 1,
-                ra: ((data[1] >> 7 ) & 1) == 1,
-                rcode: ResponseCode::try_from((data[1] << 4 ) >> 4).unwrap(),
+                ra: ((data[1] >> 7) & 1) == 1,
+                rcode: ResponseCode::try_from((data[1] << 4) >> 4).unwrap(),
                 questions: vec![],
                 responses: vec![],
             };
 
-            to_return.questions.push(QuestionSection{
+            to_return.questions.push(QuestionSection {
                 name: "".to_string(),
                 r_type: ResourceType::A,
                 class: QueryClass::IN,
@@ -223,27 +232,35 @@ mod _dns{
         }
     }
 
-    pub trait AsBasicDNS{
-        fn as_basic_dns(&self)-> &BasicDns;
+    pub trait AsBasicDNS {
+        fn as_basic_dns(&self) -> &BasicDns;
     }
 }
 
 /// UDP variant of the DNS protocol
-pub struct UdpDns{
+pub struct UdpDns {
     pub dns_parent: _dns::BasicDns,
     pub udp_parent: UDPv4,
-
-
 }
 
-impl UdpDns{
+impl UdpDns {
     /// Generates a new request
-    pub fn new_request(src_addr: Address, src_port: u16, dest_addr: Address, dest_port: u16, r_type: ResourceType, domain: String ) -> UdpDns{
-
+    pub fn new_request(
+        src_addr: Address,
+        src_port: u16,
+        dest_addr: Address,
+        dest_port: u16,
+        r_type: ResourceType,
+        domain: String,
+    ) -> UdpDns {
         // generate question
-        let question = QuestionSection{name:domain, r_type, class:QueryClass::IN};
+        let question = QuestionSection {
+            name: domain,
+            r_type,
+            class: QueryClass::IN,
+        };
 
-        UdpDns{
+        UdpDns {
             dns_parent: BasicDns {
                 qr: DnsTypes::Query,
                 opcode: Opcode::Query,
@@ -262,7 +279,7 @@ impl UdpDns{
 }
 
 impl _dns::AsBasicDNS for UdpDns {
-    fn as_basic_dns(&self)-> &BasicDns{
+    fn as_basic_dns(&self) -> &BasicDns {
         &self.dns_parent
     }
 }

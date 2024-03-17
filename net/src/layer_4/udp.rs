@@ -1,7 +1,9 @@
+use anyhow::{Error, Result};
 use ux::u13;
-use anyhow::{Result, Error};
 
-use crate::layer_3::ipv4::{Address, AssuredForwarding, DifferentiatedServices, ECN, IPPrecedence, IPV4};
+use crate::layer_3::ipv4::{
+    Address, AssuredForwarding, DifferentiatedServices, IPPrecedence, ECN, IPV4,
+};
 use crate::tools::{sum_with_carries, u8_arr_to_u16_arr, u8s_to_u16};
 
 /// IPv4 version of the UDP protocol. UDP is an OSI Layer 4 encapsulation that is connectionless or
@@ -28,8 +30,13 @@ pub struct UDPv4 {
 
 impl UDPv4 {
     /// Create / initialize a UDP packet
-    pub fn new(src_addr: Address, src_port: u16, dest_addr: Address, dst_port: u16, data: &[u8]) -> UDPv4 {
-
+    pub fn new(
+        src_addr: Address,
+        src_port: u16,
+        dest_addr: Address,
+        dst_port: u16,
+        data: &[u8],
+    ) -> UDPv4 {
         // calculate length of packet
         let length = (data.len() + 8) as u16;
 
@@ -44,7 +51,6 @@ impl UDPv4 {
                 65461,
                 u13::new(0),
                 64,
-
                 // always will be 17
                 17,
                 src_addr.encode(),
@@ -64,7 +70,6 @@ impl UDPv4 {
 
     /// returns if this packet passes the checksum
     pub fn verify(&mut self) -> bool {
-
         // create IPv4 pseudo header
         let mut pseudo_header = vec![
             (self.ipv4.source_ip_address >> 16) as u16,
@@ -88,7 +93,6 @@ impl UDPv4 {
 
     /// This will calculate the checksum for this packet
     pub fn calc_checksum(&mut self) -> u16 {
-
         // create IPv4 pseudo header
         let mut pseudo_header = vec![
             (self.ipv4.source_ip_address >> 16) as u16,
@@ -118,7 +122,6 @@ impl UDPv4 {
 
     /// encode the data into a vector of u8s
     pub fn encode(&mut self, ignore_ipv4: bool) -> Vec<u8> {
-
         // Encode this packet
         let mut arr = vec![
             (self.src_port >> 8) as u8,
@@ -155,8 +158,8 @@ impl UDPv4 {
         let data = ipv4.get_data();
 
         // ensure data integrity
-        if data.len() <= 8{
-            return Err(Error::msg("Packet too short for UDP!"))
+        if data.len() <= 8 {
+            return Err(Error::msg("Packet too short for UDP!"));
         }
 
         Ok(UDPv4 {

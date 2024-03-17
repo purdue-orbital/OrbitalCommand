@@ -24,7 +24,6 @@ pub fn encode_decode() {
     assert_eq!(decode.ipv4.source_ip_address, x.ipv4.source_ip_address);
 }
 
-
 #[test]
 pub fn checksum() {
     let mut x = UDPv4::new(
@@ -49,5 +48,8 @@ pub fn checksum() {
     x.update_checksum();
 
     // this should be true
-    assert!(x.verify(), "Failed to verify checksum as true after update!");
+    assert!(
+        x.verify(),
+        "Failed to verify checksum as true after update!"
+    );
 }

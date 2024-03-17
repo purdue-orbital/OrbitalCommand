@@ -4,15 +4,17 @@ use crate::dsp::bpsk::structs::demodulation::Demodulation;
 
 impl Demodulation {
     pub fn new(samples_per_symbol: usize, sample_rate: f32) -> Demodulation {
-        Demodulation { samples_per_symbol, sample_rate }
+        Demodulation {
+            samples_per_symbol,
+            sample_rate,
+        }
     }
 
     /// Demodulate a radio signal using BPSK
     ///
     /// # Arguments
     /// * `arr` - Array of radio samples to
-    pub fn run(&self, arr: Vec<Complex<f32>>) -> Vec<u8>
-    {
+    pub fn run(&self, arr: Vec<Complex<f32>>) -> Vec<u8> {
         let mut to_return = Vec::with_capacity(self.samples_per_symbol);
 
         let mut bin: u8 = 0;

@@ -1,7 +1,6 @@
-use std::{str};
+use std::str;
 use std::sync::{Arc, RwLock};
-use std::thread::{spawn};
-
+use std::thread::spawn;
 
 fn main() {
     // Start Radio stream
@@ -16,7 +15,6 @@ fn main() {
 
     // This is the thread we read transmissions from asynchronously
     spawn(move || {
-
         loop {
             // Read transmissions
             let arr = thread_clone.read().unwrap().read().unwrap();
@@ -27,13 +25,12 @@ fn main() {
             if let Ok(..) = check {
                 let out = check.unwrap().to_string();
 
-                if !out.is_empty(){
+                if !out.is_empty() {
                     println!("Data: {out}")
                 }
             }
         }
     });
-
 
     // Start chat app
     loop {
