@@ -6,7 +6,7 @@ ARG CARGO_BUILD=""
 RUN apt-get update
 #RUN apk add soapy-sdr-dev --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
 RUN apt-get install -y libsoapysdr-dev build-essential clang binaryen software-properties-common npm
-RUN npm install -g sass
+RUN npm install -g sass tailwindcss
 
 RUN rustup target add wasm32-unknown-unknown
 RUN cargo install cargo-generate
@@ -36,7 +36,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 RUN mkdir /usr/src/orbital/out
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/src/orbital/target \
-    cargo $CARGO_BUILD build --release && mv ../target/release/$TARGET_CRATE /usr/src/oribtal/out/app && if [ "$CARGO_BUILD" = "leptos" ]; then mv /usr/src/orbital/target/site /usr/src/orbital/out/; fi
+    cargo $CARGO_BUILD build --release && mv /usr/src/orbital/target/release/$TARGET_CRATE /usr/src/orbital/out/app && if [ "$CARGO_BUILD" = "leptos" ]; then mv /usr/src/orbital/target/site /usr/src/orbital/out/; fi
 
 EXPOSE 8080
 # EXPOSE 27017
