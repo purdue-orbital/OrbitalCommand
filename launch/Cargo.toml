@@ -22,3 +22,4 @@ ublox = "0.4.4"
 common = { path = "../common" }
 radio = { path = "../radio" }
 rolly = { git = "https://github.com/ImTheSquid/rolly.git", features = ["i2c", "i2c_ad0"]}
+lsm6dso = "0.1.0"

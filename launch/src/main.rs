@@ -17,6 +17,7 @@ use flexi_logger::{detailed_format, FileSpec, Logger};
 use log::{debug, info, warn};
 use radio::RadioStream;
 use rolly::Mpu9250;
+use lsm6dso::Lsm6dso;
 use rppal::{gpio::Gpio, gpio::OutputPin, hal::Delay, i2c::I2c};
 use signal_hook::{consts::TERM_SIGNALS, flag};
 use ublox::*;
@@ -48,6 +49,31 @@ enum ClockCommands {
     /// Get the current RTC time and exit
     Get,
 }
+
+#[derive(Debug)]
+enum LaunchState {
+    Ready,
+    IgnitorOne,
+    IgnitorTwo,
+    Done,
+    Failed,
+}
+
+#[derive(Debug)]
+struct State {
+    mission_start: Option<Instant>,
+    // The time at which the button was pressed and is still being held
+    button_hold: Option<Instant>,
+    gps_available: bool,
+    cut_done: bool,
+    pop_done: bool,
+    launch_state: LaunchState,
+}
+
+// Pin definitions
+// const CUT_PIN: u8 = 0;
+// const POP_PIN: u8 = 0;
+// const 
 
 fn main() {
     // Enable logging
@@ -100,11 +126,11 @@ fn main() {
 
     // let mut mpu = Mpu9250::new(I2c::new().expect("Failed to open MPU I2C connection!"), Delay, Default::default()).expect("Failed to initialize MPU!");
     // mpu.init().unwrap();
-    let mut mpu = Mpu9250::marg_default(
-        I2c::new().expect("Failed to open MPU I2C connection!"),
-        &mut Delay,
-    )
-    .expect("unable to make MPU9250");
+    // let mut mpu = Lsm6dso::new(
+    //     I2c::new().expect("Failed to open MPU I2C connection!"),
+    //     0x6A,
+    // )
+    // .expect("unable to make LSM6DSR");
 
     let mut gps = initialize_gps().expect("Failed to initialize GPS!");
 
@@ -234,26 +260,26 @@ fn main() {
     let tf_mpu = termination_flag.clone();
     let tx_mpu = msg_tx.clone();
     let mpu_hnd = thread::spawn(move || {
-        while !tf_mpu.load(std::sync::atomic::Ordering::SeqCst) {
-            let all: Result<rolly::MargMeasurements<[f32; 3]>, _> = mpu.all();
-            if let Ok(all) = all {
-                tx_mpu.send(MessageToGround::ImuTelemetry {
-                    temperature: all.temp as f64,
-                    acceleration: Vec3 {
-                        x: all.accel[0] as f64,
-                        y: all.accel[1] as f64,
-                        z: all.accel[2] as f64,
-                    },
-                    gyro: Vec3 {
-                        x: all.gyro[0] as f64,
-                        y: all.gyro[1] as f64,
-                        z: all.gyro[2] as f64,
-                    },
-                });
-            }
-
-            sleep(StdDuration::from_millis(1_000));
-        }
+        // while !tf_mpu.load(std::sync::atomic::Ordering::SeqCst) {
+        //     let all = mpu.read_all();
+        //     if let Ok(all) = all {
+        //         tx_mpu.send(MessageToGround::ImuTelemetry {
+        //             temperature: all.0 as f64,
+        //             acceleration: Vec3 {
+        //                 x: all.2.0 as f64,
+        //                 y: all.2.1 as f64,
+        //                 z: all.2.2 as f64,
+        //             },
+        //             gyro: Vec3 {
+        //                 x: all.1.0 as f64,
+        //                 y: all.1.1 as f64,
+        //                 z: all.1.2 as f64,
+        //             },
+        //         });
+        //     }
+        //
+        //     sleep(StdDuration::from_millis(1_000));
+        // }
     });
 
     drop(msg_tx);
